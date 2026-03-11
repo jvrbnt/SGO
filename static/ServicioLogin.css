@@ -1,0 +1,80 @@
+#login {
+  height: auto;
+  width: 350px;
+  border-radius: 20px;
+  box-shadow: 2px 2px 2px rgb(16, 34, 114);
+  background-color: rgb(80, 141, 199);
+  margin: 0 auto;
+  margin-top: 50px;
+  display: flex;
+  justify-content: center;
+}
+
+#login form {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  padding-top: 20px;
+  align-items: center;
+  padding-bottom: 30px;
+}
+
+#login h2 {
+  color: white;
+  font-size: 30px;
+  text-shadow: 2px 2px 2px black;
+  font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+}
+
+#login a {
+    font-size: 25px;
+    text-decoration: none;
+    color: rgb(255, 255, 255);
+}
+
+#login button {
+    width: 120px;
+    height: 40px;
+    border-radius: 5px;
+    background-color: rgb(95, 235, 114);
+    border: 1px solid black;
+    font-size: 15px
+}
+
+#login button:hover {
+    background-color: rgb(83, 218, 89);
+    cursor: pointer;
+}
+
+#login input {
+    border-radius: 8px;
+    height: 25px;
+    padding-right: 35px; /* Espacio para que el texto no pise el ojo */
+    background: linear-gradient(white, rgb(211, 211, 211));
+    width: 90%; 
+    box-sizing: border-box;
+}
+
+#login form:invalid button {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(1); /* Se verá grisáceo hasta que rellenes todo */
+}
+
+/* --- Contenedor de Password y Ojo --- */
+.password-container {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.eye-icon {
+    position: absolute;
+    right: 10%; /* Ajusta según el ancho de tus inputs */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    cursor: pointer;
+    z-index: 10;
+}
