@@ -1,25 +1,22 @@
 const loginForm = document.getElementById('loginForm');
-const passwordInput = document.getElementById('password');
-const togglePassword = document.getElementById('togglePassword');
 
-// Lógica para ver/ocultar contraseña
-togglePassword.addEventListener('click', function () {
-    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-    passwordInput.setAttribute('type', type);
-    
-    // Cambiamos la imagen del ojo
-    if (type === 'password') {
-        this.src = 'https://images.icon-icons.com/3252/PNG/96/eye_show_regular_icon_205294.png';
-    } else {
-        this.src = 'https://images.icon-icons.com/3250/PNG/96/eye_show_filled_icon_201405.png';
-    }
-});
-
-// Lógica al pulsar el botón de Login
 loginForm.addEventListener('submit', function(event) {
-    event.preventDefault(); // Evita que se recargue la página
+    event.preventDefault();
+    
     const email = document.getElementById('email').value;
-    alert("Iniciando sesión con: " + email);
-    // Aquí podrías redirigir a una página de "Bienvenida"
-    // window.location.href = "PaginaPrincipal.html";
+    const password = document.getElementById('password').value;
+
+    // Obtener "base de datos" de usuarios
+    const usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
+
+    // Buscar coincidencia
+    const usuarioValido = usuarios.find(u => u.email === email && u.password === password);
+
+    if (usuarioValido) {
+        // Guardamos el usuario actual en la sesión
+        localStorage.setItem('usuarioActivo', JSON.stringify(usuarioValido));
+        window.location.href = "ServicioUsuario.html";
+    } else {
+        alert("Usuario no encontrado o contraseña incorrecta. Por favor, regístrate.");
+    }
 });

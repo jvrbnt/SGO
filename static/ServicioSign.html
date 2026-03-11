@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SignServicio</title>
-    <link rel="stylesheet" href="Servicio.css">
-    <link rel="stylesheet" href="ServicioSign.css">
+    <link rel="stylesheet" href="/static/Servicio.css">
+    <link rel="stylesheet" href="/static/ServicioSign.css">
 </head>
 <body>
    <div class="barrasLaterales"></div>
-    <div id = "icon"><img src = "imagenes/Csic.png"></div>
+    <div id = "icon"><img src = "/static/imagenes/Csic.png"></div>
     <div id = "imgCentral"><h1>Gestión de Peticiones</h1></div>
     <div id="sign">
     <form id = "registroForm">
@@ -40,7 +40,7 @@
             <label for="entidad">you're in?</label>
             <select id="entidad" name="entidad" required>
                 <option selected disabled>select</option>
-                <option value="mina">Mina</option>
+                <option value="mina">Interno</option>
                 <option value="csic">CSIC</option>
                 <option value="uam">UAM</option>
                 <option value="universidad">Universidad</option>
@@ -50,6 +50,20 @@
         </div>
 
         <div id="camposExtra" style="display: none;">
+
+    <div class="campo">
+        <label for="grupo">Group:</label>
+        <select id="group" name="group" required>
+                <option selected disabled>select</option>
+                <option value="mina">FINDER</option>
+                <option value="csic">BIONANOMECÁNICA</option>
+                <option value="uam">ES4TERM</option>
+                <option value="universidad">OMS</option>
+                <option value="opis">MBE</option>
+                <option value="empresa">METALNANO</option>
+            </select>
+    </div>    
+
     <div class="campo">
         <label for="ip">IP:</label>
         <input type="text" id="ip" name="ip" placeholder="IP">
@@ -67,11 +81,11 @@
 </div>
 
         <button type="submit">Sign up</button>
-        <a href="ServicioLogin.html">Login up</a>
+        <a href="/static/ServicioLogin.html">Login up</a>
     </form>
 </div>
-<div id = "icon2"><img src = "imagenes/Mina.png"></div>
+<div id = "icon2"><img src = "/static/imagenes/Mina.png"></div>
 <div class="barrasLaterales"></div>
 </body>
-<script src="ServicioSign.js" defer></script>
+<script src="/static/ServicioSign.js" defer></script>
 </html>

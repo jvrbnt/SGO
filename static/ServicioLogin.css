@@ -49,7 +49,6 @@
 #login input {
     border-radius: 8px;
     height: 25px;
-    padding-right: 35px; /* Espacio para que el texto no pise el ojo */
     background: linear-gradient(white, rgb(211, 211, 211));
     width: 90%; 
     box-sizing: border-box;
