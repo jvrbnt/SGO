@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const div = document.createElement("div");
                 div.className = "peticion-card";
                 div.innerHTML = `
-                    <strong style="color:#004687;">${p.servicio}</strong><br>
+                    <strong style="color: var(--azul-csic);">${p.servicio}</strong><br>
                     <small>Horas: ${p.horas} | Fecha: ${p.fecha}</small><br>
                     <p style="font-size:12px; margin-top:5px; color:#555;">${p.comentario || 'Sin comentarios'}</p>
                 `;

@@ -29,7 +29,7 @@
     height: 120px;
     border-radius: 50%;
     object-fit: cover;
-    border: 4px solid #004687;
+    border: 4px solid var(--azul-csic);
     background: white;
 }
 
@@ -67,7 +67,7 @@
 /* --- BOTONES PROFESIONALES CON HOVER --- */
 
 #btnGuardarCambios {
-    background-color: #004687;
+    background-color: var(--azul-csic);
     color: white;
     padding: 15px;
     border: none;
@@ -81,9 +81,9 @@
 }
 
 #btnGuardarCambios:hover {
-    background-color: #002d57;
+    background-color: var(--azul-hover);
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 70, 135, 0.3);
+    box-shadow: 0 5px 15px rgba(97, 1, 1, 0.3);
 }
 
 #btnGuardarCambios:active {
