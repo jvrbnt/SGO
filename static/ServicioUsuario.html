@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LoginServicio</title>
+    <title>Panel de Servicios - IMN</title>
     <link rel="stylesheet" href="ServicioUsuario.css">
     <link rel="stylesheet" href="Servicio.css">
 </head>
 <body>
     <div class="barrasLaterales" id="barraSup">
         <div id="perfilContainer">
+            <span id="nombreUsuarioBarra"></span> 
             <img id="iconoUsuario" src="https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png" alt="iconoUsuario">
             <div id="menuDesplegable" class="oculto">
-                <button class="opcionMenu">Editar Perfil</button>
+                <button class="opcionMenu" id="editarPerfil">Editar Perfil</button>
                 <button class="opcionMenu" id="cerrarSesion">Cerrar Sesión</button>
             </div>
         </div>
@@ -20,150 +21,42 @@
 
     <div id="icon"><img src="imagenes/Csic.png"></div>
     
-    <div id="menu">
+    <div id="contenedorPrincipal">
         <div id="servicios">
-            <h2>Servicios</h2>
-            
-            <div class="contenedor-oferta">
-                <button class="botonOferta">Litrografía eletrónica</button>
-                <div class="formulario-oferta">
-                    <label>Horas:</label>
-                    <input type="number" placeholder="0" min="1">
-                    <label>Comentario:</label>
-                    <input type="text" placeholder="Escribe aquí...">
+            <h2 class="titulo-seccion">Catálogo de Servicios</h2>
+            <div id="gridServicios">
+                <div class="contenedor-oferta"><button class="botonOferta">Litografía electrónica</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
+                <div class="contenedor-oferta"><button class="botonOferta">SEM Alta resolución</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
+                <div class="contenedor-oferta"><button class="botonOferta">RIE</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
+                <div class="contenedor-oferta"><button class="botonOferta">FIB</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
+                <div class="contenedor-oferta"><button class="botonOferta">Evaporador por cañón de e⁻</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
+                <div class="contenedor-oferta"><button class="botonOferta">AFM</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
+                <div class="contenedor-oferta"><button class="botonOferta">Litografía auto</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
+                <div class="contenedor-oferta"><button class="botonOferta">Perfilómetro</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
+                <div class="contenedor-oferta"><button class="botonOferta">Centrífuga</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
+                <div class="contenedor-oferta"><button class="botonOferta">Ataque Húmedo</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
+                <div class="contenedor-oferta"><button class="botonOferta">RX</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
+                <div class="contenedor-oferta"><button class="botonOferta">PECVD</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
+                
+                <div class="contenedor-oferta" id="servicio-microsoldadura">
+                    <button class="botonOferta">Microsoldadura</button>
+                    <div class="formulario-oferta">
+                        <div class="input-group"><label>Horas:</label><input type="number"></div>
+                        <div class="input-group"><label>Comentario:</label><input type="text"></div>
+                    </div>
                 </div>
             </div>
-
-            <div class="contenedor-oferta">
-                <button class="botonOferta">SEM Alta resolución</button>
-                <div class="formulario-oferta">
-                    <label>Horas:</label>
-                    <input type="number" placeholder="0" min="1">
-                    <label>Comentario:</label>
-                    <input type="text" placeholder="Escribe aquí...">
-                </div>
-            </div>
-
-            <div class="contenedor-oferta">
-                <button class="botonOferta">RIE</button>
-                <div class="formulario-oferta">
-                    <label>Horas:</label>
-                    <input type="number" placeholder="0" min="1">
-                    <label>Comentario:</label>
-                    <input type="text" placeholder="Escribe aquí...">
-                </div>
-            </div>
-
-            <div class="contenedor-oferta">
-                <button class="botonOferta">FIB</button>
-                <div class="formulario-oferta">
-                    <label>Horas:</label>
-                    <input type="number" placeholder="0" min="1">
-                    <label>Comentario:</label>
-                    <input type="text" placeholder="Escribe aquí...">
-                </div>
-            </div>
-
-            <div class="contenedor-oferta">
-                <button class="botonOferta">Evaporador por cañón de e⁻</button>
-                <div class="formulario-oferta">
-                    <label>Horas:</label>
-                    <input type="number" placeholder="0" min="1">
-                    <label>Comentario:</label>
-                    <input type="text" placeholder="Escribe aquí...">
-                </div>
-            </div>
-
-            <div class="contenedor-oferta">
-                <button class="botonOferta">AFM</button>
-                <div class="formulario-oferta">
-                    <label>Horas:</label>
-                    <input type="number" placeholder="0" min="1">
-                    <label>Comentario:</label>
-                    <input type="text" placeholder="Escribe aquí...">
-                </div>
-            </div>
-
-            <div class="contenedor-oferta">
-                <button class="botonOferta">Litrografía auto</button>
-                <div class="formulario-oferta">
-                    <label>Horas:</label>
-                    <input type="number" placeholder="0" min="1">
-                    <label>Comentario:</label>
-                    <input type="text" placeholder="Escribe aquí...">
-                </div>
-            </div>
-
-            <div class="contenedor-oferta">
-                <button class="botonOferta">Perfilómetro</button>
-                <div class="formulario-oferta">
-                    <label>Horas:</label>
-                    <input type="number" placeholder="0" min="1">
-                    <label>Comentario:</label>
-                    <input type="text" placeholder="Escribe aquí...">
-                </div>
-            </div>
-
-            <div class="contenedor-oferta">
-                <button class="botonOferta">Centrífuga</button>
-                <div class="formulario-oferta">
-                    <label>Horas:</label>
-                    <input type="number" placeholder="0" min="1">
-                    <label>Comentario:</label>
-                    <input type="text" placeholder="Escribe aquí...">
-                </div>
-            </div>
-
-            <div class="contenedor-oferta">
-                <button class="botonOferta">Ataque Húmedo</button>
-                <div class="formulario-oferta">
-                    <label>Horas:</label>
-                    <input type="number" placeholder="0" min="1">
-                    <label>Comentario:</label>
-                    <input type="text" placeholder="Escribe aquí...">
-                </div>
-            </div>
-
-            <div class="contenedor-oferta">
-                <button class="botonOferta">RX</button>
-                <div class="formulario-oferta">
-                    <label>Horas:</label>
-                    <input type="number" placeholder="0" min="1">
-                    <label>Comentario:</label>
-                    <input type="text" placeholder="Escribe aquí...">
-                </div>
-            </div>
-
-            <div class="contenedor-oferta">
-                <button class="botonOferta">PECVD</button>
-                <div class="formulario-oferta">
-                    <label>Horas:</label>
-                    <input type="number" placeholder="0" min="1">
-                    <label>Comentario:</label>
-                    <input type="text" placeholder="Escribe aquí...">
-                </div>
-            </div>
-
-            <div class="contenedor-oferta">
-                <button class="botonOferta">Microsoldadura</button>
-                <div class="formulario-oferta">
-                    <label>Horas:</label>
-                    <input type="number" placeholder="0" min="1">
-                    <label>Comentario:</label>
-                    <input type="text" placeholder="Escribe aquí...">
-                </div>
-            </div>
-
             <button id="btnEnviarPeticion">Enviar petición</button>
         </div>
 
         <div id="peticiones">
-            <h2>Mis peticiones</h2>
+            <h2 class="titulo-seccion">Mis peticiones</h2>
+            <div id="listaPeticiones"></div>
         </div>
     </div>
 
     <div id="icon2"><img src="imagenes/Mina.png"></div>
-    <div class="barrasLaterales"></div>
+<div class="barrasLaterales" id="datos"><div><img src="https://symbl-cdn.com/i/webp/bf/f742f23d736ec34c4cbe8d7e825e10.webp" alt="correo"><h6>Gmail: mina.imn@csic.es</h6></div><div><img src="https://static.vecteezy.com/system/resources/thumbnails/068/203/105/small/simple-blue-gradient-telephone-receiver-icon-isolated-on-transparent-background-png.png" alt="telefono"><h6>Teléfono: +34 91 806 07 00</h6></div></div>
 
     <script src="ServicioUsuario.js" defer></script>
 </body>

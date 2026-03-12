@@ -1,79 +1,113 @@
-#login {
-  height: auto;
-  width: 350px;
-  border-radius: 20px;
-  box-shadow: 2px 2px 2px rgb(16, 34, 114);
-  background-color: rgb(80, 141, 199);
-  margin: 0 auto;
-  margin-top: 50px;
-  display: flex;
-  justify-content: center;
+#login, #sign {
+    height: auto;
+    width: 400px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    background-color: var(--blanco);
+    margin: 50px auto;
+    padding: 20px;
+    border: 1px solid #eee;
+    transition: width 0.3s ease; /* Transición suave al ensanchar */
 }
 
-#login form {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-  padding-top: 20px;
-  align-items: center;
-  padding-bottom: 30px;
+/* Cuando el sign tiene campos extra, lo ensanchamos un poco */
+#sign:has(#camposExtra[style*="display: flex"]) {
+    width: 550px;
 }
 
-#login h2 {
-  color: white;
-  font-size: 30px;
-  text-shadow: 2px 2px 2px black;
-  font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+#login form, #sign form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
 }
 
-#login a {
-    font-size: 25px;
+#login h2, #sign h2 {
+    color: var(--azul-csic);
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+#login a, #sign a {
+    font-size: 14px;
     text-decoration: none;
-    color: rgb(255, 255, 255);
+    color: var(--azul-csic);
+    font-weight: 600;
 }
 
-#login button {
-    width: 120px;
-    height: 40px;
-    border-radius: 5px;
-    background-color: rgb(95, 235, 114);
-    border: 1px solid black;
-    font-size: 15px
-}
-
-#login button:hover {
-    background-color: rgb(83, 218, 89);
+#login button, #sign button {
+    width: 100%;
+    height: 45px;
+    border-radius: 6px;
+    background-color: var(--azul-csic);
+    color: white;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
     cursor: pointer;
+    transition: background 0.3s;
 }
 
-#login input {
+#login button:hover, #sign button:hover {
+    background-color: var(--azul-hover);
+}
+
+#login input, #sign input, #sign select {
+    border-radius: 6px;
+    height: 40px;
+    border: 1px solid #ccc;
+    width: 100%;
+    padding: 0 10px;
+    box-sizing: border-box;
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* --- ESTILO CAMPOS EXTRA (HORIZONTALES) --- */
+#camposExtra {
+    display: none; 
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    background-color: #f4f8fb;
+    padding: 15px;
     border-radius: 8px;
-    height: 25px;
-    background: linear-gradient(white, rgb(211, 211, 211));
-    width: 90%; 
     box-sizing: border-box;
 }
 
-#login form:invalid button {
-    opacity: 0.5;
-    cursor: not-allowed;
-    filter: grayscale(1); /* Se verá grisáceo hasta que rellenes todo */
-}
-
-/* --- Contenedor de Password y Ojo --- */
-.password-container {
-    position: relative;
-    width: 100%;
+.fila-extra {
     display: flex;
-    justify-content: center;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 15px;
+    width: 100%;
 }
 
-.eye-icon {
-    position: absolute;
-    right: 10%; /* Ajusta según el ancho de tus inputs */
-    top: 50%;
-    transform: translateY(-50%);
-    width: 20px;
-    cursor: pointer;
-    z-index: 10;
+.fila-extra .campo {
+    flex: 1;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 90%;
+    gap: 5px;
+}
+
+.campo label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+}
+
+#login form:invalid button, #registroForm:invalid button {
+    opacity: 0.5;
+    filter: grayscale(1);
+    cursor: not-allowed;
+}
+
+#mensajePassword {
+    font-weight: bold;
+    font-size: 12px;
 }

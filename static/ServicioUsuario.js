@@ -1,43 +1,55 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Verificar sesión y cargar datos del usuario
     const usuarioActivo = JSON.parse(localStorage.getItem('usuarioActivo'));
+    
+    // 1. Redirección de seguridad
     if (!usuarioActivo) {
         window.location.href = "ServicioLogin.html";
         return;
     }
 
-    // Actualizar foto de perfil con la del JSON
-    const iconoUsuario = document.getElementById("iconoUsuario");
-    iconoUsuario.src = usuarioActivo.fotoPerfil;
+    // 2. Lógica de Nombre + Apellidos o Apodo
+    let nombreAMostrar = "";
+    if (usuarioActivo.apodo && usuarioActivo.apodo.trim() !== "") {
+        nombreAMostrar = usuarioActivo.apodo;
+    } else {
+        // Combina nombre y apellidos si existen
+        const nombreCompleto = `${usuarioActivo.nombre || ""} ${usuarioActivo.apellidos || ""}`.trim();
+        nombreAMostrar = nombreCompleto !== "" ? nombreCompleto : "Usuario";
+    }
+    
+    document.getElementById("nombreUsuarioBarra").textContent = nombreAMostrar;
+    document.getElementById("iconoUsuario").src = usuarioActivo.fotoPerfil;
 
-    // 2. Cargar peticiones previas del usuario en la interfaz
-    const contenedorPeticiones = document.getElementById("peticiones");
+    // 3. Renderizar Peticiones existentes
+    const contenedorLista = document.getElementById("listaPeticiones");
     function renderPeticiones() {
-        // Limpiar excepto el H2
-        const h2 = contenedorPeticiones.querySelector("h2");
-        contenedorPeticiones.innerHTML = "";
-        contenedorPeticiones.appendChild(h2);
-
-        usuarioActivo.peticiones.forEach(p => {
-            const div = document.createElement("div");
-            div.style.borderBottom = "1px solid #ccc";
-            div.style.padding = "10px";
-            div.innerHTML = `<strong>${p.servicio}</strong><br>Horas: ${p.horas}<br><small>${p.comentario}</small>`;
-            contenedorPeticiones.appendChild(div);
-        });
+        contenedorLista.innerHTML = "";
+        if (usuarioActivo.peticiones) {
+            usuarioActivo.peticiones.forEach(p => {
+                const div = document.createElement("div");
+                div.className = "peticion-card";
+                div.innerHTML = `
+                    <strong style="color:#004687;">${p.servicio}</strong><br>
+                    <small>Horas: ${p.horas} | Fecha: ${p.fecha}</small><br>
+                    <p style="font-size:12px; margin-top:5px; color:#555;">${p.comentario || 'Sin comentarios'}</p>
+                `;
+                contenedorLista.appendChild(div);
+            });
+        }
     }
     renderPeticiones();
 
-    // 3. Lógica Menú Perfil
+    // 4. Menú Desplegable
     const perfilContainer = document.getElementById("perfilContainer");
     const menuDesplegable = document.getElementById("menuDesplegable");
+    
     perfilContainer.addEventListener("click", (e) => {
         e.stopPropagation();
         menuDesplegable.classList.toggle("oculto");
     });
     document.addEventListener("click", () => menuDesplegable.classList.add("oculto"));
 
-    // 4. Lógica expansión servicios
+    // 5. Acordeón de Servicios
     const botonesOferta = document.querySelectorAll(".botonOferta");
     botonesOferta.forEach(boton => {
         boton.addEventListener("click", function(e) {
@@ -46,55 +58,53 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // 5. ENVIAR PETICIÓN Y GUARDAR EN JSON
+    // 6. Enviar Peticiones
     const btnEnviar = document.getElementById("btnEnviarPeticion");
     btnEnviar.addEventListener("click", () => {
         const formularios = document.querySelectorAll(".formulario-oferta");
         let algunaPeticion = false;
 
         formularios.forEach(form => {
-            const horas = form.querySelector("input[type='number']").value;
-            const comentario = form.querySelector("input[type='text']").value;
+            const horasInput = form.querySelector("input[type='number']");
+            const comentarioInput = form.querySelector("input[type='text']");
+            const horas = horasInput.value;
             const servicio = form.previousElementSibling.textContent;
 
             if (horas > 0) {
-                const nuevaPeticion = {
+                if (!usuarioActivo.peticiones) usuarioActivo.peticiones = [];
+                usuarioActivo.peticiones.push({
                     servicio: servicio,
                     horas: horas,
-                    comentario: comentario,
+                    comentario: comentarioInput.value,
                     fecha: new Date().toLocaleDateString()
-                };
-                usuarioActivo.peticiones.push(nuevaPeticion);
+                });
                 algunaPeticion = true;
-                // Limpiar campos
-                form.querySelector("input[type='number']").value = "";
-                form.querySelector("input[type='text']").value = "";
+                horasInput.value = "";
+                comentarioInput.value = "";
                 form.classList.remove("abierto");
             }
         });
 
         if (algunaPeticion) {
-            // Actualizar usuario activo en sesión
             localStorage.setItem('usuarioActivo', JSON.stringify(usuarioActivo));
-            
-            // Actualizar en la "base de datos" global de usuarios
-            let usuarios = JSON.parse(localStorage.getItem('usuarios'));
+            let usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
             const index = usuarios.findIndex(u => u.email === usuarioActivo.email);
-            usuarios[index] = usuarioActivo;
-            localStorage.setItem('usuarios', JSON.stringify(usuarios));
-
+            if (index !== -1) {
+                usuarios[index] = usuarioActivo;
+                localStorage.setItem('usuarios', JSON.stringify(usuarios));
+            }
             renderPeticiones();
-            alert("Peticiones guardadas en tu perfil");
-        } else {
-            alert("Por favor, introduce horas en al menos un servicio.");
+            alert("Petición enviada correctamente.");
         }
     });
 
-    // 6. Cerrar Sesión
+    // 7. Navegación
     document.getElementById("cerrarSesion").addEventListener("click", () => {
-        if(confirm("¿Cerrar sesión?")) {
-            localStorage.removeItem('usuarioActivo');
-            window.location.href = "ServicioLogin.html";
-        }
+        localStorage.removeItem('usuarioActivo');
+        window.location.href = "ServicioLogin.html";
+    });
+
+    document.getElementById("editarPerfil").addEventListener("click", () => {
+        window.location.href = "ServicioEdit.html";
     });
 });
