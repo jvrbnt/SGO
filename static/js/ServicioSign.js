@@ -54,11 +54,7 @@ registroForm.addEventListener('submit', async function(event) {
 
         if (response.ok) {
             alert(data.mensaje); // "Cuenta creada con éxito"
-<<<<<<< HEAD://SGO/static/js/ServicioSign.js
             window.location.href = "/SGO/static/html/ServicioLogin.html";
-=======
-            window.location.href = "/SGO/static/html/ServicioLogin.html";
->>>>>>> 1632cb6210aba5593f716fa3e7b26d0585289efe:/SGO/static/js/ServicioSign.js
         } else {
             // El backend devuelve un error (ej: El email ya está registrado)
             alert(data.detail); 
