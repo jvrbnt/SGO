@@ -5,6 +5,7 @@ const registroForm = document.getElementById('registroForm');
 const passwordInput = document.getElementById('contraseña');
 const mensaje = document.getElementById('mensajePassword');
 
+// Mostrar/Ocultar campos extra si es interno
 selectEntidad.addEventListener('change', function() {
     if (this.value === "mina") {
         camposExtra.style.display = "flex"; 
@@ -15,6 +16,7 @@ selectEntidad.addEventListener('change', function() {
     }
 });
 
+// Medidor de seguridad de contraseña
 passwordInput.addEventListener('input', function() {
     const pass = this.value;
     const tieneLetras = /[a-zA-Z]/.test(pass);
@@ -28,28 +30,37 @@ passwordInput.addEventListener('input', function() {
     }
 });
 
-registroForm.addEventListener('submit', function(event) {
+// Enviar datos al Backend (PostgreSQL) en lugar de localStorage
+registroForm.addEventListener('submit', async function(event) {
     event.preventDefault();
+    
+    // Los datos básicos que espera tu base de datos
     const nuevoUsuario = {
         nombre: document.getElementById('nombre').value,
         apellidos: document.getElementById('apellidos').value,
         email: document.getElementById('email').value,
         password: passwordInput.value,
-        entidad: selectEntidad.value,
-        fotoPerfil: "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png",
-        peticiones: [],
-        grupo: document.getElementById('group').value || null,
-        ip: document.getElementById('ip').value || null,
-        cuenta: document.getElementById('cuenta').value || null,
-        proyecto: document.getElementById('proyecto').value || null
+        entidad: selectEntidad.value
     };
-    let usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
-    if (usuarios.some(u => u.email === nuevoUsuario.email)) {
-        alert("Este correo ya está registrado.");
-        return;
+
+    try {
+        const response = await fetch('/api/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(nuevoUsuario)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert(data.mensaje); // "Cuenta creada con éxito"
+            window.location.href = "ServicioLogin.html";
+        } else {
+            // El backend devuelve un error (ej: El email ya está registrado)
+            alert(data.detail); 
+        }
+    } catch (error) {
+        console.error("Error al conectar con el backend:", error);
+        alert("Error de conexión. Asegúrate de que tu servidor FastAPI está encendido.");
     }
-    usuarios.push(nuevoUsuario);
-    localStorage.setItem('usuarios', JSON.stringify(usuarios));
-    alert("Cuenta creada con éxito");
-    window.location.href = "ServicioLogin.html";
 });
