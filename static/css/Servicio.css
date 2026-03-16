@@ -1,0 +1,215 @@
+/* IMPORTACIÓN DE MONTSERRAT */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap');
+
+:root {
+    --azul-csic: #af071f;
+    --azul-hover: #8f071b;
+    --gris-fondo: #f8f9fa;
+    --blanco: #ffffff;
+    --gris-texto: #333;
+    --gris-inferior: #bcbdbe;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Montserrat', sans-serif;
+    background-color: var(--gris-fondo);
+    color: var(--gris-texto);
+}
+
+#perfilContainer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    cursor: pointer;
+}
+
+#nombreUsuarioBarra {
+    color: white;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Contenedor para izquierda (datos) y derecha (perfil) */
+.barrasLaterales {
+    background-color: var(--azul-csic);
+    height: 60px;
+    width: 100%;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+/* Contenedor para los datos en la parte izquierda de la barra */
+.datos-contacto-superior {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding-left: 20px;
+}
+
+.datos-contacto-superior div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.datos-contacto-superior img {
+    height: 18px;
+    width: auto;
+    filter: brightness(0) invert(1);
+}
+
+.datos-contacto-superior h6 {
+    color: white;
+    margin: 0;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+#icon, #icon2 {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+}
+
+/* Contenedor de los dos logos centrados */
+#icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 120px; 
+    margin-top: 80px; 
+}
+
+/* Estilo para las dos imágenes de logo centradas */
+.icono-centrado {
+    height: auto;
+    width: 250px; 
+    transition: transform 0.3s ease;
+}
+
+/* Desplazamiento a la izquierda */
+.icono-izquierda {
+    margin-right: -40px;
+    width: 500px; 
+}
+
+/* Desplazamiento a la derecha */
+.icono-derecha {
+    margin-left: -40px; 
+}
+
+#icon2 img {
+    width: 250px;
+    height: auto;
+}
+
+#imgCentral {   
+    height: 300px;
+    width: 100%;
+    background: linear-gradient(rgba(0, 70, 135, 0.6), rgba(0, 70, 135, 0.6)), url("/static/imagenes/fotoTitulo.png");
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#imgCentral h1 {
+    font-size: 3.5rem;
+    color: white;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 2px 4px 8px rgba(0,0,0,0.3);
+    margin: 0;
+}
+
+#iconoUsuario {
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+    border: 2px solid white;
+    margin-right: 20px;
+    cursor: pointer;
+}
+
+/* FOOTER ACTUALIZADO Y CORREGIDO */
+.barrasLaterales#datos {
+    width: 100%;
+    background-color: var(--gris-inferior);
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Centra el contenido principal (la imagen) */
+    position: relative; /* Para posicionar las redes absolutamente */
+    padding: 0 40px;
+    height: 100px;
+    box-sizing: border-box;
+}
+
+.logo-footer {
+    height: 80px;
+    width: 200px;
+    /* Sin márgenes especiales, el contenedor lo centra */
+}
+
+.redes-sociales {
+    display: flex;
+    gap: 10px;
+    position: absolute; /* Posiciona las redes a la derecha */
+    right: 40px;
+}
+
+.btn-social {
+    width: 40px;
+    height: 40px;
+    background-color: black;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-social:hover {
+    background-color: var(--azul-csic);
+}
+
+.btn-social img {
+    width: 16px;
+    height: 16px;
+    filter: brightness(0) invert(1);
+}
+
+#insta img {
+    height: 30px;
+    width: 30px;
+}
+
+#twitter img{
+    height: 20px;
+    width: 30px;
+}
+
+#youtube img {
+    height: 25px;
+    width: 25px;
+}
+
+#tiktok img {
+    height: 25px;
+    width: 25px;    
+}

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Perfil - IMN</title>
+    <link rel="stylesheet" href="/static/css/ServicioEdit.css">
+    <link rel="stylesheet" href="/static/css/Servicio.css">
+</head>
+<body>
+    <div class="barrasLaterales" id="barraSup">
+        <div class="datos-contacto-superior">
+            <div>
+                <img src="https://cdn.iconscout.com/icon/premium/png-256-thumb/correo-electronico-icon-svg-png-download-11866287.png?f=webp&w=128" alt="correo">
+                <h6>mina.imn@csic.es</h6>
+            </div>
+            <div>
+                <img src="https://static.vecteezy.com/system/resources/thumbnails/068/203/105/small/simple-blue-gradient-telephone-receiver-icon-isolated-on-transparent-background-png.png" alt="telefono">
+                <h6>+34 91 806 07 00</h6>
+            </div>
+        </div>
+
+        <div id="perfilContainer">
+            <span id="nombreUsuarioBarra"></span>
+            <img id="iconoUsuario" src="" alt="iconoUsuario">
+            <div id="menuDesplegable" class="oculto">
+                <button class="opcionMenu" id="irServicios">Servicios</button>
+                <button class="opcionMenu" id="cerrarSesion">Cerrar Sesión</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="icon">
+        <img src="/static/imagenes/Csic.png" alt="Csic Logo Izquierda" class="icono-centrado icono-izquierda">
+        <img src="/static/imagenes/MicroNano.png" alt="Csic Logo Derecha" class="icono-centrado icono-derecha">
+    </div>
+    
+    <div id="contenedorPrincipal">
+        <h2 class="titulo-seccion">Configuración de la Cuenta</h2>
+        
+        <div id="formularioEdicion">
+            <div class="seccion-foto">
+                <img id="previewFoto" src="" alt="Vista previa">
+                <input type="file" id="inputFileFoto" accept="image/*" style="display: none;">
+                <div class="botones-foto">
+                    <button type="button" id="btnCambiarFoto" class="btn-secundario">Cambiar Foto</button>
+                    <button type="button" id="btnQuitarFoto" class="btn-peligro">Quitar Foto</button>
+                </div>
+            </div>
+
+            <div class="grid-campos">
+                <div class="input-group">
+                    <label>Apodo de Usuario:</label>
+                    <input type="text" id="editApodo" placeholder="Tu apodo">
+                </div>
+
+                <div class="input-group">
+                    <label>Entidad / Procedencia:</label>
+                    <select id="editEntidad">
+                        <option value="interno(MiNa)">interno(MiNa)</option>
+                        <option value="CSIC">CSIC</option>
+                        <option value="UAM">UAM</option>
+                        <option value="Universidad">Universidad</option>
+                        <option value="OPIS">OPIS</option>
+                        <option value="Empresa">Empresa</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="camposInternos" class="oculto-form">
+                <div class="grid-campos">
+                    <div class="input-group">
+                        <label>Grupo de Investigación:</label>
+                        <select id="editGrupo">
+                            <option value="" disabled selected>Selecciona un grupo</option>
+                            <option value="FINGER">FINGER</option>
+                            <option value="BIOMECÁNICA">BIOMECÁNICA</option>
+                            <option value="ES4TERM">ES4TERM</option>
+                            <option value="OMS">OMS</option>
+                            <option value="MBE">MBE</option>
+                            <option value="METALNANO">METALNANO</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Dirección IP:</label>
+                        <input type="text" id="editIP">
+                    </div>
+                    <div class="input-group">
+                        <label>Cuenta Interna:</label>
+                        <input type="text" id="editCuentaInterna">
+                    </div>
+                    <div class="input-group">
+                        <label>Código Proyecto:</label>
+                        <input type="text" id="editProyecto">
+                    </div>
+                </div>
+            </div>
+
+            <button id="btnGuardarCambios">Guardar Cambios</button>
+        </div>
+    </div>
+
+    <div id="icon2"><img src="/static/imagenes/Mina.png"></div>
+
+    <div class="barrasLaterales" id="datos">
+        <img src="/static/imagenes/CsicGris.png" alt="Logo Footer" class="logo-footer">
+        <div class="redes-sociales">
+            <a href="https://es-es.facebook.com/CSIC/" class="btn-social"><img src="https://cdn.pixabay.com/photo/2021/06/15/12/51/facebook-6338508_640.png" alt="Facebook"></a>
+            <a href="https://www.instagram.com/csic/" class="btn-social" id="insta"><img src="https://static.vecteezy.com/system/resources/thumbnails/018/930/691/small/instagram-logo-instagram-icon-transparent-free-png.png" alt="Instagram"></a>
+            <a href="https://x.com/csic" class="btn-social" id = twitter><img src="https://1000logos.net/wp-content/uploads/2017/06/Twitter-Log%D0%BE-500x281.png" alt="Twitter/X"></a>
+            <a href="https://www.youtube.com/user/csicdptocomunicacion" class="btn-social" id = youtube><img src="https://static.vecteezy.com/system/resources/thumbnails/042/148/649/small/youtube-logo-youtube-social-media-icon-free-png.png" alt="Youtube"></a>
+            <a href="https://www.tiktok.com/@elcsic" class="btn-social" id = tiktok><img src="https://static.vecteezy.com/system/resources/thumbnails/065/386/723/small/tiktok-white-icon-logo-tiktok-app-transparent-background-premium-social-media-design-for-digital-download-free-png.png" alt="LinkedIn"></a>
+            <a href="https://bsky.app/profile/csic.es" class="btn-social" id = bsky><img src="https://images.seeklogo.com/logo-png/52/2/bluesky-logo-png_seeklogo-520643.png" alt="Bsky"></a>
+        </div>
+    </div>
+
+    <script src="/static/js/ServicioEdit.js" defer></script>
+</body>
+</html>

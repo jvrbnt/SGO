@@ -15,7 +15,7 @@ loginForm.addEventListener('submit', function(event) {
     if (usuarioValido) {
         // Guardamos el usuario actual en la sesión
         localStorage.setItem('usuarioActivo', JSON.stringify(usuarioValido));
-        window.location.href = "ServicioUsuario.html";
+        window.location.href = "/static/html/ServicioUsuario.html";
     } else {
         alert("Usuario no encontrado o contraseña incorrecta. Por favor, regístrate.");
     }
