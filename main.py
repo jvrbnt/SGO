@@ -20,7 +20,7 @@ def get_db():
 
 @app.get("/")
 async def read_index():
-    return FileResponse("static/ServicioLogin.html")
+    return FileResponse("static/html/ServicioLogin.html")
 
 # --- RUTA DE REGISTRO ---
 @app.post("/api/signup")
