@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // Recuperamos el usuario (ahora con nombres en inglés tras el login)
     const usuarioActivo = JSON.parse(localStorage.getItem('usuarioActivo'));
     
     // 1. Redirección de seguridad
@@ -7,31 +8,33 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    // 2. Lógica de Nombre + Apellidos o Apodo
+    // 2. Lógica de Nombre + Apellidos (Adaptado a first_name / last_name)
     let nombreAMostrar = "";
-    if (usuarioActivo.apodo && usuarioActivo.apodo.trim() !== "") {
-        nombreAMostrar = usuarioActivo.apodo;
+    // Mantenemos la lógica de apodo/nickname por si lo incluyes en el modelo
+    if (usuarioActivo.nickname && usuarioActivo.nickname.trim() !== "") {
+        nombreAMostrar = usuarioActivo.nickname;
     } else {
-        // Combina nombre y apellidos si existen
-        const nombreCompleto = `${usuarioActivo.nombre || ""} ${usuarioActivo.apellidos || ""}`.trim();
+        const nombreCompleto = `${usuarioActivo.first_name || ""} ${usuarioActivo.last_name || ""}`.trim();
         nombreAMostrar = nombreCompleto !== "" ? nombreCompleto : "Usuario";
     }
     
     document.getElementById("nombreUsuarioBarra").textContent = nombreAMostrar;
-    document.getElementById("iconoUsuario").src = usuarioActivo.fotoPerfil;
+    // Adaptado a profile_picture
+    document.getElementById("iconoUsuario").src = usuarioActivo.profile_picture || "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png";
 
-    // 3. Renderizar Peticiones existentes
+    // 3. Renderizar Peticiones (Adaptado a 'requests')
     const contenedorLista = document.getElementById("listaPeticiones");
     function renderPeticiones() {
         contenedorLista.innerHTML = "";
-        if (usuarioActivo.peticiones) {
-            usuarioActivo.peticiones.forEach(p => {
+        // Ahora usamos usuarioActivo.requests en lugar de peticiones
+        if (usuarioActivo.requests) {
+            usuarioActivo.requests.forEach(r => {
                 const div = document.createElement("div");
                 div.className = "peticion-card";
                 div.innerHTML = `
-                    <strong style="color: var(--azul-csic);">${p.servicio}</strong><br>
-                    <small>Horas: ${p.horas} | Fecha: ${p.fecha}</small><br>
-                    <p style="font-size:12px; margin-top:5px; color:#555;">${p.comentario || 'Sin comentarios'}</p>
+                    <strong style="color: var(--azul-csic);">${r.service_name}</strong><br>
+                    <small>Horas: ${r.hours} | Fecha: ${r.request_date}</small><br>
+                    <p style="font-size:12px; margin-top:5px; color:#555;">${r.comment || 'Sin comentarios'}</p>
                 `;
                 contenedorLista.appendChild(div);
             });
@@ -39,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     renderPeticiones();
 
-    // 4. Menú Desplegable
+    // 4. Menú Desplegable (Sin cambios)
     const perfilContainer = document.getElementById("perfilContainer");
     const menuDesplegable = document.getElementById("menuDesplegable");
     
@@ -49,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     document.addEventListener("click", () => menuDesplegable.classList.add("oculto"));
 
-    // 5. Acordeón de Servicios
+    // 5. Acordeón de Servicios (Sin cambios)
     const botonesOferta = document.querySelectorAll(".botonOferta");
     botonesOferta.forEach(boton => {
         boton.addEventListener("click", function(e) {
@@ -58,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // 6. Enviar Peticiones
+    // 6. Enviar Peticiones (Actualizado con llaves en inglés para el futuro fetch)
     const btnEnviar = document.getElementById("btnEnviarPeticion");
     btnEnviar.addEventListener("click", () => {
         const formularios = document.querySelectorAll(".formulario-oferta");
@@ -71,12 +74,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const servicio = form.previousElementSibling.textContent;
 
             if (horas > 0) {
-                if (!usuarioActivo.peticiones) usuarioActivo.peticiones = [];
-                usuarioActivo.peticiones.push({
-                    servicio: servicio,
-                    horas: horas,
-                    comentario: comentarioInput.value,
-                    fecha: new Date().toLocaleDateString()
+                if (!usuarioActivo.requests) usuarioActivo.requests = [];
+                // Guardamos con las llaves que espera nuestro nuevo modelo Request
+                usuarioActivo.requests.push({
+                    service_name: servicio,
+                    hours: parseFloat(horas),
+                    comment: comentarioInput.value,
+                    request_date: new Date().toLocaleDateString()
                 });
                 algunaPeticion = true;
                 horasInput.value = "";
@@ -86,15 +90,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (algunaPeticion) {
+            // Guardamos localmente (más adelante haremos el fetch a /api/requests)
             localStorage.setItem('usuarioActivo', JSON.stringify(usuarioActivo));
-            let usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
-            const index = usuarios.findIndex(u => u.email === usuarioActivo.email);
-            if (index !== -1) {
-                usuarios[index] = usuarioActivo;
-                localStorage.setItem('usuarios', JSON.stringify(usuarios));
-            }
             renderPeticiones();
-            alert("Petición enviada correctamente.");
+            alert("Petición guardada localmente. Lista para ser sincronizada.");
         }
     });
 

@@ -18,29 +18,28 @@ loginForm.addEventListener('submit', async function(event) {
         const data = await response.json();
 
         if (response.ok) {
-            // Reconstruimos el objeto que tu frontend espera para que ServicioUsuario.js no falle
+            // Mapeamos la respuesta del backend (Inglés) al objeto de sesión
             const usuarioActivo = {
-                nombre: data.nombre,
-                apellidos: data.apellidos,
+                first_name: data.first_name,
+                last_name: data.last_name,
                 email: data.email,
-                entidad: data.entidad,
-                fotoPerfil: "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png",
-                grupo: data.grupo,
-                ip: data.ip,
-                cuenta: data.cuenta,
-                proyecto: data.proyecto,
-                peticiones: data.peticiones || []
+                entity: data.entity,
+                role: data.role,
+                profile_picture: data.profile_picture || "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png",
+                research_group: data.research_group,
+                principal_investigator: data.principal_investigator,
+                internal_account: data.internal_account,
+                project_code: data.project_code,
+                requests: data.requests || [] // Cambiado de 'peticiones' a 'requests'
             };
 
-            // Guardamos el usuario en la sesión
             localStorage.setItem('usuarioActivo', JSON.stringify(usuarioActivo));
             window.location.href = "/static/html/ServicioUsuario.html";
         } else {
-            // Error de credenciales incorrectas desde el backend
             alert(data.detail);
         }
     } catch (error) {
         console.error("Error al conectar con el backend:", error);
-        alert("Error de conexión. Asegúrate de que tu servidor FastAPI está encendido.");
+        alert("Error de conexión.");
     }
 });

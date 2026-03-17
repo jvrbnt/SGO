@@ -6,12 +6,12 @@ from sqlalchemy.orm import Session
 import models, schemas
 from database import engine, LocalSession
 
-# 1. Crear las tablas en PostgreSQL
+# 1. Create tables in PostgreSQL using the updated models
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-# 2. Dependencia para la base de datos (Debe estar antes de las rutas)
+# 2. Database dependency
 def get_db():
     db = LocalSession()
     try:
@@ -19,59 +19,60 @@ def get_db():
     finally:
         db.close()
 
-# --- 3. RUTAS DE LA API (Siempre primero que los estáticos) ---
+# --- 3. API ROUTES ---
 
 @app.post("/api/signup")
-def create_user(user: schemas.UsuarioCreate, db: Session = Depends(get_db)):
-    if db.query(models.Usuario).filter(models.Usuario.email == user.email).first():
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    # Check if email is already registered in the 'users' table
+    if db.query(models.User).filter(models.User.email == user.email).first():
         raise HTTPException(status_code=400, detail="El email ya está registrado")
     
-    nuevo_usuario = models.Usuario(
-        nombre=user.nombre,
-        apellidos=user.apellidos,
+    new_user = models.User(
+        first_name=user.first_name,
+        last_name=user.last_name,
         email=user.email,
         password=user.password, 
-        entidad=user.entidad,
-        grupo=user.grupo,
-        ip=user.ip,
-        cuenta=user.cuenta,
-        proyecto=user.proyecto,
-        foto_perfil="https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png"
+        entity=user.entity,
+        research_group=user.research_group,
+        principal_investigator=user.principal_investigator,
+        internal_account=user.internal_account,
+        project_code=user.project_code,
+        profile_picture="https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png"
     )
-    db.add(nuevo_usuario)
+    db.add(new_user)
     db.commit()
     return {"mensaje": "Cuenta creada con éxito"}
 
 @app.post("/api/login")
-def login(user: schemas.UsuarioLogin, db: Session = Depends(get_db)):
-    # Buscamos al usuario por email y contraseña
-    db_user = db.query(models.Usuario).filter(
-        models.Usuario.email == user.email, 
-        models.Usuario.password == user.password
+def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
+    # Query the 'users' table using English column names
+    db_user = db.query(models.User).filter(
+        models.User.email == user.email, 
+        models.User.password == user.password
     ).first()
     
     if not db_user:
         raise HTTPException(status_code=400, detail="Usuario o contraseña incorrectos")
     
+    # Return data to the frontend (keys match ServicioLogin.js)
     return {
         "email": db_user.email,
-        "nombre": db_user.nombre,
-        "apellidos": db_user.apellidos,
-        "entidad": db_user.entidad,
-        "grupo": db_user.grupo,
-        "ip": db_user.ip,
-        "cuenta": db_user.cuenta,
-        "proyecto": db_user.proyecto,
-        "fotoPerfil": db_user.foto_perfil,
-        "peticiones": []
+        "first_name": db_user.first_name,
+        "last_name": db_user.last_name,
+        "entity": db_user.entity,
+        "role": db_user.role,
+        "research_group": db_user.research_group,
+        "principal_investigator": db_user.principal_investigator,
+        "internal_account": db_user.internal_account,
+        "project_code": db_user.project_code,
+        "profile_picture": db_user.profile_picture,
+        "requests": []
     }
 
-# --- 4. CONFIGURACIÓN DE ARCHIVOS ESTÁTICOS Y VISTAS (Al final) ---
+# --- 4. STATIC FILES AND VIEWS ---
 
-# Primero montamos la carpeta
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Y por último la ruta que sirve el HTML
 @app.get("/")
 async def read_index():
     return FileResponse("static/html/ServicioLogin.html")

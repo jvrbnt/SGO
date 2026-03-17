@@ -34,19 +34,18 @@ passwordInput.addEventListener('input', function() {
 registroForm.addEventListener('submit', async function(event) {
     event.preventDefault();
     
-    // Capturamos todos los valores, incluidos los campos de MiNa
-    // Usamos || null para que si están vacíos se envíen como nulos al backend
+    // IMPORTANTE: Las llaves (keys) ahora están en INGLÉS para el Backend
     const nuevoUsuario = {
-        nombre: document.getElementById('nombre').value,
-        apellidos: document.getElementById('apellidos').value,
+        first_name: document.getElementById('nombre').value,
+        last_name: document.getElementById('apellidos').value,
         email: document.getElementById('email').value,
         password: passwordInput.value,
-        entidad: selectEntidad.value,
-        // --- CAMPOS EXTRA PARA LA TABLA USUARIOS ---
-        grupo: document.getElementById('group').value || null,
-        ip: document.getElementById('ip').value || null,
-        cuenta: document.getElementById('cuenta').value || null,
-        proyecto: document.getElementById('proyecto').value || null
+        entity: selectEntidad.value,
+        // Campos extra MiNa
+        research_group: document.getElementById('group').value || null,
+        principal_investigator: document.getElementById('ip').value || null,
+        internal_account: document.getElementById('cuenta').value || null,
+        project_code: document.getElementById('proyecto').value || null
     };
 
     try {
@@ -66,6 +65,6 @@ registroForm.addEventListener('submit', async function(event) {
         }
     } catch (error) {
         console.error("Error al conectar con el backend:", error);
-        alert("Error de conexión. Asegúrate de que tu servidor FastAPI está encendido.");
+        alert("Error de conexión.");
     }
 });
