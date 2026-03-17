@@ -25,16 +25,16 @@ loginForm.addEventListener('submit', async function(event) {
                 email: data.email,
                 entidad: data.entidad,
                 fotoPerfil: "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png",
-                peticiones: [],
-                grupo: null,
-                ip: null,
-                cuenta: null,
-                proyecto: null
+                grupo: data.grupo,
+                ip: data.ip,
+                cuenta: data.cuenta,
+                proyecto: data.proyecto,
+                peticiones: data.peticiones || []
             };
 
             // Guardamos el usuario en la sesión
             localStorage.setItem('usuarioActivo', JSON.stringify(usuarioActivo));
-            window.location.href = "/SGO/static/html/ServicioUsuario.html";
+            window.location.href = "/static/html/ServicioUsuario.html";
         } else {
             // Error de credenciales incorrectas desde el backend
             alert(data.detail);

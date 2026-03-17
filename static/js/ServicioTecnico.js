@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const filtroTecnico = document.getElementById("filtroTecnico");
     const filtroServicio = document.getElementById("filtroServicio");
     if (!usuarioActivo) {
-        window.location.href = "/SGO/static/html/ServicioLogin.html";
+        window.location.href = "/static/html/ServicioLogin.html";
         return;
     }
 
@@ -103,11 +103,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("cerrarSesion").addEventListener("click", () => {
         localStorage.removeItem('usuarioActivo');
-        window.location.href = "/SGO/static/html/ServicioLogin.html";
+        window.location.href = "/static/html/ServicioLogin.html";
     });
 
     document.getElementById("editarPerfil").addEventListener("click", () => {
-        window.location.href = "/SGO/static/html/ServicioEdit.html";
+        window.location.href = "/static/html/ServicioEdit.html";
     });
 
     renderPeticiones();

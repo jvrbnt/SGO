@@ -30,17 +30,23 @@ passwordInput.addEventListener('input', function() {
     }
 });
 
-// Enviar datos al Backend (PostgreSQL) en lugar de localStorage
+// Enviar datos al Backend (PostgreSQL)
 registroForm.addEventListener('submit', async function(event) {
     event.preventDefault();
     
-    // Los datos básicos que espera tu base de datos
+    // Capturamos todos los valores, incluidos los campos de MiNa
+    // Usamos || null para que si están vacíos se envíen como nulos al backend
     const nuevoUsuario = {
         nombre: document.getElementById('nombre').value,
         apellidos: document.getElementById('apellidos').value,
         email: document.getElementById('email').value,
         password: passwordInput.value,
-        entidad: selectEntidad.value
+        entidad: selectEntidad.value,
+        // --- CAMPOS EXTRA PARA LA TABLA USUARIOS ---
+        grupo: document.getElementById('group').value || null,
+        ip: document.getElementById('ip').value || null,
+        cuenta: document.getElementById('cuenta').value || null,
+        proyecto: document.getElementById('proyecto').value || null
     };
 
     try {
@@ -53,10 +59,9 @@ registroForm.addEventListener('submit', async function(event) {
         const data = await response.json();
 
         if (response.ok) {
-            alert(data.mensaje); // "Cuenta creada con éxito"
-            window.location.href = "/SGO/static/html/ServicioLogin.html";
+            alert(data.mensaje); 
+            window.location.href = "/static/html/ServicioLogin.html";
         } else {
-            // El backend devuelve un error (ej: El email ya está registrado)
             alert(data.detail); 
         }
     } catch (error) {

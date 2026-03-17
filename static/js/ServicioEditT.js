@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const FOTO_DEFECTO = "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png";
     
     if (!usuarioActivo) {
-        window.location.href = "/SGO/static/html/ServicioLogin.html";
+        window.location.href = "/static/html/ServicioLogin.html";
         return;
     }
 
@@ -75,11 +75,11 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("click", () => menu.classList.add("oculto"));
 
 document.getElementById("editarPerfil").addEventListener("click", () => {
-    window.location.href = "/SGO/static/html/ServicioEditT.html";
+    window.location.href = "/static/html/ServicioEditT.html";
 });
 
     document.getElementById("cerrarSesion").addEventListener("click", () => {
         localStorage.removeItem('usuarioActivo');
-        window.location.href = "/SGO/static/html/ServicioLogin.html";
+        window.location.href = "/static/html/ServicioLogin.html";
     });
 });

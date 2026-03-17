@@ -6,11 +6,12 @@ from sqlalchemy.orm import Session
 import models, schemas
 from database import engine, LocalSession
 
+# 1. Crear las tablas en PostgreSQL
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# 2. Dependencia para la base de datos (Debe estar antes de las rutas)
 def get_db():
     db = LocalSession()
     try:
@@ -18,11 +19,8 @@ def get_db():
     finally:
         db.close()
 
-@app.get("/")
-async def read_index():
-    return FileResponse("static/html/ServicioLogin.html")
+# --- 3. RUTAS DE LA API (Siempre primero que los estáticos) ---
 
-# --- RUTA DE REGISTRO ---
 @app.post("/api/signup")
 def create_user(user: schemas.UsuarioCreate, db: Session = Depends(get_db)):
     if db.query(models.Usuario).filter(models.Usuario.email == user.email).first():
@@ -34,7 +32,6 @@ def create_user(user: schemas.UsuarioCreate, db: Session = Depends(get_db)):
         email=user.email,
         password=user.password, 
         entidad=user.entidad,
-        # Guardamos los campos extra:
         grupo=user.grupo,
         ip=user.ip,
         cuenta=user.cuenta,
@@ -45,9 +42,9 @@ def create_user(user: schemas.UsuarioCreate, db: Session = Depends(get_db)):
     db.commit()
     return {"mensaje": "Cuenta creada con éxito"}
 
-# --- RUTA DE LOGIN ---
 @app.post("/api/login")
 def login(user: schemas.UsuarioLogin, db: Session = Depends(get_db)):
+    # Buscamos al usuario por email y contraseña
     db_user = db.query(models.Usuario).filter(
         models.Usuario.email == user.email, 
         models.Usuario.password == user.password
@@ -56,7 +53,6 @@ def login(user: schemas.UsuarioLogin, db: Session = Depends(get_db)):
     if not db_user:
         raise HTTPException(status_code=400, detail="Usuario o contraseña incorrectos")
     
-    # Devolvemos el objeto completo para que el JS lo cargue directamente
     return {
         "email": db_user.email,
         "nombre": db_user.nombre,
@@ -67,5 +63,15 @@ def login(user: schemas.UsuarioLogin, db: Session = Depends(get_db)):
         "cuenta": db_user.cuenta,
         "proyecto": db_user.proyecto,
         "fotoPerfil": db_user.foto_perfil,
-        "peticiones": [] # (El siguiente paso será hacer una tabla para las peticiones)
+        "peticiones": []
     }
+
+# --- 4. CONFIGURACIÓN DE ARCHIVOS ESTÁTICOS Y VISTAS (Al final) ---
+
+# Primero montamos la carpeta
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Y por último la ruta que sirve el HTML
+@app.get("/")
+async def read_index():
+    return FileResponse("static/html/ServicioLogin.html")
