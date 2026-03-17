@@ -8,72 +8,72 @@
     <link rel="stylesheet" href="/SGO/static/css/Servicio.css">
 </head>
 <body>
-    <div class="barrasLaterales" id="barraSup">
-        <div class="datos-contacto-superior">
+    <div class="side-bar" id="topBar">
+        <div class="top-contact-info">
             <div>
-                <img src="https://cdn.iconscout.com/icon/premium/png-256-thumb/correo-electronico-icon-svg-png-download-11866287.png?f=webp&w=128" alt="correo">
+                <img src="https://cdn.iconscout.com/icon/premium/png-256-thumb/correo-electronico-icon-svg-png-download-11866287.png?f=webp&w=128" alt="email">
                 <h6>mina.imn@csic.es</h6>
             </div>
             <div>
-                <img src="https://static.vecteezy.com/system/resources/thumbnails/068/203/105/small/simple-blue-gradient-telephone-receiver-icon-isolated-on-transparent-background-png.png" alt="telefono">
+                <img src="https://static.vecteezy.com/system/resources/thumbnails/068/203/105/small/simple-blue-gradient-telephone-receiver-icon-isolated-on-transparent-background-png.png" alt="phone">
                 <h6>+34 91 806 07 00</h6>
             </div>
         </div>
 
-        <div id="perfilContainer">
-            <span id="nombreUsuarioBarra"></span> 
-            <img id="iconoUsuario" src="https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png" alt="iconoUsuario">
-            <div id="menuDesplegable" class="oculto">
-                <button class="opcionMenu" id="editarPerfil">Editar Perfil</button>
-                <button class="opcionMenu" id="cerrarSesion">Cerrar Sesión</button>
+        <div id="profileContainer">
+            <span id="userNameBar"></span> 
+            <img id="userIcon" src="https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png" alt="userIcon">
+            <div id="dropdownMenu" class="hidden">
+                <button class="menu-option" id="editProfile">Edit Profile</button>
+                <button class="menu-option" id="logOut">Log Out</button>
             </div>
         </div>
     </div>
 
     <div id="icon">
-        <img src="/SGO/static/imagenes/Csic.png" alt="Csic Logo Izquierda" class="icono-centrado icono-izquierda">
-        <img src="/SGO/static/imagenes/MicroNano.png" alt="Csic Logo Derecha" class="icono-centrado icono-derecha">
+        <img src="/SGO/static/imagenes/Csic.png" alt="Csic Logo Left" class="centered-icon icon-left">
+        <img src="/SGO/static/imagenes/MicroNano.png" alt="Csic Logo Right" class="centered-icon icon-right">
     </div>
     
-    <div id="contenedorPrincipal">
-        <div id="servicios">
-            <h2 class="titulo-seccion">Catálogo de Servicios</h2>
-            <div id="gridServicios">
-                <div class="contenedor-oferta"><button class="botonOferta">Litografía electrónica</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
-                <div class="contenedor-oferta"><button class="botonOferta">SEM Alta resolución</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
-                <div class="contenedor-oferta"><button class="botonOferta">RIE</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
-                <div class="contenedor-oferta"><button class="botonOferta">FIB</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
-                <div class="contenedor-oferta"><button class="botonOferta">Evaporador por cañón de e⁻</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
-                <div class="contenedor-oferta"><button class="botonOferta">AFM</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
-                <div class="contenedor-oferta"><button class="botonOferta">Litografía auto</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
-                <div class="contenedor-oferta"><button class="botonOferta">Perfilómetro</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
-                <div class="contenedor-oferta"><button class="botonOferta">Centrífuga</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
-                <div class="contenedor-oferta"><button class="botonOferta">Ataque Húmedo</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
-                <div class="contenedor-oferta"><button class="botonOferta">RX</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
-                <div class="contenedor-oferta"><button class="botonOferta">PECVD</button><div class="formulario-oferta"><div class="input-group"><label>Horas:</label><input type="number"></div><div class="input-group"><label>Comentario:</label><input type="text"></div></div></div>
+    <div id="mainContainer">
+        <div id="services">
+            <h2 class="section-title">Services Catalog</h2>
+            <div id="servicesGrid">
+                <div class="service-container"><button class="service-button">Electron Lithography</button><div class="service-form"><div class="input-group"><label>Hours:</label><input type="number"></div><div class="input-group"><label>Comment:</label><input type="text"></div></div></div>
+                <div class="service-container"><button class="service-button">High Resolution SEM</button><div class="service-form"><div class="input-group"><label>Hours:</label><input type="number"></div><div class="input-group"><label>Comment:</label><input type="text"></div></div></div>
+                <div class="service-container"><button class="service-button">RIE</button><div class="service-form"><div class="input-group"><label>Hours:</label><input type="number"></div><div class="input-group"><label>Comment:</label><input type="text"></div></div></div>
+                <div class="service-container"><button class="service-button">FIB</button><div class="service-form"><div class="input-group"><label>Hours:</label><input type="number"></div><div class="input-group"><label>Comment:</label><input type="text"></div></div></div>
+                <div class="service-container"><button class="service-button">Electron Beam Evaporator</button><div class="service-form"><div class="input-group"><label>Hours:</label><input type="number"></div><div class="input-group"><label>Comment:</label><input type="text"></div></div></div>
+                <div class="service-container"><button class="service-button">AFM</button><div class="service-form"><div class="input-group"><label>Hours:</label><input type="number"></div><div class="input-group"><label>Comment:</label><input type="text"></div></div></div>
+                <div class="service-container"><button class="service-button">Auto Lithography</button><div class="service-form"><div class="input-group"><label>Hours:</label><input type="number"></div><div class="input-group"><label>Comment:</label><input type="text"></div></div></div>
+                <div class="service-container"><button class="service-button">Profilometer</button><div class="service-form"><div class="input-group"><label>Hours:</label><input type="number"></div><div class="input-group"><label>Comment:</label><input type="text"></div></div></div>
+                <div class="service-container"><button class="service-button">Centrifuge</button><div class="service-form"><div class="input-group"><label>Hours:</label><input type="number"></div><div class="input-group"><label>Comment:</label><input type="text"></div></div></div>
+                <div class="service-container"><button class="service-button">Wet Etching</button><div class="service-form"><div class="input-group"><label>Hours:</label><input type="number"></div><div class="input-group"><label>Comment:</label><input type="text"></div></div></div>
+                <div class="service-container"><button class="service-button">RX</button><div class="service-form"><div class="input-group"><label>Hours:</label><input type="number"></div><div class="input-group"><label>Comment:</label><input type="text"></div></div></div>
+                <div class="service-container"><button class="service-button">PECVD</button><div class="service-form"><div class="input-group"><label>Hours:</label><input type="number"></div><div class="input-group"><label>Comment:</label><input type="text"></div></div></div>
                 
-                <div class="contenedor-oferta" id="servicio-microsoldadura">
-                    <button class="botonOferta">Microsoldadura</button>
-                    <div class="formulario-oferta">
-                        <div class="input-group"><label>Horas:</label><input type="number"></div>
-                        <div class="input-group"><label>Comentario:</label><input type="text"></div>
+                <div class="service-container" id="service-micro-welding">
+                    <button class="service-button">Micro-welding</button>
+                    <div class="service-form">
+                        <div class="input-group"><label>Hours:</label><input type="number"></div>
+                        <div class="input-group"><label>Comment:</label><input type="text"></div>
                     </div>
                 </div>
             </div>
-            <button id="btnEnviarPeticion">Enviar petición</button>
+            <button id="btnSendRequest">Send Request</button>
         </div>
 
-        <div id="peticiones">
-            <h2 class="titulo-seccion">Mis peticiones</h2>
-            <div id="listaPeticiones"></div>
+        <div id="requests">
+            <h2 class="section-title">My Requests</h2>
+            <div id="requestList"></div>
         </div>
     </div>
 
     <div id="icon2"><img src="/static/imagenes/Mina.png"></div>
 
-    <div class="barrasLaterales" id="datos">
-        <img src="/SGO/static/imagenes/CsicGris.png" alt="Logo Footer" class="logo-footer">
-        <div class="redes-sociales">
+    <div class="side-bar" id="footer">
+        <img src="/SGO/static/imagenes/CsicGris.png" alt="Footer Logo" class="logo-footer">
+        <div class="social-links">
             <a href="https://es-es.facebook.com/CSIC/" class="btn-social"><img src="https://cdn.pixabay.com/photo/2021/06/15/12/51/facebook-6338508_640.png" alt="Facebook"></a>
             <a href="https://www.instagram.com/csic/" class="btn-social" id = insta><img src="https://static.vecteezy.com/system/resources/thumbnails/018/930/691/small/instagram-logo-instagram-icon-transparent-free-png.png" alt="Instagram"></a>
             <a href="https://x.com/csic" class="btn-social" id = twitter><img src="https://1000logos.net/wp-content/uploads/2017/06/Twitter-Log%D0%BE-500x281.png" alt="Twitter/X"></a>

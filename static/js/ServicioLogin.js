@@ -3,7 +3,7 @@ const loginForm = document.getElementById('loginForm');
 loginForm.addEventListener('submit', async function(event) {
     event.preventDefault();
     
-    const credenciales = {
+    const credentials = {
         email: document.getElementById('email').value,
         password: document.getElementById('password').value
     };
@@ -12,35 +12,35 @@ loginForm.addEventListener('submit', async function(event) {
         const response = await fetch('/api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(credenciales)
+            body: JSON.stringify(credentials)
         });
 
         const data = await response.json();
 
         if (response.ok) {
-            // Reconstruimos el objeto que tu frontend espera para que ServicioUsuario.js no falle
-            const usuarioActivo = {
-                nombre: data.nombre,
-                apellidos: data.apellidos,
+            // Build the active user object so ServicioUsuario.js doesn't fail
+            const activeUser = {
+                name: data.name,
+                lastName: data.lastName,
                 email: data.email,
-                entidad: data.entidad,
-                fotoPerfil: "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png",
-                peticiones: [],
-                grupo: null,
+                entity: data.entity,
+                profilePicture: "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png",
+                requests: [],
+                group: null,
                 ip: null,
-                cuenta: null,
-                proyecto: null
+                account: null,
+                project: null
             };
 
-            // Guardamos el usuario en la sesión
-            localStorage.setItem('usuarioActivo', JSON.stringify(usuarioActivo));
+            // Save the user to local storage
+            localStorage.setItem('activeUser', JSON.stringify(activeUser));
             window.location.href = "/SGO/static/html/ServicioUsuario.html";
         } else {
-            // Error de credenciales incorrectas desde el backend
+            // Incorrect credentials error from the backend
             alert(data.detail);
         }
     } catch (error) {
-        console.error("Error al conectar con el backend:", error);
-        alert("Error de conexión. Asegúrate de que tu servidor FastAPI está encendido.");
+        console.error("Error connecting to the backend:", error);
+        alert("Connection error. Make sure your FastAPI server is running.");
     }
 });

@@ -1,5 +1,5 @@
-/* --- ESTILOS DE FILTROS --- */
-#filtrosPeticiones {
+/* --- FILTER STYLES --- */
+#requestFilters {
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
@@ -11,20 +11,20 @@
     align-items: flex-end;
 }
 
-.filtro-grupo {
+.filter-group {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
-.filtro-grupo label {
+.filter-group label {
     font-family: 'Montserrat', sans-serif;
     font-weight: 700;
     font-size: 13px;
-    color: var(--azul-csic);
+    color: var(--color-csic);
 }
 
-.filtro-grupo select {
+.filter-group select {
     padding: 8px 12px;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -34,25 +34,25 @@
     min-width: 180px;
 }
 
-.filtro-grupo select:focus {
-    border-color: var(--azul-csic);
+.filter-group select:focus {
+    border-color: var(--color-csic);
 }
 
-/* --- REUTILIZACIÓN DE ESTILOS ANTERIORES --- */
-#contenedorPrincipal { display: flex; flex-direction: column; align-items: center; gap: 40px; width: 90%; margin: 30px auto; }
-#peticiones { background-color: white; border-radius: 12px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #eee; width: 100%; }
-.titulo-seccion { color: var(--azul-csic); font-size: 26px; font-family: 'Montserrat', sans-serif; font-weight: 700; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 3px solid var(--azul-csic); }
-#listaPeticionesGlobales { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; width: 100%; }
-.peticion-card { border: 1px solid #eee; padding: 20px; border-radius: 8px; background: #fff; border-left: 5px solid var(--azul-csic); box-shadow: 2px 2px 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; }
-.peticion-card:hover { transform: translateY(-3px); }
-.peticion-card.reservada { border-left-color: #28a745; }
-.badge-estado { float: right; font-size: 10px; padding: 3px 7px; border-radius: 4px; background: #f0f0f0; font-weight: bold; }
-.btn-reservar { margin-top: 15px; width: 100%; height: 40px; background-color: var(--azul-csic); color: white; border: none; border-radius: 4px; font-weight: 700; font-family: 'Montserrat', sans-serif; cursor: pointer; }
-.tecnico-asignado { margin-top: 10px; font-size: 12px; color: #28a745; font-weight: 700; text-align: center; background: #f1fcf4; padding: 5px; border-radius: 4px; }
-#perfilContainer { position: relative; cursor: pointer; display: flex; align-items: center; gap: 10px; }
-#iconoUsuario { height: 45px; width: 45px; border-radius: 50%; border: 2px solid white; }
-#nombreUsuarioBarra { color: white; font-family: 'Montserrat', sans-serif; font-weight: 600; }
-#menuDesplegable { position: absolute; top: 55px; right: 0; background: white; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); width: 170px; z-index: 1000; overflow: hidden; }
-.opcionMenu { width: 100%; padding: 12px; border: none; background: none; font-family: 'Montserrat', sans-serif; font-weight: 600; cursor: pointer; text-align: left; }
-.opcionMenu:hover { background-color: #f0f0f0; }
-.oculto { display: none !important; }
+/* --- REUSE OF PREVIOUS STYLES --- */
+#mainContainer { display: flex; flex-direction: column; align-items: center; gap: 40px; width: 90%; margin: 30px auto; }
+#requests { background-color: white; border-radius: 12px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #eee; width: 100%; }
+.section-title { color: var(--color-csic); font-size: 26px; font-family: 'Montserrat', sans-serif; font-weight: 700; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 3px solid var(--color-csic); }
+#globalRequestList { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; width: 100%; }
+.request-card { border: 1px solid #eee; padding: 20px; border-radius: 8px; background: #fff; border-left: 5px solid var(--color-csic); box-shadow: 2px 2px 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; }
+.request-card:hover { transform: translateY(-3px); }
+.request-card.reserved { border-left-color: #28a745; }
+.status-badge { float: right; font-size: 10px; padding: 3px 7px; border-radius: 4px; background: #f0f0f0; font-weight: bold; }
+.btn-reserve { margin-top: 15px; width: 100%; height: 40px; background-color: var(--color-csic); color: white; border: none; border-radius: 4px; font-weight: 700; font-family: 'Montserrat', sans-serif; cursor: pointer; }
+.assigned-technician { margin-top: 10px; font-size: 12px; color: #28a745; font-weight: 700; text-align: center; background: #f1fcf4; padding: 5px; border-radius: 4px; }
+#profileContainer { position: relative; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+#userIcon { height: 45px; width: 45px; border-radius: 50%; border: 2px solid white; }
+#userNameBar { color: white; font-family: 'Montserrat', sans-serif; font-weight: 600; }
+#dropdownMenu { position: absolute; top: 55px; right: 0; background: white; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); width: 170px; z-index: 1000; overflow: hidden; }
+.menu-option { width: 100%; padding: 12px; border: none; background: none; font-family: 'Montserrat', sans-serif; font-weight: 600; cursor: pointer; text-align: left; }
+.menu-option:hover { background-color: #f0f0f0; }
+.hidden { display: none !important; }

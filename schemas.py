@@ -1,19 +1,19 @@
 from pydantic import BaseModel
 from typing import Optional
 
-class UsuarioCreate(BaseModel):
-    nombre: str
-    apellidos: str
+class UserCreate(BaseModel):
+    name: str
+    last_name: str
     email: str
     password: str
-    entidad: str
-    
-    # Campos opcionales (por defecto serán None si no se envían)
-    grupo: Optional[str] = None
-    ip: Optional[str] = None
-    cuenta: Optional[str] = None
-    proyecto: Optional[str] = None
+    entity: str
 
-class UsuarioLogin(BaseModel):
+    # Optional fields (default to None if not sent)
+    group: Optional[str] = None
+    ip: Optional[str] = None
+    account: Optional[str] = None
+    project: Optional[str] = None
+
+class UserLogin(BaseModel):
     email: str
     password: str

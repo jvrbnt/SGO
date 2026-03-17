@@ -4,17 +4,17 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
-# 1. Cargamos las variables desde el archivo .env local
+# 1. Load variables from the local .env file
 load_dotenv()
 
-# 2. Obtenemos la URL completa desde la variable de entorno
+# 2. Get the full URL from the environment variable
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 
-# 3. Motor que envía los datos
+# 3. Engine that sends the data
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
-# 4. Gestor de consultas (Usado en main.py para las peticiones API)
+# 4. Query manager (Used in main.py for API requests)
 LocalSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# 5. Clase base de donde nacerán todas las tablas (Usada en models.py)
+# 5. Base class from which all tables will be created (Used in models.py)
 Base = declarative_base()

@@ -1,80 +1,80 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Perfil - IMN</title>
+    <title>Edit Profile - IMN</title>
     <link rel="stylesheet" href="/SGO/static/css/ServicioEdit.css">
     <link rel="stylesheet" href="/SGO/static/css/Servicio.css">
 </head>
 <body>
-    <div class="barrasLaterales" id="barraSup">
-        <div class="datos-contacto-superior">
+    <div class="side-bar" id="topBar">
+        <div class="top-contact-info">
             <div>
-                <img src="https://cdn.iconscout.com/icon/premium/png-256-thumb/correo-electronico-icon-svg-png-download-11866287.png?f=webp&w=128" alt="correo">
+                <img src="https://cdn.iconscout.com/icon/premium/png-256-thumb/correo-electronico-icon-svg-png-download-11866287.png?f=webp&w=128" alt="email">
                 <h6>mina.imn@csic.es</h6>
             </div>
             <div>
-                <img src="https://static.vecteezy.com/system/resources/thumbnails/068/203/105/small/simple-blue-gradient-telephone-receiver-icon-isolated-on-transparent-background-png.png" alt="telefono">
+                <img src="https://static.vecteezy.com/system/resources/thumbnails/068/203/105/small/simple-blue-gradient-telephone-receiver-icon-isolated-on-transparent-background-png.png" alt="phone">
                 <h6>+34 91 806 07 00</h6>
             </div>
         </div>
 
-        <div id="perfilContainer">
-            <span id="nombreUsuarioBarra"></span>
-            <img id="iconoUsuario" src="" alt="iconoUsuario">
-            <div id="menuDesplegable" class="oculto">
-                <button class="opcionMenu" id="irServicios">Servicios</button>
-                <button class="opcionMenu" id="cerrarSesion">Cerrar Sesión</button>
+        <div id="profileContainer">
+            <span id="userNameBar"></span>
+            <img id="userIcon" src="" alt="userIcon">
+            <div id="dropdownMenu" class="hidden">
+                <button class="menu-option" id="goToServices">Services</button>
+                <button class="menu-option" id="logOut">Log Out</button>
             </div>
         </div>
     </div>
 
     <div id="icon">
-        <img src="/SGO/static/imagenes/Csic.png" alt="Csic Logo Izquierda" class="icono-centrado icono-izquierda">
-        <img src="/SGO/static/imagenes/MicroNano.png" alt="Csic Logo Derecha" class="icono-centrado icono-derecha">
+        <img src="/SGO/static/imagenes/Csic.png" alt="Csic Logo Left" class="centered-icon icon-left">
+        <img src="/SGO/static/imagenes/MicroNano.png" alt="Csic Logo Right" class="centered-icon icon-right">
     </div>
     
-    <div id="contenedorPrincipal">
-        <h2 class="titulo-seccion">Configuración de la Cuenta</h2>
+    <div id="mainContainer">
+        <h2 class="section-title">Account Settings</h2>
         
-        <div id="formularioEdicion">
-            <div class="seccion-foto">
-                <img id="previewFoto" src="" alt="Vista previa">
-                <input type="file" id="inputFileFoto" accept="image/*" style="display: none;">
-                <div class="botones-foto">
-                    <button type="button" id="btnCambiarFoto" class="btn-secundario">Cambiar Foto</button>
-                    <button type="button" id="btnQuitarFoto" class="btn-peligro">Quitar Foto</button>
+        <div id="editForm">
+            <div class="photo-section">
+                <img id="photoPreview" src="" alt="Preview">
+                <input type="file" id="inputPhotoFile" accept="image/*" style="display: none;">
+                <div class="photo-buttons">
+                    <button type="button" id="btnChangePhoto" class="btn-secundario">Change Photo</button>
+                    <button type="button" id="btnRemovePhoto" class="btn-danger">Remove Photo</button>
                 </div>
             </div>
 
-            <div class="grid-campos">
+            <div class="fields-grid">
                 <div class="input-group">
-                    <label>Apodo de Usuario:</label>
-                    <input type="text" id="editApodo" placeholder="Tu apodo">
+                    <label>Username:</label>
+                    <input type="text" id="editNickname" placeholder="Your nickname">
                 </div>
 
                 <div class="input-group">
-                    <label>Entidad / Procedencia:</label>
-                    <select id="editEntidad">
-                        <option value="interno(MiNa)">interno(MiNa)</option>
+                    <label>Entity / Origin:</label>
+                    <select id="editEntity">
+                        <option value="interno(MiNa)">Internal (MiNa)</option>
                         <option value="CSIC">CSIC</option>
                         <option value="UAM">UAM</option>
-                        <option value="Universidad">Universidad</option>
+                        <option value="Universidad">University</option>
                         <option value="OPIS">OPIS</option>
-                        <option value="Empresa">Empresa</option>
+                        <option value="Empresa">Company</option>
                     </select>
                 </div>
             </div>
 
-            <div id="camposInternos" class="oculto-form">
-                <div class="grid-campos">
+            <div id="internalFields" class="hidden-form">
+                <div class="fields-grid">
                     <div class="input-group">
-                        <label>Grupo de Investigación:</label>
-                        <select id="editGrupo">
-                            <option value="" disabled selected>Selecciona un grupo</option>
+                        <label>Research Group:</label>
+                        <select id="editGroup">
+                            <option value="" disabled selected>Select a group</option>
                             <option value="FINGER">FINGER</option>
-                            <option value="BIOMECÁNICA">BIOMECÁNICA</option>
+                            <option value="BIOMECHANICS">BIOMECHANICS</option>
                             <option value="ES4TERM">ES4TERM</option>
                             <option value="OMS">OMS</option>
                             <option value="MBE">MBE</option>
@@ -82,21 +82,21 @@
                         </select>
                     </div>
                     <div class="input-group">
-                        <label>Dirección IP:</label>
+                        <label>IP Address:</label>
                         <input type="text" id="editIP">
                     </div>
                     <div class="input-group">
-                        <label>Cuenta Interna:</label>
-                        <input type="text" id="editCuentaInterna">
+                        <label>Internal Account:</label>
+                        <input type="text" id="editInternalAccount">
                     </div>
                     <div class="input-group">
-                        <label>Código Proyecto:</label>
-                        <input type="text" id="editProyecto">
+                        <label>Project Code:</label>
+                        <input type="text" id="editProject">
                     </div>
                 </div>
             </div>
 
-            <button id="btnGuardarCambios">Guardar Cambios</button>
+            <button id="btnSaveChanges">Save Changes</button>
         </div>
     </div>
 
@@ -104,9 +104,9 @@
         <img src="/SGO/static/imagenes/Mina.png" alt="Mina">
     </div>
 
-    <div class="barrasLaterales" id="datos">
-        <img src="/SGO/static/imagenes/CsicGris.png" alt="Logo Footer" class="logo-footer">
-        <div class="redes-sociales">
+    <div class="side-bar" id="footer">
+        <img src="/SGO/static/imagenes/CsicGris.png" alt="Footer Logo" class="logo-footer">
+        <div class="social-links">
             <a href="https://es-es.facebook.com/CSIC/" class="btn-social"><img src="https://cdn.pixabay.com/photo/2021/06/15/12/51/facebook-6338508_640.png" alt="Facebook"></a>
             <a href="https://www.instagram.com/csic/" class="btn-social" id="insta"><img src="https://static.vecteezy.com/system/resources/thumbnails/018/930/691/small/instagram-logo-instagram-icon-transparent-free-png.png" alt="Instagram"></a>
             <a href="https://x.com/csic" class="btn-social" id = twitter><img src="https://1000logos.net/wp-content/uploads/2017/06/Twitter-Log%D0%BE-500x281.png" alt="Twitter/X"></a>

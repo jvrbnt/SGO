@@ -1,66 +1,66 @@
-const selectEntidad = document.getElementById('entidad');
-const camposExtra = document.getElementById('camposExtra');
-const inputsExtra = camposExtra.querySelectorAll('input, select');
-const registroForm = document.getElementById('registroForm');
-const passwordInput = document.getElementById('contraseña');
-const mensaje = document.getElementById('mensajePassword');
+const selectEntity = document.getElementById('entity');
+const extraFields = document.getElementById('extraFields');
+const extraInputs = extraFields.querySelectorAll('input, select');
+const registrationForm = document.getElementById('registrationForm');
+const passwordInput = document.getElementById('password');
+const passwordStrengthMsg = document.getElementById('passwordMessage');
 
-// Mostrar/Ocultar campos extra si es interno
-selectEntidad.addEventListener('change', function() {
+// Show/Hide extra fields if entity is internal
+selectEntity.addEventListener('change', function() {
     if (this.value === "mina") {
-        camposExtra.style.display = "flex"; 
-        inputsExtra.forEach(input => input.required = true);
+        extraFields.style.display = "flex"; 
+        extraInputs.forEach(input => input.required = true);
     } else {
-        camposExtra.style.display = "none";
-        inputsExtra.forEach(input => input.required = false);
+        extraFields.style.display = "none";
+        extraInputs.forEach(input => input.required = false);
     }
 });
 
-// Medidor de seguridad de contraseña
+// Password strength meter
 passwordInput.addEventListener('input', function() {
     const pass = this.value;
-    const tieneLetras = /[a-zA-Z]/.test(pass);
-    const tieneNumeros = /\d/.test(pass);
-    if (pass.length > 9 && tieneLetras && tieneNumeros) {
-        mensaje.textContent = "Seguridad: Alta"; mensaje.style.color = "green";
+    const hasLetters = /[a-zA-Z]/.test(pass);
+    const hasNumbers = /\d/.test(pass);
+    if (pass.length > 9 && hasLetters && hasNumbers) {
+        passwordStrengthMsg.textContent = "Strength: High"; passwordStrengthMsg.style.color = "green";
     } else if (pass.length > 6) {
-        mensaje.textContent = "Seguridad: Media"; mensaje.style.color = "orange";
+        passwordStrengthMsg.textContent = "Strength: Medium"; passwordStrengthMsg.style.color = "orange";
     } else {
-        mensaje.textContent = "Seguridad: Baja"; mensaje.style.color = "red";
+        passwordStrengthMsg.textContent = "Strength: Low"; passwordStrengthMsg.style.color = "red";
     }
 });
 
-// Enviar datos al Backend (PostgreSQL) en lugar de localStorage
-registroForm.addEventListener('submit', async function(event) {
+// Send data to the Backend (PostgreSQL) instead of localStorage
+registrationForm.addEventListener('submit', async function(event) {
     event.preventDefault();
     
-    // Los datos básicos que espera tu base de datos
-    const nuevoUsuario = {
-        nombre: document.getElementById('nombre').value,
-        apellidos: document.getElementById('apellidos').value,
+    // Basic fields expected by the database
+    const newUser = {
+        name: document.getElementById('name').value,
+        last_name: document.getElementById('lastName').value,
         email: document.getElementById('email').value,
         password: passwordInput.value,
-        entidad: selectEntidad.value
+        entity: selectEntity.value
     };
 
     try {
         const response = await fetch('/api/signup', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(nuevoUsuario)
+            body: JSON.stringify(newUser)
         });
 
         const data = await response.json();
 
         if (response.ok) {
-            alert(data.mensaje); // "Cuenta creada con éxito"
+            alert(data.message); // "Account created successfully"
             window.location.href = "/SGO/static/html/ServicioLogin.html";
         } else {
-            // El backend devuelve un error (ej: El email ya está registrado)
+            // Backend returns an error (e.g.: Email is already registered)
             alert(data.detail); 
         }
     } catch (error) {
-        console.error("Error al conectar con el backend:", error);
-        alert("Error de conexión. Asegúrate de que tu servidor FastAPI está encendido.");
+        console.error("Error connecting to the backend:", error);
+        alert("Connection error. Make sure your FastAPI server is running.");
     }
 });
