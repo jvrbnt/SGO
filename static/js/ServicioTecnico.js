@@ -1,119 +1,115 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const usuarioActivo = JSON.parse(localStorage.getItem('usuarioActivo'));
-    const listaGlobal = document.getElementById("listaPeticionesGlobales");
-    
-    // Selectores de filtros
-    const filtroEstado = document.getElementById("filtroEstado");
-    const filtroTecnico = document.getElementById("filtroTecnico");
-    const filtroServicio = document.getElementById("filtroServicio");
+    const activeUser = JSON.parse(localStorage.getItem('activeUser'));
+    const globalList = document.getElementById("globalRequestList");
 
-    if (!usuarioActivo) {
+    // Filter selectors
+    const filterStatus = document.getElementById("filterStatus");
+    const filterTechnician = document.getElementById("filterTechnician");
+    const filterService = document.getElementById("filterService");
+
+    if (!activeUser) {
         window.location.href = "/static/html/ServicioLogin.html";
         return;
     }
 
-    // Actualizado a first_name y profile_picture
-    document.getElementById("nombreUsuarioBarra").textContent = usuarioActivo.nickname || usuarioActivo.first_name || "Técnico";
-    document.getElementById("iconoUsuario").src = usuarioActivo.profile_picture || "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png";
+    document.getElementById("userNameBar").textContent = activeUser.nickname || activeUser.name || "Technician";
+    document.getElementById("userIcon").src = activeUser.profilePicture || "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png";
 
-    function renderPeticiones() {
-        listaGlobal.innerHTML = "";
-        // Nota: Esto sigue usando localStorage para 'usuarios'. 
-        // En casa, tras el login, este array 'usuarios' también debería estar en inglés.
-        const usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
-        
-        const valEstado = filtroEstado.value;
-        const valTecnico = filtroTecnico.value;
-        const valServicio = filtroServicio.value;
+    function renderRequests() {
+        globalList.innerHTML = "";
+        const users = JSON.parse(localStorage.getItem('users')) || [];
 
-        usuarios.forEach(u => {
-            // Cambiado de u.peticiones a u.requests
+        // Current filter values
+        const statusFilter = filterStatus.value;
+        const technicianFilter = filterTechnician.value;
+        const serviceFilter = filterService.value;
+
+        users.forEach(u => {
             if (u.requests) {
                 u.requests.forEach((r, index) => {
-                    // Adaptado a los nombres del modelo Request (status, technician_name, etc.)
-                    const estado = r.status || "requested";
-                    const tecnico = r.technician_name || null;
-                    const servicio = r.service_name;
+                    const status = r.status || "Requested";
+                    const technician = r.technician || null;
+                    const service = r.service;
 
-                    // APLICAR FILTROS (Mapeo de valores de los filtros a los estados en inglés)
-                    // Nota: Si el <select> en HTML tiene value="Requested", debe coincidir con el status
-                    let cumpleEstado = (valEstado === "todos" || estado.toLowerCase() === valEstado.toLowerCase());
-                    let cumpleServicio = (valServicio === "todos" || servicio === valServicio);
-                    let cumpleTecnico = true;
+                    // Apply filters
+                    let matchesStatus = (statusFilter === "todos" || status === statusFilter);
+                    let matchesService = (serviceFilter === "todos" || service === serviceFilter);
+                    let matchesTechnician = true;
 
-                    if (valTecnico === "sin_asignar") {
-                        cumpleTecnico = (tecnico === null);
-                    } else if (valTecnico === "mis_peticiones") {
-                        // Comparación con el nombre del técnico logueado
-                        cumpleTecnico = (tecnico === usuarioActivo.first_name);
+                    if (technicianFilter === "sin_asignar") {
+                        matchesTechnician = (technician === null);
+                    } else if (technicianFilter === "mis_peticiones") {
+                        matchesTechnician = (technician === activeUser.name);
                     }
 
-                    if (cumpleEstado && cumpleServicio && cumpleTecnico) {
+                    // If all 3 filters match, render it
+                    if (matchesStatus && matchesService && matchesTechnician) {
                         const card = document.createElement("div");
-                        card.className = `peticion-card ${tecnico ? 'reservada' : ''}`;
-                        
+                        card.className = `request-card ${technician ? 'reserved' : ''}`;
+
                         card.innerHTML = `
                             <div>
-                                <span class="badge-estado">${estado}</span>
-                                <strong style="color: var(--azul-csic); font-size: 16px;">${servicio}</strong><br>
+                                <span class="status-badge">${status}</span>
+                                <strong style="color: var(--color-csic); font-size: 16px;">${service}</strong><br>
                                 <p style="margin: 5px 0; font-size: 13px; color: #666;">
-                                    👤 <b>Usuario:</b> ${u.first_name} ${u.last_name}<br>
-                                    📅 <b>Fecha:</b> ${r.request_date}<br>
-                                    ⏱️ <b>Horas:</b> ${r.hours}h
+                                    👤 <b>User:</b> ${u.name} ${u.lastName}<br>
+                                    📅 <b>Date:</b> ${r.date}<br>
+                                    ⏱️ <b>Hours:</b> ${r.hours}h
                                 </p>
                                 <p style="font-size: 12px; color: #444; background: #f9f9f9; padding: 5px; border-radius: 4px;">
-                                    💬 ${r.comment || 'Sin comentarios'}
+                                    💬 ${r.comment || 'No comments'}
                                 </p>
                             </div>
-                            ${tecnico 
-                                ? `<div class="tecnico-asignado">✅ Reservado por: ${tecnico}</div>`
-                                : `<button class="btn-reservar" data-email="${u.email}" data-idx="${index}">Reservar Oferta</button>`
+                            ${technician
+                                ? `<div class="assigned-technician">✅ Reserved by: ${technician}</div>`
+                                : `<button class="btn-reserve" data-email="${u.email}" data-idx="${index}">Reserve</button>`
                             }
                         `;
-                        listaGlobal.appendChild(card);
+                        globalList.appendChild(card);
                     }
                 });
             }
         });
 
-        document.querySelectorAll(".btn-reservar").forEach(btn => {
+        // Reserve button events
+        document.querySelectorAll(".btn-reserve").forEach(btn => {
             btn.addEventListener("click", function() {
-                asignarPeticion(this.dataset.email, this.dataset.idx);
+                assignRequest(this.dataset.email, this.dataset.idx);
             });
         });
     }
 
-    function asignarPeticion(email, idx) {
-        let usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
-        const uIdx = usuarios.findIndex(u => u.email === email);
+    function assignRequest(email, idx) {
+        let users = JSON.parse(localStorage.getItem('users')) || [];
+        const uIdx = users.findIndex(u => u.email === email);
 
         if (uIdx !== -1) {
-            // Actualización a nombres en inglés: status y technician_name
-            usuarios[uIdx].requests[idx].status = "offered"; // O "accepted" según tu flujo
-            usuarios[uIdx].requests[idx].technician_name = usuarioActivo.first_name;
-            localStorage.setItem('usuarios', JSON.stringify(usuarios));
-            renderPeticiones();
+            users[uIdx].requests[idx].status = "Accepted";
+            users[uIdx].requests[idx].technician = activeUser.name;
+            localStorage.setItem('users', JSON.stringify(users));
+            renderRequests();
         }
     }
 
-    filtroEstado.addEventListener("change", renderPeticiones);
-    filtroTecnico.addEventListener("change", renderPeticiones);
-    filtroServicio.addEventListener("change", renderPeticiones);
+    // Filter change listeners
+    filterStatus.addEventListener("change", renderRequests);
+    filterTechnician.addEventListener("change", renderRequests);
+    filterService.addEventListener("change", renderRequests);
 
-    const perfilContainer = document.getElementById("perfilContainer");
-    const menu = document.getElementById("menuDesplegable");
-    perfilContainer.addEventListener("click", (e) => { e.stopPropagation(); menu.classList.toggle("oculto"); });
-    document.addEventListener("click", () => menu.classList.add("oculto"));
+    // Dropdown menu and navigation
+    const profileContainer = document.getElementById("profileContainer");
+    const dropdownMenu = document.getElementById("dropdownMenu");
+    profileContainer.addEventListener("click", (e) => { e.stopPropagation(); dropdownMenu.classList.toggle("hidden"); });
+    document.addEventListener("click", () => dropdownMenu.classList.add("hidden"));
 
-    document.getElementById("cerrarSesion").addEventListener("click", () => {
-        localStorage.removeItem('usuarioActivo');
+    document.getElementById("logOut").addEventListener("click", () => {
+        localStorage.removeItem('activeUser');
         window.location.href = "/static/html/ServicioLogin.html";
     });
 
-    document.getElementById("editarPerfil").addEventListener("click", () => {
-        // Asegúrate de que este ID existe en el HTML de ServicioTecnico
+    document.getElementById("editProfile").addEventListener("click", () => {
         window.location.href = "/static/html/servicioEditT.html";
     });
 
-    renderPeticiones();
+    renderRequests();
 });

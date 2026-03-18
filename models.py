@@ -7,21 +7,21 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String) # nombre
-    last_name = Column(String)  # apellidos
+    name = Column(String)
+    last_name = Column(String)
     email = Column(String, unique=True, index=True)
     password = Column(String)
-    entity = Column(String)     # entidad
-    role = Column(String, default="client") # client o technician
-    
-    # --- MI NA SPECIFIC FIELDS ---
-    research_group = Column(String, nullable=True)     # grupo
-    principal_investigator = Column(String, nullable=True) # ip (investigador principal)
-    internal_account = Column(String, nullable=True)    # cuenta
-    project_code = Column(String, nullable=True)        # proyecto
-    profile_picture = Column(String, nullable=True)     # foto_perfil
+    entity = Column(String)
 
-    # Relación: Un usuario tiene muchas peticiones
+    # --- EXTRA FIELDS (Optional, can be empty if not from MiNa) ---
+    group = Column(String, nullable=True)
+    ip = Column(String, nullable=True)
+    account = Column(String, nullable=True)
+    project = Column(String, nullable=True)
+
+    # Field to store the profile picture URL
+    profile_picture = Column(String, nullable=True)
+    
     requests = relationship("Request", back_populates="client", foreign_keys="[Request.client_id]")
 
 class Request(Base):

@@ -1,129 +1,131 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const usuarioActivo = JSON.parse(localStorage.getItem('usuarioActivo'));
-    const FOTO_DEFECTO = "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png";
-    
-    if (!usuarioActivo) {
+    const activeUser = JSON.parse(localStorage.getItem('activeUser'));
+    const DEFAULT_PHOTO = "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png";
+
+    if (!activeUser) {
         window.location.href = "/static/html/ServicioLogin.html";
         return;
     }
 
-    // --- LOGICA DE NOMBRE EN BARRA ---
-    const actualizarNombreBarra = () => {
-        let nombreAMostrar = "";
-        if (usuarioActivo.apodo && usuarioActivo.apodo.trim() !== "") {
-            nombreAMostrar = usuarioActivo.apodo;
+    // --- NAME IN TOP BAR ---
+    const updateNameBar = () => {
+        let displayName = "";
+        if (activeUser.nickname && activeUser.nickname.trim() !== "") {
+            displayName = activeUser.nickname;
         } else {
-            const nombreCompleto = `${usuarioActivo.nombre || ""} ${usuarioActivo.apellidos || ""}`.trim();
-            nombreAMostrar = nombreCompleto !== "" ? nombreCompleto : "Usuario";
+            const fullName = `${activeUser.name || ""} ${activeUser.lastName || ""}`.trim();
+            displayName = fullName !== "" ? fullName : "User";
         }
-        document.getElementById("nombreUsuarioBarra").textContent = nombreAMostrar;
+        document.getElementById("userNameBar").textContent = displayName;
     };
-    actualizarNombreBarra();
+    updateNameBar();
 
-    // --- CARGA INICIAL DE INPUTS ---
-    document.getElementById("iconoUsuario").src = usuarioActivo.fotoPerfil || FOTO_DEFECTO;
-    document.getElementById("previewFoto").src = usuarioActivo.fotoPerfil || FOTO_DEFECTO;
-    document.getElementById("editApodo").value = usuarioActivo.apodo || "";
-    document.getElementById("editEntidad").value = usuarioActivo.entidad || "CSIC";
+    // --- INITIAL LOAD ---
+    document.getElementById("userIcon").src = activeUser.profilePicture || DEFAULT_PHOTO;
+    document.getElementById("photoPreview").src = activeUser.profilePicture || DEFAULT_PHOTO;
+    document.getElementById("editNickname").value = activeUser.nickname || "";
+    document.getElementById("editEntity").value = activeUser.entity || "CSIC";
 
-    const divInternos = document.getElementById("camposInternos");
-    
-    const gestionarVistaInterna = (valor) => {
-        if (valor === "interno(MiNa)") {
-            divInternos.classList.remove("oculto-form");
+    const internalDiv = document.getElementById("internalFields");
+
+    const manageInternalView = (value) => {
+        if (value === "interno(MiNa)") {
+            internalDiv.classList.remove("hidden-form");
         } else {
-            divInternos.classList.add("oculto-form");
+            internalDiv.classList.add("hidden-form");
         }
     };
 
-    gestionarVistaInterna(usuarioActivo.entidad);
+    manageInternalView(activeUser.entity);
 
-    // Solo cargamos los datos si es interno
-    if (usuarioActivo.entidad === "interno(MiNa)") {
-        if (usuarioActivo.grupo) {
-            document.getElementById("editGrupo").value = usuarioActivo.grupo;
+    // Load internal fields only if user is internal
+    if (activeUser.entity === "interno(MiNa)") {
+        if (activeUser.group) {
+            document.getElementById("editGroup").value = activeUser.group;
         }
-        document.getElementById("editIP").value = usuarioActivo.ip || "";
-        document.getElementById("editCuentaInterna").value = usuarioActivo.cuentaInterna || "";
-        document.getElementById("editProyecto").value = usuarioActivo.proyecto || "";
+        document.getElementById("editIP").value = activeUser.ip || "";
+        document.getElementById("editInternalAccount").value = activeUser.account || "";
+        document.getElementById("editProject").value = activeUser.project || "";
     }
 
-    // --- GESTIÓN DE LA FOTO ---
-    const btnCambiarFoto = document.getElementById("btnCambiarFoto");
-    const btnQuitarFoto = document.getElementById("btnQuitarFoto");
-    const inputFileFoto = document.getElementById("inputFileFoto");
-    const previewFoto = document.getElementById("previewFoto");
-    let nuevaFotoBase64 = usuarioActivo.fotoPerfil;
+    // --- PHOTO MANAGEMENT ---
+    const btnChangePhoto = document.getElementById("btnChangePhoto");
+    const btnRemovePhoto = document.getElementById("btnRemovePhoto");
+    const inputPhotoFile = document.getElementById("inputPhotoFile");
+    const photoPreview = document.getElementById("photoPreview");
+    let newPhotoBase64 = activeUser.profilePicture;
 
-    btnCambiarFoto.addEventListener("click", () => inputFileFoto.click());
-    btnQuitarFoto.addEventListener("click", () => {
-        nuevaFotoBase64 = FOTO_DEFECTO;
-        previewFoto.src = FOTO_DEFECTO;
+    btnChangePhoto.addEventListener("click", () => inputPhotoFile.click());
+    btnRemovePhoto.addEventListener("click", () => {
+        newPhotoBase64 = DEFAULT_PHOTO;
+        photoPreview.src = DEFAULT_PHOTO;
     });
 
-    inputFileFoto.addEventListener("change", function() {
+    inputPhotoFile.addEventListener("change", function() {
         const file = this.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                previewFoto.src = e.target.result;
-                nuevaFotoBase64 = e.target.result;
-            }
+                photoPreview.src = e.target.result;
+                newPhotoBase64 = e.target.result;
+            };
             reader.readAsDataURL(file);
         }
     });
 
-    // --- CAMBIO DE ENTIDAD ---
-    document.getElementById("editEntidad").addEventListener("change", function() {
-        gestionarVistaInterna(this.value);
+    // --- ENTITY CHANGE ---
+    document.getElementById("editEntity").addEventListener("change", function() {
+        manageInternalView(this.value);
     });
 
-    // --- MENU DESPLEGABLE ---
-    const perfilContainer = document.getElementById("perfilContainer");
-    const menuDesplegable = document.getElementById("menuDesplegable");
-    perfilContainer.addEventListener("click", (e) => {
+    // --- DROPDOWN MENU ---
+    const profileContainer = document.getElementById("profileContainer");
+    const dropdownMenu = document.getElementById("dropdownMenu");
+    profileContainer.addEventListener("click", (e) => {
         e.stopPropagation();
-        menuDesplegable.classList.toggle("oculto");
+        dropdownMenu.classList.toggle("hidden");
     });
-    document.addEventListener("click", () => menuDesplegable.classList.add("oculto"));
+    document.addEventListener("click", () => dropdownMenu.classList.add("hidden"));
 
-    // --- GUARDAR ---
-    document.getElementById("btnGuardarCambios").addEventListener("click", () => {
-        const entidadSeleccionada = document.getElementById("editEntidad").value;
-        const grupoSeleccionado = document.getElementById("editGrupo").value;
+    // --- SAVE CHANGES ---
+    document.getElementById("btnSaveChanges").addEventListener("click", () => {
+        const selectedEntity = document.getElementById("editEntity").value;
+        const selectedGroup = document.getElementById("editGroup").value;
 
-        // Validación simple: si es interno, obligar a elegir grupo
-        if (entidadSeleccionada === "interno(MiNa)" && grupoSeleccionado === "") {
-            alert("Por favor, selecciona un Grupo de Investigación.");
+        // Simple validation: if internal, require a group
+        if (selectedEntity === "interno(MiNa)" && selectedGroup === "") {
+            alert("Please select a Research Group.");
             return;
         }
 
-        usuarioActivo.fotoPerfil = nuevaFotoBase64;
-        usuarioActivo.apodo = document.getElementById("editApodo").value;
-        usuarioActivo.entidad = entidadSeleccionada;
+        activeUser.profilePicture = newPhotoBase64;
+        activeUser.nickname = document.getElementById("editNickname").value;
+        activeUser.entity = selectedEntity;
 
-        if (usuarioActivo.entidad === "interno(MiNa)") {
-            usuarioActivo.grupo = grupoSeleccionado;
-            usuarioActivo.ip = document.getElementById("editIP").value;
-            usuarioActivo.cuentaInterna = document.getElementById("editCuentaInterna").value;
-            usuarioActivo.proyecto = document.getElementById("editProyecto").value;
+        if (activeUser.entity === "interno(MiNa)") {
+            activeUser.group = selectedGroup;
+            activeUser.ip = document.getElementById("editIP").value;
+            activeUser.account = document.getElementById("editInternalAccount").value;
+            activeUser.project = document.getElementById("editProject").value;
         }
 
-        localStorage.setItem('usuarioActivo', JSON.stringify(usuarioActivo));
-        let usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
-        const index = usuarios.findIndex(u => u.email === usuarioActivo.email);
+        localStorage.setItem('activeUser', JSON.stringify(activeUser));
+        let users = JSON.parse(localStorage.getItem('users')) || [];
+        const index = users.findIndex(u => u.email === activeUser.email);
         if (index !== -1) {
-            usuarios[index] = usuarioActivo;
-            localStorage.setItem('usuarios', JSON.stringify(usuarios));
+            users[index] = activeUser;
+            localStorage.setItem('users', JSON.stringify(users));
         }
 
-        alert("Perfil actualizado correctamente");
+        alert("Profile updated successfully");
         window.location.reload();
     });
 
-    document.getElementById("irServicios").addEventListener("click", () => { window.location.href = "/static/html/ServicioUsuario.html"; });
-    document.getElementById("cerrarSesion").addEventListener("click", () => {
-        localStorage.removeItem('usuarioActivo');
+    document.getElementById("goToServices").addEventListener("click", () => {
+        window.location.href = "/static/html/ServicioUsuario.html";
+    });
+    document.getElementById("logOut").addEventListener("click", () => {
+        localStorage.removeItem('activeUser');
         window.location.href = "/static/html/ServicioLogin.html";
     });
 });

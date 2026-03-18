@@ -1,109 +1,110 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Recuperamos el usuario (ahora con nombres en inglés tras el login)
-    const usuarioActivo = JSON.parse(localStorage.getItem('usuarioActivo'));
+    const activeUser = JSON.parse(localStorage.getItem('activeUser'));
     
-    // 1. Redirección de seguridad
-    if (!usuarioActivo) {
+    // 1. Security redirect
+    if (!activeUser) {
         window.location.href = "/static/html/ServicioLogin.html";
         return;
     }
 
-    // 2. Lógica de Nombre + Apellidos (Adaptado a first_name / last_name)
-    let nombreAMostrar = "";
-    // Mantenemos la lógica de apodo/nickname por si lo incluyes en el modelo
-    if (usuarioActivo.nickname && usuarioActivo.nickname.trim() !== "") {
-        nombreAMostrar = usuarioActivo.nickname;
+    // 2. Name + Last Name or Nickname logic
+    let displayName = "";
+    if (activeUser.nickname && activeUser.nickname.trim() !== "") {
+        displayName = activeUser.nickname;
     } else {
-        const nombreCompleto = `${usuarioActivo.first_name || ""} ${usuarioActivo.last_name || ""}`.trim();
-        nombreAMostrar = nombreCompleto !== "" ? nombreCompleto : "Usuario";
+        // Combine name and lastName if they exist
+        const fullName = `${activeUser.name || ""} ${activeUser.lastName || ""}`.trim();
+        displayName = fullName !== "" ? fullName : "User";
     }
     
-    document.getElementById("nombreUsuarioBarra").textContent = nombreAMostrar;
-    // Adaptado a profile_picture
-    document.getElementById("iconoUsuario").src = usuarioActivo.profile_picture || "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png";
+    document.getElementById("userNameBar").textContent = displayName;
+    document.getElementById("userIcon").src = activeUser.profilePicture;
 
-    // 3. Renderizar Peticiones (Adaptado a 'requests')
-    const contenedorLista = document.getElementById("listaPeticiones");
-    function renderPeticiones() {
-        contenedorLista.innerHTML = "";
-        // Ahora usamos usuarioActivo.requests en lugar de peticiones
-        if (usuarioActivo.requests) {
-            usuarioActivo.requests.forEach(r => {
+    // 3. Render existing requests
+    const listContainer = document.getElementById("requestList");
+    function renderRequests() {
+        listContainer.innerHTML = "";
+        if (activeUser.requests) {
+            activeUser.requests.forEach(r => {
                 const div = document.createElement("div");
-                div.className = "peticion-card";
+                div.className = "request-card";
                 div.innerHTML = `
-                    <strong style="color: var(--azul-csic);">${r.service_name}</strong><br>
-                    <small>Horas: ${r.hours} | Fecha: ${r.request_date}</small><br>
-                    <p style="font-size:12px; margin-top:5px; color:#555;">${r.comment || 'Sin comentarios'}</p>
+                    <strong style="color: var(--color-csic);">${r.service}</strong><br>
+                    <small>Hours: ${r.hours} | Date: ${r.date}</small><br>
+                    <p style="font-size:12px; margin-top:5px; color:#555;">${r.comment || 'No comments'}</p>
                 `;
-                contenedorLista.appendChild(div);
+                listContainer.appendChild(div);
             });
         }
     }
-    renderPeticiones();
+    renderRequests();
 
-    // 4. Menú Desplegable (Sin cambios)
-    const perfilContainer = document.getElementById("perfilContainer");
-    const menuDesplegable = document.getElementById("menuDesplegable");
+    // 4. Dropdown Menu
+    const profileContainer = document.getElementById("profileContainer");
+    const dropdownMenu = document.getElementById("dropdownMenu");
     
-    perfilContainer.addEventListener("click", (e) => {
+    profileContainer.addEventListener("click", (e) => {
         e.stopPropagation();
-        menuDesplegable.classList.toggle("oculto");
+        dropdownMenu.classList.toggle("hidden");
     });
-    document.addEventListener("click", () => menuDesplegable.classList.add("oculto"));
+    document.addEventListener("click", () => dropdownMenu.classList.add("hidden"));
 
-    // 5. Acordeón de Servicios (Sin cambios)
-    const botonesOferta = document.querySelectorAll(".botonOferta");
-    botonesOferta.forEach(boton => {
-        boton.addEventListener("click", function(e) {
+    // 5. Services Accordion
+    const serviceButtons = document.querySelectorAll(".service-button");
+    serviceButtons.forEach(button => {
+        button.addEventListener("click", function(e) {
             e.stopPropagation();
-            this.nextElementSibling.classList.toggle("abierto");
+            this.nextElementSibling.classList.toggle("open");
         });
     });
 
-    // 6. Enviar Peticiones (Actualizado con llaves en inglés para el futuro fetch)
-    const btnEnviar = document.getElementById("btnEnviarPeticion");
-    btnEnviar.addEventListener("click", () => {
-        const formularios = document.querySelectorAll(".formulario-oferta");
-        let algunaPeticion = false;
+    // 6. Send Requests
+    const btnSend = document.getElementById("btnSendRequest");
+    btnSend.addEventListener("click", () => {
+        const forms = document.querySelectorAll(".service-form");
+        let anyRequest = false;
 
-        formularios.forEach(form => {
-            const horasInput = form.querySelector("input[type='number']");
-            const comentarioInput = form.querySelector("input[type='text']");
-            const horas = horasInput.value;
-            const servicio = form.previousElementSibling.textContent;
+        forms.forEach(form => {
+            const hoursInput = form.querySelector("input[type='number']");
+            const commentInput = form.querySelector("input[type='text']");
+            const hours = hoursInput.value;
+            const service = form.previousElementSibling.textContent;
 
-            if (horas > 0) {
-                if (!usuarioActivo.requests) usuarioActivo.requests = [];
-                // Guardamos con las llaves que espera nuestro nuevo modelo Request
-                usuarioActivo.requests.push({
-                    service_name: servicio,
-                    hours: parseFloat(horas),
-                    comment: comentarioInput.value,
-                    request_date: new Date().toLocaleDateString()
+            if (hours > 0) {
+                if (!activeUser.requests) activeUser.requests = [];
+                activeUser.requests.push({
+                    service: service,
+                    hours: hours,
+                    comment: commentInput.value,
+                    date: new Date().toLocaleDateString()
                 });
-                algunaPeticion = true;
-                horasInput.value = "";
-                comentarioInput.value = "";
-                form.classList.remove("abierto");
+                anyRequest = true;
+                hoursInput.value = "";
+                commentInput.value = "";
+                form.classList.remove("open");
             }
         });
 
-        if (algunaPeticion) {
-            // Guardamos localmente (más adelante haremos el fetch a /api/requests)
-            localStorage.setItem('usuarioActivo', JSON.stringify(usuarioActivo));
-            renderPeticiones();
-            alert("Petición guardada localmente. Lista para ser sincronizada.");
+        if (anyRequest) {
+            localStorage.setItem('activeUser', JSON.stringify(activeUser));
+            let users = JSON.parse(localStorage.getItem('users')) || [];
+            const index = users.findIndex(u => u.email === activeUser.email);
+            if (index !== -1) {
+                users[index] = activeUser;
+                localStorage.setItem('users', JSON.stringify(users));
+            }
+            renderRequests();
+            alert("Request sent successfully.");
         }
     });
 
-    // 7. Navegación
-    document.getElementById("cerrarSesion").addEventListener("click", () => {
-        localStorage.removeItem('usuarioActivo');
+    // 7. Navigation
+    document.getElementById("logOut").addEventListener("click", () => {
+        localStorage.removeItem('activeUser');
         window.location.href = "/static/html/ServicioLogin.html";
     });
 
-    document.getElementById("editarPerfil").addEventListener("click", () => {
+    document.getElementById("editProfile").addEventListener("click", () => {
         window.location.href = "/static/html/ServicioEdit.html";
     });
 });

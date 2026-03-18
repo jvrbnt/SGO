@@ -2,18 +2,17 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 
 class UserCreate(BaseModel):
-    # Campos obligatorios para todos
-    first_name: str
+    name: str
     last_name: str
-    email: EmailStr # Usamos EmailStr para una validación más profesional
+    email: str
     password: str
     entity: str
-    
-    # Campos opcionales (Específicos de MiNa)
-    research_group: Optional[str] = None
-    principal_investigator: Optional[str] = None # Antes 'ip'
-    internal_account: Optional[str] = None
-    project_code: Optional[str] = None
+
+    # Optional fields (default to None if not sent)
+    group: Optional[str] = None
+    ip: Optional[str] = None
+    account: Optional[str] = None
+    project: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: str

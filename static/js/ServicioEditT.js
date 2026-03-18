@@ -1,85 +1,85 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const usuarioActivo = JSON.parse(localStorage.getItem('usuarioActivo'));
-    const FOTO_DEFECTO = "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png";
-    
-    if (!usuarioActivo) {
+    const activeUser = JSON.parse(localStorage.getItem('activeUser'));
+    const DEFAULT_PHOTO = "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png";
+
+    if (!activeUser) {
         window.location.href = "/static/html/ServicioLogin.html";
         return;
     }
 
-    // --- NOMBRE EN LA BARRA ---
-    const actualizarBarra = () => {
-        const nombre = usuarioActivo.apodo || usuarioActivo.nombre || "Técnico";
-        document.getElementById("nombreUsuarioBarra").textContent = nombre;
-        document.getElementById("iconoUsuario").src = usuarioActivo.fotoPerfil || FOTO_DEFECTO;
+    // --- NAME IN TOP BAR ---
+    const updateBar = () => {
+        const name = activeUser.nickname || activeUser.name || "Technician";
+        document.getElementById("userNameBar").textContent = name;
+        document.getElementById("userIcon").src = activeUser.profilePicture || DEFAULT_PHOTO;
     };
-    actualizarBarra();
+    updateBar();
 
-    // --- CARGAR DATOS EN FORMULARIO ---
-    document.getElementById("previewFoto").src = usuarioActivo.fotoPerfil || FOTO_DEFECTO;
-    document.getElementById("editApodo").value = usuarioActivo.apodo || "";
+    // --- LOAD FORM DATA ---
+    document.getElementById("photoPreview").src = activeUser.profilePicture || DEFAULT_PHOTO;
+    document.getElementById("editNickname").value = activeUser.nickname || "";
 
-    // --- GESTIÓN DE FOTO ---
-    const btnCambiarFoto = document.getElementById("btnCambiarFoto");
-    const btnQuitarFoto = document.getElementById("btnQuitarFoto");
-    const inputFileFoto = document.getElementById("inputFileFoto");
-    const previewFoto = document.getElementById("previewFoto");
-    let nuevaFotoBase64 = usuarioActivo.fotoPerfil;
+    // --- PHOTO MANAGEMENT ---
+    const btnChangePhoto = document.getElementById("btnChangePhoto");
+    const btnRemovePhoto = document.getElementById("btnRemovePhoto");
+    const inputPhotoFile = document.getElementById("inputPhotoFile");
+    const photoPreview = document.getElementById("photoPreview");
+    let newPhotoBase64 = activeUser.profilePicture;
 
-    btnCambiarFoto.addEventListener("click", () => inputFileFoto.click());
-    
-    btnQuitarFoto.addEventListener("click", () => {
-        nuevaFotoBase64 = FOTO_DEFECTO;
-        previewFoto.src = FOTO_DEFECTO;
+    btnChangePhoto.addEventListener("click", () => inputPhotoFile.click());
+
+    btnRemovePhoto.addEventListener("click", () => {
+        newPhotoBase64 = DEFAULT_PHOTO;
+        photoPreview.src = DEFAULT_PHOTO;
     });
 
-    inputFileFoto.addEventListener("change", function() {
+    inputPhotoFile.addEventListener("change", function() {
         const file = this.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                previewFoto.src = e.target.result;
-                nuevaFotoBase64 = e.target.result;
-            }
+                photoPreview.src = e.target.result;
+                newPhotoBase64 = e.target.result;
+            };
             reader.readAsDataURL(file);
         }
     });
 
-    // --- GUARDAR CAMBIOS ---
-    document.getElementById("btnGuardarCambios").addEventListener("click", () => {
-        usuarioActivo.fotoPerfil = nuevaFotoBase64;
-        usuarioActivo.apodo = document.getElementById("editApodo").value;
+    // --- SAVE CHANGES ---
+    document.getElementById("btnSaveChanges").addEventListener("click", () => {
+        activeUser.profilePicture = newPhotoBase64;
+        activeUser.nickname = document.getElementById("editNickname").value;
 
-        // Actualizar sesión actual
-        localStorage.setItem('usuarioActivo', JSON.stringify(usuarioActivo));
+        // Update current session
+        localStorage.setItem('activeUser', JSON.stringify(activeUser));
 
-        // Actualizar base de datos local (usuarios)
-        let usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
-        const index = usuarios.findIndex(u => u.email === usuarioActivo.email);
+        // Update local user database
+        let users = JSON.parse(localStorage.getItem('users')) || [];
+        const index = users.findIndex(u => u.email === activeUser.email);
         if (index !== -1) {
-            usuarios[index] = usuarioActivo;
-            localStorage.setItem('usuarios', JSON.stringify(usuarios));
+            users[index] = activeUser;
+            localStorage.setItem('users', JSON.stringify(users));
         }
 
-        alert("Perfil técnico actualizado correctamente");
+        alert("Technician profile updated successfully");
         window.location.reload();
     });
 
-    // --- NAVEGACIÓN ---
-    const perfilContainer = document.getElementById("perfilContainer");
-    const menu = document.getElementById("menuDesplegable");
-    perfilContainer.addEventListener("click", (e) => {
+    // --- NAVIGATION ---
+    const profileContainer = document.getElementById("profileContainer");
+    const dropdownMenu = document.getElementById("dropdownMenu");
+    profileContainer.addEventListener("click", (e) => {
         e.stopPropagation();
-        menu.classList.toggle("oculto");
+        dropdownMenu.classList.toggle("hidden");
     });
-    document.addEventListener("click", () => menu.classList.add("oculto"));
+    document.addEventListener("click", () => dropdownMenu.classList.add("hidden"));
 
-document.getElementById("editarPerfil").addEventListener("click", () => {
-    window.location.href = "/static/html/ServicioEditT.html";
-});
+    document.getElementById("editProfile").addEventListener("click", () => {
+        window.location.href = "/static/html/servicioEditT.html";
+    });
 
-    document.getElementById("cerrarSesion").addEventListener("click", () => {
-        localStorage.removeItem('usuarioActivo');
+    document.getElementById("logOut").addEventListener("click", () => {
+        localStorage.removeItem('activeUser');
         window.location.href = "/static/html/ServicioLogin.html";
     });
 });

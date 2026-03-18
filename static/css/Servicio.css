@@ -1,24 +1,24 @@
-/* IMPORTACIÓN DE MONTSERRAT */
+/* MONTSERRAT IMPORT */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap');
 
 :root {
-    --azul-csic: #af071f;
-    --azul-hover: #8f071b;
-    --gris-fondo: #f8f9fa;
-    --blanco: #ffffff;
-    --gris-texto: #333;
-    --gris-inferior: #bcbdbe;
+    --color-csic: #af071f;
+    --color-hover: #8f071b;
+    --bg-gray: #f8f9fa;
+    --white: #ffffff;
+    --text-color: #333;
+    --footer-gray: #bcbdbe;
 }
 
 body {
     margin: 0;
     padding: 0;
     font-family: 'Montserrat', sans-serif;
-    background-color: var(--gris-fondo);
-    color: var(--gris-texto);
+    background-color: var(--bg-gray);
+    color: var(--text-color);
 }
 
-#perfilContainer {
+#profileContainer {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -26,16 +26,16 @@ body {
     cursor: pointer;
 }
 
-#nombreUsuarioBarra {
+#userNameBar {
     color: white;
     font-family: 'Montserrat', sans-serif;
     font-weight: 600;
     font-size: 14px;
 }
 
-/* Contenedor para izquierda (datos) y derecha (perfil) */
-.barrasLaterales {
-    background-color: var(--azul-csic);
+/* Container for left (info) and right (profile) */
+.side-bar {
+    background-color: var(--color-csic);
     height: 60px;
     width: 100%;
     z-index: 1000;
@@ -48,27 +48,27 @@ body {
     left: 0;
 }
 
-/* Contenedor para los datos en la parte izquierda de la barra */
-.datos-contacto-superior {
+/* Container for contact info on the left side of the bar */
+.top-contact-info {
     display: flex;
     align-items: center;
     gap: 20px;
     padding-left: 20px;
 }
 
-.datos-contacto-superior div {
+.top-contact-info div {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.datos-contacto-superior img {
+.top-contact-info img {
     height: 18px;
     width: auto;
     filter: brightness(0) invert(1);
 }
 
-.datos-contacto-superior h6 {
+.top-contact-info h6 {
     color: white;
     margin: 0;
     font-size: 12px;
@@ -81,7 +81,7 @@ body {
     padding: 20px 0;
 }
 
-/* Contenedor de los dos logos centrados */
+/* Container for the two centered logos */
 #icon {
     display: flex;
     justify-content: center;
@@ -90,21 +90,21 @@ body {
     margin-top: 80px; 
 }
 
-/* Estilo para las dos imágenes de logo centradas */
-.icono-centrado {
+/* Style for the two centered logo images */
+.centered-icon {
     height: auto;
     width: 250px; 
     transition: transform 0.3s ease;
 }
 
-/* Desplazamiento a la izquierda */
-.icono-izquierda {
+/* Shift to the left */
+.icon-left {
     margin-right: -40px;
     width: 500px; 
 }
 
-/* Desplazamiento a la derecha */
-.icono-derecha {
+/* Shift to the right */
+.icon-right {
     margin-left: -40px; 
 }
 
@@ -134,7 +134,7 @@ body {
     margin: 0;
 }
 
-#iconoUsuario {
+#userIcon {
     height: 40px;
     width: 40px;
     border-radius: 50%;
@@ -143,15 +143,15 @@ body {
     cursor: pointer;
 }
 
-/* FOOTER ACTUALIZADO Y CORREGIDO */
-.barrasLaterales#datos {
+/* UPDATED AND FIXED FOOTER */
+.side-bar#footer {
     width: 100%;
-    background-color: var(--gris-inferior);
+    background-color: var(--footer-gray);
     height: 60px;
     display: flex;
     align-items: center;
-    justify-content: center; /* Centra el contenido principal (la imagen) */
-    position: relative; /* Para posicionar las redes absolutamente */
+    justify-content: center; /* Centers the main content (logo) */
+    position: relative; /* Positions social links absolutely */
     padding: 0 40px;
     height: 100px;
     box-sizing: border-box;
@@ -160,13 +160,13 @@ body {
 .logo-footer {
     height: 80px;
     width: 200px;
-    /* Sin márgenes especiales, el contenedor lo centra */
+    /* No special margins, the container centers it */
 }
 
-.redes-sociales {
+.social-links {
     display: flex;
     gap: 10px;
-    position: absolute; /* Posiciona las redes a la derecha */
+    position: absolute; /* Positions social links to the right */
     right: 40px;
 }
 
@@ -185,7 +185,7 @@ body {
 }
 
 .btn-social:hover {
-    background-color: var(--azul-csic);
+    background-color: var(--color-csic);
 }
 
 .btn-social img {
