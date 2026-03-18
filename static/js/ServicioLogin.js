@@ -34,7 +34,7 @@ loginForm.addEventListener('submit', async function(event) {
 
             // Save the user to local storage
             localStorage.setItem('activeUser', JSON.stringify(activeUser));
-            window.location.href = "/SGO/static/html/ServicioUsuario.html";
+            window.location.href = "/static/html/ServicioUsuario.html";
         } else {
             // Incorrect credentials error from the backend
             alert(data.detail);

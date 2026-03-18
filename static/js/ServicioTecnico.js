@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const filterService = document.getElementById("filterService");
 
     if (!activeUser) {
-        window.location.href = "/SGO/static/html/ServicioLogin.html";
+        window.location.href = "/static/html/ServicioLogin.html";
         return;
     }
 
@@ -104,11 +104,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("logOut").addEventListener("click", () => {
         localStorage.removeItem('activeUser');
-        window.location.href = "/SGO/static/html/ServicioLogin.html";
+        window.location.href = "/static/html/ServicioLogin.html";
     });
 
     document.getElementById("editProfile").addEventListener("click", () => {
-        window.location.href = "/SGO/static/html/servicioEditT.html";
+        window.location.href = "/static/html/servicioEditT.html";
     });
 
     renderRequests();

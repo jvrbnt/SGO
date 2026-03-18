@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // 1. Security redirect
     if (!activeUser) {
-        window.location.href = "/SGO/static/html/ServicioLogin.html";
+        window.location.href = "/static/html/ServicioLogin.html";
         return;
     }
 
@@ -101,10 +101,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // 7. Navigation
     document.getElementById("logOut").addEventListener("click", () => {
         localStorage.removeItem('activeUser');
-        window.location.href = "/SGO/static/html/ServicioLogin.html";
+        window.location.href = "/static/html/ServicioLogin.html";
     });
 
     document.getElementById("editProfile").addEventListener("click", () => {
-        window.location.href = "/SGO/static/html/ServicioEdit.html";
+        window.location.href = "/static/html/ServicioEdit.html";
     });
 });

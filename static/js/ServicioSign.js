@@ -36,11 +36,16 @@ registrationForm.addEventListener('submit', async function(event) {
     
     // Basic fields expected by the database
     const newUser = {
-        name: document.getElementById('name').value,
+        first_name: document.getElementById('name').value,
         last_name: document.getElementById('lastName').value,
         email: document.getElementById('email').value,
         password: passwordInput.value,
-        entity: selectEntity.value
+        entity: selectEntity.value,
+        // Campos extra MiNa
+        research_group: document.getElementById('group').value || null,
+        principal_investigator: document.getElementById('ip').value || null,
+        internal_account: document.getElementById('cuenta').value || null,
+        project_code: document.getElementById('proyecto').value || null
     };
 
     try {
@@ -54,7 +59,7 @@ registrationForm.addEventListener('submit', async function(event) {
 
         if (response.ok) {
             alert(data.message); // "Account created successfully"
-            window.location.href = "/SGO/static/html/ServicioLogin.html";
+            window.location.href = "/static/html/ServicioLogin.html";
         } else {
             // Backend returns an error (e.g.: Email is already registered)
             alert(data.detail); 

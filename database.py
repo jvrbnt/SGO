@@ -10,6 +10,9 @@ load_dotenv()
 # 2. Get the full URL from the environment variable
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 
+if not SQLALCHEMY_DATABASE_URL:
+    raise RuntimeError("ERROR: No se ha encontrado la variable DATABASE_URL en el archivo .env")
+
 # 3. Engine that sends the data
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 

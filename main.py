@@ -6,11 +6,12 @@ from sqlalchemy.orm import Session
 import models, schemas
 from database import engine, LocalSession
 
+# 1. Create tables in PostgreSQL using the updated models
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# 2. Database dependency
 def get_db():
     db = LocalSession()
     try:
@@ -18,9 +19,7 @@ def get_db():
     finally:
         db.close()
 
-@app.get("/")
-async def read_index():
-    return FileResponse("static/ServicioLogin.html")
+# --- 3. API ROUTES ---
 
 # --- REGISTRATION ROUTE ---
 @app.post("/api/signup")
