@@ -29,73 +29,73 @@
     <div id="imgCentral"><h1>Request Management</h1></div>
     
     <div id="sign">
-        <form id="registroForm">
+        <form id="registrationForm">
             <h2>Sign up</h2>
             
-            <div class="campo">
-                <label for="nombre">Name:</label>
-                <input type="text" id="nombre" placeholder="Name" required>
+            <div class="field">
+                <label for="name">Name:</label>
+                <input type="text" id="name" placeholder="Name" required>
             </div>
 
-            <div class="campo">
-                <label for="apellidos">Last Name:</label>
-                <input type="text" id="apellidos" placeholder="Last Name" required>
+            <div class="field">
+                <label for="lastName">Last Name:</label>
+                <input type="text" id="lastName" placeholder="Last Name" required>
             </div>
 
-            <div class="campo">
+            <div class="field">
                 <label for="email">Email:</label>
                 <input type="email" id="email" placeholder="Email" required>
             </div>
 
-            <div class="campo">
-                <label for="contraseña">Password:</label>
+            <div class="field">
+                <label for="password">Password:</label>
                 <div class="password-container">
-                    <input type="password" id="contraseña" placeholder="Password" required>
+                    <input type="password" id="password" placeholder="Password" required>
                 </div>
-                <span id="mensajePassword"></span>
+                <span id="passwordMessage"></span>
             </div>
 
-            <div class="campo">
-                <label for="entidad">you're in?</label>
-                <select id="entidad" name="entidad" required>
+            <div class="field">
+                <label for="entity">you're in?</label>
+                <select id="entity" name="entity" required>
                     <option selected disabled>select</option>
-                    <option value="mina">Interno (MiNa)</option>
+                    <option value="mina">Internal (MiNa)</option>
                     <option value="csic">CSIC</option>
                     <option value="uam">UAM</option>
-                    <option value="universidad">Universidad</option>
+                    <option value="universidad">University</option>
                     <option value="opis">OPIS</option>
-                    <option value="empresa">Empresa</option>
+                    <option value="empresa">Company</option>
                 </select>
             </div>
 
-            <div id="camposExtra" style="display: none;">
-                <div class="fila-extra">
-                    <div class="campo">
+            <div id="extraFields" style="display: none;">
+                <div class="extra-row">
+                    <div class="field">
                         <label for="group">Group:</label>
                         <select id="group" name="group">
                             <option selected disabled>select</option>
                             <option value="finder">FINDER</option>
-                            <option value="bionano">BIONANOMECÁNICA</option>
+                            <option value="bionano">BIONANOMECHANICS</option>
                             <option value="es4term">ES4TERM</option>
                             <option value="oms">OMS</option>
                             <option value="mbe">MBE</option>
                             <option value="metalnano">METALNANO</option>
                         </select>
                     </div>
-                    <div class="campo">
+                    <div class="field">
                         <label for="ip">IP:</label>
                         <input type="text" id="ip" name="ip" placeholder="IP">
                     </div>
                 </div>
 
-                <div class="fila-extra">
-                    <div class="campo">
-                        <label for="cuenta">Internal Account:</label>
-                        <input type="text" id="cuenta" name="cuenta" placeholder="Account">
+                <div class="extra-row">
+                    <div class="field">
+                        <label for="account">Internal Account:</label>
+                        <input type="text" id="account" name="account" placeholder="Account">
                     </div>
-                    <div class="campo">
-                        <label for="proyecto">Proyect Code:</label>
-                        <input type="text" id="proyecto" name="proyecto" placeholder="Project">
+                    <div class="field">
+                        <label for="project">Project Code:</label>
+                        <input type="text" id="project" name="project" placeholder="Project">
                     </div>
                 </div>
             </div>

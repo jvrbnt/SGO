@@ -135,7 +135,7 @@
 #userIcon { height: 45px; width: 45px; border-radius: 50%; border: 2px solid white; transition: transform 0.3s; }
 #profileContainer:hover #userIcon { transform: scale(1.1); }
 
-#menuDesplegable { 
+#dropdownMenu { 
     position: absolute; 
     top: 55px; 
     right: 0; 

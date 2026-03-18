@@ -1,110 +1,110 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const usuarioActivo = JSON.parse(localStorage.getItem('usuarioActivo'));
+    const activeUser = JSON.parse(localStorage.getItem('activeUser'));
     
-    // 1. Redirección de seguridad
-    if (!usuarioActivo) {
+    // 1. Security redirect
+    if (!activeUser) {
         window.location.href = "/SGO/static/html/ServicioLogin.html";
         return;
     }
 
-    // 2. Lógica de Nombre + Apellidos o Apodo
-    let nombreAMostrar = "";
-    if (usuarioActivo.apodo && usuarioActivo.apodo.trim() !== "") {
-        nombreAMostrar = usuarioActivo.apodo;
+    // 2. Name + Last Name or Nickname logic
+    let displayName = "";
+    if (activeUser.nickname && activeUser.nickname.trim() !== "") {
+        displayName = activeUser.nickname;
     } else {
-        // Combina nombre y apellidos si existen
-        const nombreCompleto = `${usuarioActivo.nombre || ""} ${usuarioActivo.apellidos || ""}`.trim();
-        nombreAMostrar = nombreCompleto !== "" ? nombreCompleto : "Usuario";
+        // Combine name and lastName if they exist
+        const fullName = `${activeUser.name || ""} ${activeUser.lastName || ""}`.trim();
+        displayName = fullName !== "" ? fullName : "User";
     }
     
-    document.getElementById("nombreUsuarioBarra").textContent = nombreAMostrar;
-    document.getElementById("iconoUsuario").src = usuarioActivo.fotoPerfil;
+    document.getElementById("userNameBar").textContent = displayName;
+    document.getElementById("userIcon").src = activeUser.profilePicture;
 
-    // 3. Renderizar Peticiones existentes
-    const contenedorLista = document.getElementById("listaPeticiones");
-    function renderPeticiones() {
-        contenedorLista.innerHTML = "";
-        if (usuarioActivo.peticiones) {
-            usuarioActivo.peticiones.forEach(p => {
+    // 3. Render existing requests
+    const listContainer = document.getElementById("requestList");
+    function renderRequests() {
+        listContainer.innerHTML = "";
+        if (activeUser.requests) {
+            activeUser.requests.forEach(r => {
                 const div = document.createElement("div");
-                div.className = "peticion-card";
+                div.className = "request-card";
                 div.innerHTML = `
-                    <strong style="color: var(--azul-csic);">${p.servicio}</strong><br>
-                    <small>Horas: ${p.horas} | Fecha: ${p.fecha}</small><br>
-                    <p style="font-size:12px; margin-top:5px; color:#555;">${p.comentario || 'Sin comentarios'}</p>
+                    <strong style="color: var(--color-csic);">${r.service}</strong><br>
+                    <small>Hours: ${r.hours} | Date: ${r.date}</small><br>
+                    <p style="font-size:12px; margin-top:5px; color:#555;">${r.comment || 'No comments'}</p>
                 `;
-                contenedorLista.appendChild(div);
+                listContainer.appendChild(div);
             });
         }
     }
-    renderPeticiones();
+    renderRequests();
 
-    // 4. Menú Desplegable
-    const perfilContainer = document.getElementById("perfilContainer");
-    const menuDesplegable = document.getElementById("menuDesplegable");
+    // 4. Dropdown Menu
+    const profileContainer = document.getElementById("profileContainer");
+    const dropdownMenu = document.getElementById("dropdownMenu");
     
-    perfilContainer.addEventListener("click", (e) => {
+    profileContainer.addEventListener("click", (e) => {
         e.stopPropagation();
-        menuDesplegable.classList.toggle("oculto");
+        dropdownMenu.classList.toggle("hidden");
     });
-    document.addEventListener("click", () => menuDesplegable.classList.add("oculto"));
+    document.addEventListener("click", () => dropdownMenu.classList.add("hidden"));
 
-    // 5. Acordeón de Servicios
-    const botonesOferta = document.querySelectorAll(".botonOferta");
-    botonesOferta.forEach(boton => {
-        boton.addEventListener("click", function(e) {
+    // 5. Services Accordion
+    const serviceButtons = document.querySelectorAll(".service-button");
+    serviceButtons.forEach(button => {
+        button.addEventListener("click", function(e) {
             e.stopPropagation();
-            this.nextElementSibling.classList.toggle("abierto");
+            this.nextElementSibling.classList.toggle("open");
         });
     });
 
-    // 6. Enviar Peticiones
-    const btnEnviar = document.getElementById("btnEnviarPeticion");
-    btnEnviar.addEventListener("click", () => {
-        const formularios = document.querySelectorAll(".formulario-oferta");
-        let algunaPeticion = false;
+    // 6. Send Requests
+    const btnSend = document.getElementById("btnSendRequest");
+    btnSend.addEventListener("click", () => {
+        const forms = document.querySelectorAll(".service-form");
+        let anyRequest = false;
 
-        formularios.forEach(form => {
-            const horasInput = form.querySelector("input[type='number']");
-            const comentarioInput = form.querySelector("input[type='text']");
-            const horas = horasInput.value;
-            const servicio = form.previousElementSibling.textContent;
+        forms.forEach(form => {
+            const hoursInput = form.querySelector("input[type='number']");
+            const commentInput = form.querySelector("input[type='text']");
+            const hours = hoursInput.value;
+            const service = form.previousElementSibling.textContent;
 
-            if (horas > 0) {
-                if (!usuarioActivo.peticiones) usuarioActivo.peticiones = [];
-                usuarioActivo.peticiones.push({
-                    servicio: servicio,
-                    horas: horas,
-                    comentario: comentarioInput.value,
-                    fecha: new Date().toLocaleDateString()
+            if (hours > 0) {
+                if (!activeUser.requests) activeUser.requests = [];
+                activeUser.requests.push({
+                    service: service,
+                    hours: hours,
+                    comment: commentInput.value,
+                    date: new Date().toLocaleDateString()
                 });
-                algunaPeticion = true;
-                horasInput.value = "";
-                comentarioInput.value = "";
-                form.classList.remove("abierto");
+                anyRequest = true;
+                hoursInput.value = "";
+                commentInput.value = "";
+                form.classList.remove("open");
             }
         });
 
-        if (algunaPeticion) {
-            localStorage.setItem('usuarioActivo', JSON.stringify(usuarioActivo));
-            let usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
-            const index = usuarios.findIndex(u => u.email === usuarioActivo.email);
+        if (anyRequest) {
+            localStorage.setItem('activeUser', JSON.stringify(activeUser));
+            let users = JSON.parse(localStorage.getItem('users')) || [];
+            const index = users.findIndex(u => u.email === activeUser.email);
             if (index !== -1) {
-                usuarios[index] = usuarioActivo;
-                localStorage.setItem('usuarios', JSON.stringify(usuarios));
+                users[index] = activeUser;
+                localStorage.setItem('users', JSON.stringify(users));
             }
-            renderPeticiones();
-            alert("Petición enviada correctamente.");
+            renderRequests();
+            alert("Request sent successfully.");
         }
     });
 
-    // 7. Navegación
-    document.getElementById("cerrarSesion").addEventListener("click", () => {
-        localStorage.removeItem('usuarioActivo');
+    // 7. Navigation
+    document.getElementById("logOut").addEventListener("click", () => {
+        localStorage.removeItem('activeUser');
         window.location.href = "/SGO/static/html/ServicioLogin.html";
     });
 
-    document.getElementById("editarPerfil").addEventListener("click", () => {
+    document.getElementById("editProfile").addEventListener("click", () => {
         window.location.href = "/SGO/static/html/ServicioEdit.html";
     });
 });

@@ -150,8 +150,8 @@ body {
     height: 60px;
     display: flex;
     align-items: center;
-    justify-content: center; /* Centra el contenido principal (la imagen) */
-    position: relative; /* Para posicionar las redes absolutamente */
+    justify-content: center; /* Centers the main content (logo) */
+    position: relative; /* Positions social links absolutely */
     padding: 0 40px;
     height: 100px;
     box-sizing: border-box;
@@ -166,7 +166,7 @@ body {
 .social-links {
     display: flex;
     gap: 10px;
-    position: absolute; /* Posiciona las redes a la derecha */
+    position: absolute; /* Positions social links to the right */
     right: 40px;
 }
 
@@ -185,7 +185,7 @@ body {
 }
 
 .btn-social:hover {
-    background-color: var(--azul-csic);
+    background-color: var(--color-csic);
 }
 
 .btn-social img {
