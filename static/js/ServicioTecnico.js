@@ -32,13 +32,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     const service = r.service;
 
                     // Apply filters
-                    let matchesStatus = (statusFilter === "todos" || status === statusFilter);
-                    let matchesService = (serviceFilter === "todos" || service === serviceFilter);
+                    let matchesStatus = (statusFilter === "all" || status === statusFilter);
+                    let matchesService = (serviceFilter === "all" || service === serviceFilter);
                     let matchesTechnician = true;
 
-                    if (technicianFilter === "sin_asignar") {
+                    if (technicianFilter === "unassigned") {
                         matchesTechnician = (technician === null);
-                    } else if (technicianFilter === "mis_peticiones") {
+                    } else if (technicianFilter === "my_requests") {
                         matchesTechnician = (technician === activeUser.name);
                     }
 

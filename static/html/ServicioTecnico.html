@@ -31,8 +31,8 @@
     </div>
 
     <div id="icon">
-        <img src="/static/imagenes/Csic.png" alt="Csic Logo Left" class="icono-centrado icono-izquierda">
-        <img src="/static/imagenes/MicroNano.png" alt="Csic Logo Right" class="icono-centrado icono-derecha">
+        <img src="/static/imagenes/Csic.png" alt="Csic Logo Left" class="centered-icon icon-left">
+        <img src="/static/imagenes/MicroNano.png" alt="Csic Logo Right" class="centered-icon icon-right">
     </div>
 
     <div id="mainContainer">
@@ -43,7 +43,7 @@
                 <div class="filter-group">
                     <label>Status:</label>
                     <select id="filterStatus">
-                        <option value="todos">All statuses</option>
+                        <option value="all">All statuses</option>
                         <option value="Requested">Requested</option>
                         <option value="Accepted">Accepted</option>
                         <option value="Doing">Doing</option>
@@ -53,15 +53,15 @@
                 <div class="filter-group">
                     <label>Assignment:</label>
                     <select id="filterTechnician">
-                        <option value="todos">All</option>
-                        <option value="sin_asignar">Unassigned (Free)</option>
-                        <option value="mis_peticiones">My requests</option>
+                        <option value="all">All</option>
+                        <option value="unassigned">Unassigned (Free)</option>
+                        <option value="my_requests">My requests</option>
                     </select>
                 </div>
                 <div class="filter-group">
                     <label>Service:</label>
                     <select id="filterService">
-                        <option value="todos">All services</option>
+                        <option value="all">All services</option>
                         <option value="Electron Lithography">Electron Lithography</option>
                         <option value="High Resolution SEM">High Resolution SEM</option>
                         <option value="RIE">RIE</option>
@@ -86,9 +86,9 @@
 
     <div id="icon2"><img src="/static/imagenes/Mina.png"></div>
 
-    <div class="barrasLaterales" id="datos">
-        <img src="/static/imagenes/CsicGris.png" alt="Logo Footer" class="logo-footer">
-        <div class="redes-sociales">
+    <div class="side-bar" id="footer">
+        <img src="/static/imagenes/CsicGris.png" alt="Footer Logo" class="logo-footer">
+        <div class="social-links">
             <a href="https://es-es.facebook.com/CSIC/" class="btn-social"><img src="https://cdn.pixabay.com/photo/2021/06/15/12/51/facebook-6338508_640.png" alt="Facebook"></a>
             <a href="https://www.instagram.com/csic/" class="btn-social" id="insta"><img src="https://static.vecteezy.com/system/resources/thumbnails/018/930/691/small/instagram-logo-instagram-icon-transparent-free-png.png" alt="Instagram"></a>
             <a href="https://x.com/csic" class="btn-social" id="twitter"><img src="https://1000logos.net/wp-content/uploads/2017/06/Twitter-Log%D0%BE-500x281.png" alt="Twitter/X"></a>

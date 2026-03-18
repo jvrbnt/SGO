@@ -74,8 +74,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     document.addEventListener("click", () => dropdownMenu.classList.add("hidden"));
 
-    document.getElementById("editProfile").addEventListener("click", () => {
-        window.location.href = "/static/html/servicioEditT.html";
+    document.getElementById("goToServices").addEventListener("click", () => {
+        window.location.href = "/static/html/ServicioTecnico.html";
     });
 
     document.getElementById("logOut").addEventListener("click", () => {

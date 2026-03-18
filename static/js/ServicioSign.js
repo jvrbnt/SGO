@@ -36,16 +36,16 @@ registrationForm.addEventListener('submit', async function(event) {
     
     // Basic fields expected by the database
     const newUser = {
-        first_name: document.getElementById('name').value,
+        name: document.getElementById('name').value,
         last_name: document.getElementById('lastName').value,
         email: document.getElementById('email').value,
         password: passwordInput.value,
         entity: selectEntity.value,
-        // Campos extra MiNa
-        research_group: document.getElementById('group').value || null,
-        principal_investigator: document.getElementById('ip').value || null,
-        internal_account: document.getElementById('cuenta').value || null,
-        project_code: document.getElementById('proyecto').value || null
+        // Extra fields for internal MiNa users
+        group: document.getElementById('group').value || null,
+        ip: document.getElementById('ip').value || null,
+        account: document.getElementById('account').value || null,
+        project: document.getElementById('project').value || null
     };
 
     try {

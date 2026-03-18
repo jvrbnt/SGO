@@ -10,6 +10,7 @@ from database import engine, LocalSession
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # 2. Database dependency
 def get_db():
@@ -18,6 +19,10 @@ def get_db():
         yield db
     finally:
         db.close()
+
+@app.get("/")
+async def read_index():
+    return FileResponse("static/html/ServicioLogin.html")
 
 # --- 3. API ROUTES ---
 
