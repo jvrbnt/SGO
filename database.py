@@ -10,14 +10,18 @@ load_dotenv()
 # 2. Get the full URL from the environment variable
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 
-if not SQLALCHEMY_DATABASE_URL:
-    raise RuntimeError("ERROR: No se ha encontrado la variable DATABASE_URL en el archivo .env")
-
 # 3. Engine that sends the data
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
-# 4. Query manager (Used in main.py for API requests)
-LocalSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# 5. Base class from which all tables will be created (Used in models.py)
 Base = declarative_base()
+
+if SQLALCHEMY_DATABASE_URL:
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL,
+        connect_args={"options": "-c lc_messages=C"}
+    )
+    LocalSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    DB_AVAILABLE = True
+else:
+    print("WARNING: DATABASE_URL not set — running without database.")
+    engine = None
+    LocalSession = None
+    DB_AVAILABLE = False
