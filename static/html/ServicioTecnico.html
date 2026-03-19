@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Technical Panel - IMN</title>
+    <title>Technical Management Portal - IMN</title>
     <link rel="stylesheet" href="/static/css/ServicioTecnico.css">
     <link rel="stylesheet" href="/static/css/Servicio.css">
 </head>
@@ -21,8 +21,8 @@
         </div>
 
         <div id="profileContainer">
-            <span id="userNameBar"></span>
-            <img id="userIcon" src="" alt="userIcon">
+            <span id="userNameBar">Technician Name</span>
+            <img id="userIcon" src="/static/imagenes/default-avatar.png" alt="userIcon">
             <div id="dropdownMenu" class="hidden">
                 <button class="menu-option" id="editProfile">Edit Profile</button>
                 <button class="menu-option" id="logOut">Log Out</button>
@@ -36,51 +36,65 @@
     </div>
 
     <div id="mainContainer">
+        <div id="actionPanel">
+            <button class="btn-primary" id="btnRegisterClient">
+                <img src="https://cdn-icons-png.flaticon.com/512/747/747376.png" width="20"> Register New Client
+            </button>
+            <button class="btn-secondary" id="btnStats">
+                <img src="https://cdn-icons-png.flaticon.com/512/1162/1162251.png" width="20"> View Statistics
+            </button>
+        </div>
+
         <div id="requests">
-            <h2 class="section-title">Management Panel: All Requests</h2>
+            <h2 class="section-title">Management Dashboard: Offers & Services</h2>
             
             <div id="requestFilters">
                 <div class="filter-group">
-                    <label>Status:</label>
+                    <label>Offer Status:</label>
                     <select id="filterStatus">
                         <option value="all">All statuses</option>
-                        <option value="Requested">Requested</option>
-                        <option value="Accepted">Accepted</option>
-                        <option value="Doing">Doing</option>
-                        <option value="Done">Done</option>
+                        <option value="requested">Requested (New)</option>
+                        <option value="technical_offer">In Analysis</option>
+                        <option value="accepted">Accepted / Active</option>
+                        <option value="finished">Completed</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Assignment:</label>
+                    <label>View Mode:</label>
                     <select id="filterTechnician">
-                        <option value="all">All</option>
-                        <option value="unassigned">Unassigned (Free)</option>
-                        <option value="my_requests">My requests</option>
+                        <option value="all">All Global Offers</option>
+                        <option value="my_managed">Offers Managed by Me</option>
+                        <option value="my_tasks">Specific Services Assigned to Me</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Service:</label>
-                    <select id="filterService">
-                        <option value="all">All services</option>
-                        <option value="Electron Lithography">Electron Lithography</option>
-                        <option value="High Resolution SEM">High Resolution SEM</option>
-                        <option value="RIE">RIE</option>
-                        <option value="FIB">FIB</option>
-                        <option value="Electron Beam Evaporator">Electron Beam Evaporator</option>
-                        <option value="AFM">AFM</option>
-                        <option value="Auto Lithography">Auto Lithography</option>
-                        <option value="Profilometer">Profilometer</option>
-                        <option value="Centrifuge">Centrifuge</option>
-                        <option value="Wet Etching">Wet Etching</option>
-                        <option value="RX">RX</option>
-                        <option value="PECVD">PECVD</option>
-                        <option value="Micro-welding">Micro-welding</option>
-                    </select>
+                    <input type="text" id="searchClient" placeholder="Search by Client name or email...">
                 </div>
             </div>
 
             <div id="globalRequestList">
                 </div>
+        </div>
+    </div>
+
+    <div id="modalRegisterClient" class="modal hidden">
+        <div class="modal-content">
+            <h3>Register Manual Client (Offline/Email)</h3>
+            <form id="formOfflineClient">
+                <input type="text" id="offlineName" placeholder="First Name" required>
+                <input type="text" id="offlineLastName" placeholder="Last Name" required>
+                <input type="email" id="offlineEmail" placeholder="Email Address" required>
+                <select id="offlineEntity">
+                    <option value="Internal MiNa">Internal MiNa</option>
+                    <option value="CSIC">CSIC (External)</option>
+                    <option value="University">University</option>
+                    <option value="Private Company">Private Company</option>
+                </select>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" id="closeModal">Cancel</button>
+                    <button type="submit" class="btn-save">Save Client</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -90,12 +104,7 @@
         <img src="/static/imagenes/CsicGris.png" alt="Footer Logo" class="logo-footer">
         <div class="social-links">
             <a href="https://es-es.facebook.com/CSIC/" class="btn-social"><img src="https://cdn.pixabay.com/photo/2021/06/15/12/51/facebook-6338508_640.png" alt="Facebook"></a>
-            <a href="https://www.instagram.com/csic/" class="btn-social" id="insta"><img src="https://static.vecteezy.com/system/resources/thumbnails/018/930/691/small/instagram-logo-instagram-icon-transparent-free-png.png" alt="Instagram"></a>
-            <a href="https://x.com/csic" class="btn-social" id="twitter"><img src="https://1000logos.net/wp-content/uploads/2017/06/Twitter-Log%D0%BE-500x281.png" alt="Twitter/X"></a>
-            <a href="https://www.youtube.com/user/csicdptocomunicacion" class="btn-social" id="youtube"><img src="https://static.vecteezy.com/system/resources/thumbnails/042/148/649/small/youtube-logo-youtube-social-media-icon-free-png.png" alt="Youtube"></a>
-            <a href="https://www.tiktok.com/@elcsic" class="btn-social" id="tiktok"><img src="https://static.vecteezy.com/system/resources/thumbnails/065/386/723/small/tiktok-white-icon-logo-tiktok-app-transparent-background-premium-social-media-design-for-digital-download-free-png.png" alt="LinkedIn"></a>
-            <a href="https://bsky.app/profile/csic.es" class="btn-social" id="bsky"><img src="https://images.seeklogo.com/logo-png/52/2/bluesky-logo-png_seeklogo-520643.png" alt="Bsky"></a>
-        </div>
+            </div>
     </div>
 
     <script src="/static/js/ServicioTecnico.js" defer></script>

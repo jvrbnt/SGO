@@ -1,4 +1,30 @@
 const loginForm = document.getElementById('loginForm');
+const techModeBtn = document.getElementById('techModeBtn');
+const submitBtn = document.getElementById('submitBtn');
+const signupLink = document.getElementById('signupLink');
+const loginTitle = document.querySelector('#login h2');
+
+let isTechMode = false;
+
+// Alternar entre modo Cliente y modo Técnico
+techModeBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    isTechMode = !isTechMode;
+
+    if (isTechMode) {
+        loginTitle.textContent = "Technician Login";
+        submitBtn.textContent = "Log in as Staff";
+        techModeBtn.textContent = "Back to Client Login";
+        signupLink.style.display = "none"; // Los técnicos no se registran aquí
+        document.querySelector('.separator').style.display = "none";
+    } else {
+        loginTitle.textContent = "Log in";
+        submitBtn.textContent = "Log in";
+        techModeBtn.textContent = "Staff Access";
+        signupLink.style.display = "inline";
+        document.querySelector('.separator').style.display = "inline";
+    }
+});
 
 loginForm.addEventListener('submit', async function(event) {
     event.preventDefault();
@@ -8,8 +34,11 @@ loginForm.addEventListener('submit', async function(event) {
         password: document.getElementById('password').value
     };
 
+    // Seleccionamos el endpoint según el modo
+    const loginUrl = isTechMode ? '/api/technician/login' : '/api/client/login';
+
     try {
-        const response = await fetch('/api/login', {
+        const response = await fetch(loginUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(credentials)
@@ -18,29 +47,29 @@ loginForm.addEventListener('submit', async function(event) {
         const data = await response.json();
 
         if (response.ok) {
-            // Build the active user object so ServicioUsuario.js doesn't fail
+            // Guardamos el usuario con su rol
             const activeUser = {
-                name: data.name,
-                lastName: data.lastName,
+                role: data.role,
+                firstName: data.first_name,
+                lastName: data.last_name,
                 email: data.email,
-                entity: data.entity,
-                profilePicture: "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png",
-                requests: [],
-                group: null,
-                ip: null,
-                account: null,
-                project: null
+                profilePicture: data.profile_picture,
+                entity: data.entity || "IMN-Staff"
             };
 
-            // Save the user to local storage
             localStorage.setItem('activeUser', JSON.stringify(activeUser));
-            window.location.href = "/static/html/ServicioUsuario.html";
+
+            // Redirección según el rol que devuelve el backend
+            if (data.role === 'technician') {
+                window.location.href = "/static/html/ServicioTecnico.html";
+            } else {
+                window.location.href = "/static/html/ServicioUsuario.html";
+            }
         } else {
-            // Incorrect credentials error from the backend
-            alert(data.detail);
+            alert(data.detail || "Invalid credentials");
         }
     } catch (error) {
-        console.error("Error connecting to the backend:", error);
-        alert("Connection error. Make sure your FastAPI server is running.");
+        console.error("Connection error:", error);
+        alert("Server is not responding. Check your connection.");
     }
 });

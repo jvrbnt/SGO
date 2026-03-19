@@ -22,47 +22,58 @@ passwordInput.addEventListener('input', function() {
     const hasLetters = /[a-zA-Z]/.test(pass);
     const hasNumbers = /\d/.test(pass);
     if (pass.length > 9 && hasLetters && hasNumbers) {
-        passwordStrengthMsg.textContent = "Strength: High"; passwordStrengthMsg.style.color = "green";
+        passwordStrengthMsg.textContent = "Strength: High"; 
+        passwordStrengthMsg.style.color = "green";
     } else if (pass.length > 6) {
-        passwordStrengthMsg.textContent = "Strength: Medium"; passwordStrengthMsg.style.color = "orange";
+        passwordStrengthMsg.textContent = "Strength: Medium"; 
+        passwordStrengthMsg.style.color = "orange";
     } else {
-        passwordStrengthMsg.textContent = "Strength: Low"; passwordStrengthMsg.style.color = "red";
+        passwordStrengthMsg.textContent = "Strength: Low"; 
+        passwordStrengthMsg.style.color = "red";
     }
 });
 
-// Send data to the Backend (PostgreSQL) instead of localStorage
+// Send data to the Backend (PostgreSQL)
 registrationForm.addEventListener('submit', async function(event) {
     event.preventDefault();
     
-    // Basic fields expected by the database
-    const newUser = {
-        name: document.getElementById('name').value,
+    // The keys MUST match the Pydantic schema (ClientCreateWeb) exactly
+    const newClient = {
+        first_name: document.getElementById('name').value,
         last_name: document.getElementById('lastName').value,
         email: document.getElementById('email').value,
         password: passwordInput.value,
         entity: selectEntity.value,
-        // Extra fields for internal MiNa users
-        group: document.getElementById('group').value || null,
-        ip: document.getElementById('ip').value || null,
-        account: document.getElementById('account').value || null,
-        project: document.getElementById('project').value || null
+        // Map the UI fields to the updated schema attribute names
+        internal_account: document.getElementById('account').value || null,
+        ip_address: document.getElementById('ip').value || null,
+        group_name: document.getElementById('group').value || null,
+        project_id: document.getElementById('project').value || null
     };
 
     try {
-        const response = await fetch('/api/signup', {
+        // Updated endpoint to match the new client-specific route
+        const response = await fetch('/api/client/signup', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newUser)
+            body: JSON.stringify(newClient)
         });
 
         const data = await response.json();
 
         if (response.ok) {
-            alert(data.message); // "Account created successfully"
+            alert(data.message || "Account created successfully");
             window.location.href = "/static/html/ServicioLogin.html";
         } else {
-            // Backend returns an error (e.g.: Email is already registered)
-            alert(data.detail); 
+            // Detailed error handling to avoid [object Object]
+            if (Array.isArray(data.detail)) {
+                // Validation errors from FastAPI
+                const errorMsg = data.detail.map(err => `${err.loc[1]}: ${err.msg}`).join('\n');
+                alert("Validation Error:\n" + errorMsg);
+            } else {
+                // Generic error from the backend
+                alert("Error: " + (data.detail || "Something went wrong"));
+            }
         }
     } catch (error) {
         console.error("Error connecting to the backend:", error);

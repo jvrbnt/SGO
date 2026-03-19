@@ -1,36 +1,31 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List
 
-class UserCreate(BaseModel):
-    name: str
-    last_name: str
-    email: str
-    password: str
-    entity: str
-
-    # Optional fields (default to None if not sent)
-    group: Optional[str] = None
-    ip: Optional[str] = None
-    account: Optional[str] = None
-    project: Optional[str] = None
-
-class UserLogin(BaseModel):
-    email: str
-    password: str
-
-class UserResponse(BaseModel):
-    # Lo que devolvemos al frontend tras el login
-    id: int
+# --- CLIENT SCHEMAS ---
+class ClientBase(BaseModel):
     first_name: str
     last_name: str
-    email: str
+    email: EmailStr
     entity: str
-    role: str
-    research_group: Optional[str] = None
-    principal_investigator: Optional[str] = None
     internal_account: Optional[str] = None
-    project_code: Optional[str] = None
-    profile_picture: Optional[str] = None
+    ip_address: Optional[str] = None
+    group_name: Optional[str] = None
+    project_id: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+class ClientCreateWeb(ClientBase):
+    password: str # Mandatory for web signup
+
+class ClientCreateAdmin(ClientBase):
+    password: Optional[str] = None # Optional for technician-led registration
+
+# --- TECHNICIAN SCHEMAS ---
+class TechnicianCreate(BaseModel):
+    first_name: str
+    last_name: str
+    email: EmailStr
+    password: str
+
+# --- LOGIN SCHEMAS ---
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str

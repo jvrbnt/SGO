@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
@@ -6,9 +6,10 @@ from sqlalchemy.orm import Session
 import models, schemas
 from database import engine, LocalSession, DB_AVAILABLE
 
-# 1. Create tables in PostgreSQL using the updated models
+# 1. Database Initialization
 if DB_AVAILABLE:
     try:
+        # This will create the new tables: clients, technicians, offers, services
         models.Base.metadata.create_all(bind=engine)
     except Exception as e:
         print(f"WARNING: Could not connect to database — {e}")
@@ -20,9 +21,11 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # 2. Database dependency
 def get_db():
-    import database
-    if not database.DB_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Database is not available")
+    if not DB_AVAILABLE:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, 
+            detail="Database is not available"
+        )
     db = LocalSession()
     try:
         yield db
@@ -35,50 +38,65 @@ async def read_index():
 
 # --- 3. API ROUTES ---
 
-# --- REGISTRATION ROUTE ---
-@app.post("/api/signup")
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    if db.query(models.User).filter(models.User.email == user.email).first():
+# --- CLIENT REGISTRATION (WEB) ---
+@app.post("/api/client/signup")
+def create_client(client_data: schemas.ClientCreateWeb, db: Session = Depends(get_db)):
+    # Check if client already exists
+    if db.query(models.Client).filter(models.Client.email == client_data.email).first():
         raise HTTPException(status_code=400, detail="Email is already registered")
 
-    new_user = models.User(
-        name=user.name,
-        last_name=user.last_name,
-        email=user.email,
-        password=user.password,
-        entity=user.entity,
-        # Save the extra fields:
-        group=user.group,
-        ip=user.ip,
-        account=user.account,
-        project=user.project,
+    new_client = models.Client(
+        first_name=client_data.first_name,
+        last_name=client_data.last_name,
+        email=client_data.email,
+        hashed_password=client_data.password, # In production, use hashing!
+        entity=client_data.entity,
+        internal_account=client_data.internal_account,
+        ip_address=client_data.ip_address,
+        group_name=client_data.group_name,
+        project_id=client_data.project_id,
         profile_picture="https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png"
     )
-    db.add(new_user)
+    db.add(new_client)
     db.commit()
-    return {"message": "Account created successfully"}
+    db.refresh(new_client)
+    return {"message": "Client account created successfully"}
 
-# --- LOGIN ROUTE ---
-@app.post("/api/login")
-def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(
-        models.User.email == user.email,
-        models.User.password == user.password
+# --- CLIENT LOGIN ---
+@app.post("/api/client/login")
+def login_client(login_data: schemas.LoginRequest, db: Session = Depends(get_db)):
+    db_client = db.query(models.Client).filter(
+        models.Client.email == login_data.email,
+        models.Client.hashed_password == login_data.password
     ).first()
 
-    if not db_user:
-        raise HTTPException(status_code=400, detail="Incorrect email or password")
+    if not db_client:
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
 
-    # Return the full object for direct JS loading
     return {
-        "email": db_user.email,
-        "name": db_user.name,
-        "lastName": db_user.last_name,
-        "entity": db_user.entity,
-        "group": db_user.group,
-        "ip": db_user.ip,
-        "account": db_user.account,
-        "project": db_user.project,
-        "profilePicture": db_user.profile_picture,
-        "requests": [] # (Next step will be creating a table for requests)
+        "role": "client",
+        "email": db_client.email,
+        "first_name": db_client.first_name,
+        "last_name": db_client.last_name,
+        "entity": db_client.entity,
+        "profile_picture": db_client.profile_picture
+    }
+
+# --- TECHNICIAN LOGIN ---
+@app.post("/api/technician/login")
+def login_technician(login_data: schemas.LoginRequest, db: Session = Depends(get_db)):
+    db_tech = db.query(models.Technician).filter(
+        models.Technician.email == login_data.email,
+        models.Technician.hashed_password == login_data.password
+    ).first()
+
+    if not db_tech:
+        raise HTTPException(status_code=401, detail="Technician access denied")
+
+    return {
+        "role": "technician",
+        "email": db_tech.email,
+        "first_name": db_tech.first_name,
+        "last_name": db_tech.last_name,
+        "profile_picture": db_tech.profile_picture
     }

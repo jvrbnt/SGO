@@ -1,58 +1,71 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Float, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Float, DateTime, Boolean, Text
 from sqlalchemy.orm import relationship
 import datetime
 from database import Base
 
-class User(Base):
-    __tablename__ = "users"
+class Client(Base):
+    __tablename__ = "clients"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
-    last_name = Column(String)
-    email = Column(String, unique=True, index=True)
-    password = Column(String)
-    entity = Column(String)
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=True) # Nullable for offline/email clients
+    entity = Column(String, nullable=False)
 
-    # --- EXTRA FIELDS (Optional, can be empty if not from MiNa) ---
-    group = Column(String, nullable=True)
-    ip = Column(String, nullable=True)
-    account = Column(String, nullable=True)
-    project = Column(String, nullable=True)
-
-    # Field to store the profile picture URL
+    # MiNa Specific Fields
+    internal_account = Column(String, nullable=True)
+    ip_address = Column(String, nullable=True)
+    group_name = Column(String, nullable=True)
+    project_id = Column(String, nullable=True)
     profile_picture = Column(String, nullable=True)
-    
-    requests = relationship("Request", back_populates="client", foreign_keys="[Request.client_id]")
-
-class Request(Base):
-    __tablename__ = "requests"
-
-    id = Column(Integer, primary_key=True, index=True)
-    status = Column(String, default="requested") 
-
-    # --- PHASE 1: INITIAL REQUEST (CLIENT) ---
-    service_name = Column(String)
-    initial_hours = Column(Float)
-    initial_comment = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    client_id = Column(Integer, ForeignKey("users.id"))
-
-    # --- PHASE 2: TECHNICAL OFFER (TECHNICIAN) ---
-    technician_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    offered_hours = Column(Float, nullable=True)
-    technical_adjustment = Column(String, nullable=True)
-    quoted_price = Column(Float, default=0.0) 
-    offered_at = Column(DateTime, nullable=True)
-
-    # --- PHASE 3: ACCEPTANCE (CLIENT) ---
-    is_accepted = Column(Boolean, default=False)
-    accepted_at = Column(DateTime, nullable=True)
-
-    # --- PHASE 4: TRACEABILITY (CLOUD PATHS) ---
-    path_initial_doc = Column(String, nullable=True)
-    path_offer_doc = Column(String, nullable=True)
-    path_acceptance_doc = Column(String, nullable=True)
 
     # Relationships
-    client = relationship("User", foreign_keys=[client_id], back_populates="requests")
-    technician = relationship("User", foreign_keys=[technician_id])
+    offers = relationship("Offer", back_populates="client")
+
+class Technician(Base):
+    __tablename__ = "technicians"
+
+    id = Column(Integer, primary_key=True, index=True)
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False) # Always required
+    profile_picture = Column(String, nullable=True)
+
+    # Relationships
+    managed_offers = relationship("Offer", back_populates="manager")
+    assigned_services = relationship("Service", back_populates="technician")
+
+class Offer(Base):
+    __tablename__ = "offers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    status = Column(String, default="requested") # requested, technical_offer, accepted, finished
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    
+    # Foreign Keys
+    client_id = Column(Integer, ForeignKey("clients.id"))
+    manager_id = Column(Integer, ForeignKey("technicians.id"), nullable=True)
+
+    # Relationships
+    client = relationship("Client", back_populates="offers")
+    manager = relationship("Technician", back_populates="managed_offers")
+    services = relationship("Service", back_populates="offer", cascade="all, delete-orphan")
+
+class Service(Base):
+    __tablename__ = "services"
+
+    id = Column(Integer, primary_key=True, index=True)
+    service_name = Column(String, nullable=False)
+    hours = Column(Float, default=0.0)
+    comment = Column(Text, nullable=True)
+    status = Column(String, default="pending")
+    
+    # Foreign Keys
+    offer_id = Column(Integer, ForeignKey("offers.id"))
+    technician_id = Column(Integer, ForeignKey("technicians.id"), nullable=True)
+
+    # Relationships
+    offer = relationship("Offer", back_populates="services")
+    technician = relationship("Technician", back_populates="assigned_services")
