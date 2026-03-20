@@ -10,4 +10,5 @@ GIT
 
 VIRTUAL ENVIRONMENT
 
-                # Para activar el entorno virtual
+                                     # Para activar el entorno virtual
+pip install -r .\requirements.txt    # Para instalar las dependencias del proyecto
