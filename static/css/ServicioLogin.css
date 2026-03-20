@@ -1,10 +1,18 @@
+.form-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 60px;
+    margin: 50px auto;
+}
+
 #login, #sign {
     height: auto;
     width: 400px;
     border-radius: 12px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     background-color: var(--white);
-    margin: 50px auto;
+    margin: 0;
     padding: 20px;
     border: 1px solid #eee;
     transition: width 0.3s ease; /* Smooth transition when widening */
@@ -110,4 +118,8 @@
 #passwordMessage {
     font-weight: bold;
     font-size: 12px;
+}
+
+.password-container {
+    width: 100%;
 }
