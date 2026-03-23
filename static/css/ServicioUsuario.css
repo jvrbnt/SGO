@@ -84,7 +84,8 @@
 }
 
 .service-form.open {
-    max-height: 200px;
+    max-height: 400px;
+    height: auto;
     padding: 15px;
     margin-top: 10px;
     border-bottom: 1px solid #ddd;

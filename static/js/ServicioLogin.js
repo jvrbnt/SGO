@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            console.log("Intentando hacer login. Modo Staff:", isStaffMode);
 
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
@@ -32,16 +33,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 const data = await response.json();
+                console.log("Respuesta del servidor:", data);
 
                 if (response.ok) {
                     localStorage.setItem('currentUser', JSON.stringify(data));
                     window.location.href = isStaffMode ? "/static/html/ServicioTecnico.html" : "/static/html/ServicioUsuario.html";
                 } else {
-                    alert(data.detail || "Invalid credentials. Please try again.");
+                    // Controlamos si el error es de FastAPI (Array de validación 422)
+                    let errorMsg = data.detail;
+                    if (Array.isArray(errorMsg)) {
+                        errorMsg = "Formato de datos incorrecto. Revisa el email.";
+                    }
+                    alert("Error: " + errorMsg);
                 }
             } catch (err) {
-                console.error("Connection error:", err);
-                alert("Could not connect to the server.");
+                console.error("Error de conexión:", err);
+                alert("No se pudo conectar con el servidor backend.");
             }
         });
     }

@@ -108,12 +108,12 @@ def get_catalog(db: Session = Depends(get_db)):
 
 @app.post("/api/client/offers")
 def create_offer(offer_in: schemas.OfferCreate, db: Session = Depends(get_db)):
-    # Localizamos al cliente (temporalmente el primero hasta implementar JWT)
-    client = db.query(models.Client).first()
+    # Localizamos al cliente exacto usando el email que nos manda el frontend
+    client = db.query(models.Client).filter(models.Client.email == offer_in.client_email).first()
     if not client:
-        raise HTTPException(status_code=404, detail="No client found to associate the offer")
+        raise HTTPException(status_code=404, detail="Client not found in database")
 
-    # Creación de la oferta base
+    # Creación de la oferta base vinculada al ID real del cliente
     new_offer = models.Offer(client_id=client.id, status="requested")
     db.add(new_offer)
     db.commit()
@@ -121,7 +121,7 @@ def create_offer(offer_in: schemas.OfferCreate, db: Session = Depends(get_db)):
 
     # Procesamiento de cada servicio solicitado
     for s in offer_in.services:
-        # Vinculación con el catálogo para persistencia de precios
+        # Buscamos el servicio en el catálogo para guardar la referencia
         catalog_item = db.query(models.ServiceCatalog).filter(
             models.ServiceCatalog.name == s.service_name
         ).first()
@@ -139,8 +139,11 @@ def create_offer(offer_in: schemas.OfferCreate, db: Session = Depends(get_db)):
     return {"message": "Offer requested successfully", "offer_id": new_offer.id}
 
 @app.get("/api/client/my-offers", response_model=List[schemas.OfferResponse])
-def get_client_offers(db: Session = Depends(get_db)):
-    client = db.query(models.Client).first()
+def get_client_offers(email: str, db: Session = Depends(get_db)):
+    # Buscamos las ofertas usando el email que pasamos por parámetro en la URL
+    client = db.query(models.Client).filter(models.Client.email == email).first()
+    if not client:
+        return []
     return db.query(models.Offer).filter(models.Offer.client_id == client.id).all()
 
 # --- RUTAS DE GESTIÓN DE OFERTAS (TÉCNICO) ---

@@ -59,6 +59,7 @@ class ServiceResponse(ServiceBase):
         from_attributes = True
 
 class OfferCreate(BaseModel):
+    client_email: EmailStr
     services: List[ServiceCreate]
 
 class OfferResponse(BaseModel):
