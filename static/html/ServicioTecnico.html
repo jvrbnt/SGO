@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Technical Management Portal - IMN</title>
+    <title>Technical Portal - MiNa SGO</title>
     <link rel="stylesheet" href="/static/css/ServicioTecnico.css">
-    <link rel="stylesheet" href="/static/css/Servicio.css">
 </head>
 <body>
     <div class="side-bar" id="topBar">
@@ -21,12 +20,8 @@
         </div>
 
         <div id="profileContainer">
-            <span id="userNameBar">Technician Name</span>
-            <img id="userIcon" src="/static/imagenes/default-avatar.png" alt="userIcon">
-            <div id="dropdownMenu" class="hidden">
-                <button class="menu-option" id="editProfile">Edit Profile</button>
-                <button class="menu-option" id="logOut">Log Out</button>
-            </div>
+            <span id="techName">Loading Technical Staff...</span> 
+            <img id="techProfilePic" src="https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png" alt="techIcon">
         </div>
     </div>
 
@@ -35,78 +30,26 @@
         <img src="/static/imagenes/MicroNano.png" alt="Csic Logo Right" class="centered-icon icon-right">
     </div>
 
-    <div id="mainContainer">
-        <div id="actionPanel">
-            <button class="btn-primary" id="btnRegisterClient">
-                <img src="https://cdn-icons-png.flaticon.com/512/747/747376.png" width="20"> Register New Client
-            </button>
-            <button class="btn-secondary" id="btnStats">
-                <img src="https://cdn-icons-png.flaticon.com/512/1162/1162251.png" width="20"> View Statistics
-            </button>
+    <main class="main-content">
+        <div class="dashboard-header">
+            <h1>Global Service Requests</h1>
+            <p>Technical management of incoming offers and service status.</p>
         </div>
 
-        <div id="requests">
-            <h2 class="section-title">Management Dashboard: Offers & Services</h2>
-            
-            <div id="requestFilters">
-                <div class="filter-group">
-                    <label>Offer Status:</label>
-                    <select id="filterStatus">
-                        <option value="all">All statuses</option>
-                        <option value="requested">Requested (New)</option>
-                        <option value="technical_offer">In Analysis</option>
-                        <option value="accepted">Accepted / Active</option>
-                        <option value="finished">Completed</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>View Mode:</label>
-                    <select id="filterTechnician">
-                        <option value="all">All Global Offers</option>
-                        <option value="my_managed">Offers Managed by Me</option>
-                        <option value="my_tasks">Specific Services Assigned to Me</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <input type="text" id="searchClient" placeholder="Search by Client name or email...">
-                </div>
-            </div>
-
-            <div id="globalRequestList">
-                </div>
+        <div id="globalRequestList" class="request-grid">
+            <p>Connecting to database...</p>
         </div>
-    </div>
-
-    <div id="modalRegisterClient" class="modal hidden">
-        <div class="modal-content">
-            <h3>Register Manual Client (Offline/Email)</h3>
-            <form id="formOfflineClient">
-                <input type="text" id="offlineName" placeholder="First Name" required>
-                <input type="text" id="offlineLastName" placeholder="Last Name" required>
-                <input type="email" id="offlineEmail" placeholder="Email Address" required>
-                <select id="offlineEntity">
-                    <option value="Internal MiNa">Internal MiNa</option>
-                    <option value="CSIC">CSIC (External)</option>
-                    <option value="University">University</option>
-                    <option value="Private Company">Private Company</option>
-                </select>
-                <div class="modal-buttons">
-                    <button type="button" class="btn-cancel" id="closeModal">Cancel</button>
-                    <button type="submit" class="btn-save">Save Client</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    </main>
 
     <div id="icon2"><img src="/static/imagenes/Mina.png"></div>
 
     <div class="side-bar" id="footer">
         <img src="/static/imagenes/CsicGris.png" alt="Footer Logo" class="logo-footer">
-        <div class="social-links">
-            <a href="https://es-es.facebook.com/CSIC/" class="btn-social"><img src="https://cdn.pixabay.com/photo/2021/06/15/12/51/facebook-6338508_640.png" alt="Facebook"></a>
-            </div>
+        <div class="footer-info">
+            <small>Internal Management System - MiNa SGO</small>
+        </div>
     </div>
 
-    <script src="/static/js/ServicioTecnico.js" defer></script>
+    <script src="/static/js/ServicioTecnico.js"></script>
 </body>
 </html>

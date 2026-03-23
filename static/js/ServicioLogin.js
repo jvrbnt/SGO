@@ -1,75 +1,51 @@
-const loginForm = document.getElementById('loginForm');
-const techModeBtn = document.getElementById('techModeBtn');
-const submitBtn = document.getElementById('submitBtn');
-const signupLink = document.getElementById('signupLink');
-const loginTitle = document.querySelector('#login h2');
+document.addEventListener("DOMContentLoaded", () => {
+  const loginForm = document.getElementById("loginForm");
+  const techModeBtn = document.getElementById("techModeBtn");
+  const loginTitle = document.getElementById("title"); // ID corregido
 
-let isTechMode = false;
+  let isStaffMode = false;
 
-// Alternar entre modo Cliente y modo Técnico
-techModeBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    isTechMode = !isTechMode;
+  if (techModeBtn) {
+    techModeBtn.addEventListener("click", () => {
+      isStaffMode = !isStaffMode;
+      loginTitle.textContent = isStaffMode ? "Staff Login" : "Client Login";
+      techModeBtn.textContent = isStaffMode
+        ? "Back to Client Login"
+        : "Staff Access";
 
-    if (isTechMode) {
-        loginTitle.textContent = "Technician Login";
-        submitBtn.textContent = "Log in as Staff";
-        techModeBtn.textContent = "Back to Client Login";
-        signupLink.style.display = "none"; // Los técnicos no se registran aquí
-        document.querySelector('.separator').style.display = "none";
-    } else {
-        loginTitle.textContent = "Log in";
-        submitBtn.textContent = "Log in";
-        techModeBtn.textContent = "Staff Access";
-        signupLink.style.display = "inline";
-        document.querySelector('.separator').style.display = "inline";
-    }
-});
+      // Opcional: un cambio de color para que se note
+      techModeBtn.style.color = isStaffMode ? "var(--color-csic)" : "black";
+    });
+  }
 
-loginForm.addEventListener('submit', async function(event) {
-    event.preventDefault();
-    
-    const credentials = {
-        email: document.getElementById('email').value,
-        password: document.getElementById('password').value
-    };
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault(); // CRÍTICO: Evita que la página se recargue
 
-    // Seleccionamos el endpoint según el modo
-    const loginUrl = isTechMode ? '/api/technician/login' : '/api/client/login';
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const endpoint = isStaffMode
+      ? "/api/technician/login"
+      : "/api/client/login";
 
     try {
-        const response = await fetch(loginUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(credentials)
-        });
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-        const data = await response.json();
+      const data = await response.json();
 
-        if (response.ok) {
-            // Guardamos el usuario con su rol
-            const activeUser = {
-                role: data.role,
-                firstName: data.first_name,
-                lastName: data.last_name,
-                email: data.email,
-                profilePicture: data.profile_picture,
-                entity: data.entity || "IMN-Staff"
-            };
-
-            localStorage.setItem('activeUser', JSON.stringify(activeUser));
-
-            // Redirección según el rol que devuelve el backend
-            if (data.role === 'technician') {
-                window.location.href = "/static/html/ServicioTecnico.html";
-            } else {
-                window.location.href = "/static/html/ServicioUsuario.html";
-            }
-        } else {
-            alert(data.detail || "Invalid credentials");
-        }
+      if (response.ok) {
+        localStorage.setItem("currentUser", JSON.stringify(data));
+        window.location.href = isStaffMode
+          ? "ServicioTecnico.html"
+          : "ServicioUsuario.html";
+      } else {
+        alert(data.detail || "Invalid credentials");
+      }
     } catch (error) {
-        console.error("Connection error:", error);
-        alert("Server is not responding. Check your connection.");
+      alert("Connection error. Is the server running?");
     }
+  });
 });
