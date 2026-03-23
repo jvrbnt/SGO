@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Technical Portal - MiNa SGO</title>
+    <title>Staff Portal - IMN</title>
     <link rel="stylesheet" href="/static/css/ServicioTecnico.css">
+    <link rel="stylesheet" href="/static/css/Servicio.css">
 </head>
 <body>
-    <div class="side-bar" id="topBar">
+    <div class="side-bar">
         <div class="top-contact-info">
             <div>
                 <img src="https://cdn.iconscout.com/icon/premium/png-256-thumb/correo-electronico-icon-svg-png-download-11866287.png?f=webp&w=128" alt="email">
@@ -18,38 +19,39 @@
                 <h6>+34 91 806 07 00</h6>
             </div>
         </div>
-
-        <div id="profileContainer">
-            <span id="techName">Loading Technical Staff...</span> 
-            <img id="techProfilePic" src="https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png" alt="techIcon">
+        <div id="profileContainer" style="display: flex; align-items: center; gap: 10px; margin-right: 20px;">
+            <span id="techName" style="color: white; font-weight: bold;"></span> 
+            <button id="logOut" style="background: red; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px;">Exit Staff</button>
         </div>
     </div>
 
-    <div id="icon">
-        <img src="/static/imagenes/Csic.png" alt="Csic Logo Left" class="centered-icon icon-left">
-        <img src="/static/imagenes/MicroNano.png" alt="Csic Logo Right" class="centered-icon icon-right">
-    </div>
+    <div id="imgCentral"><h1>MiNa Staff Portal</h1></div>
 
     <main class="main-content">
-        <div class="dashboard-header">
-            <h1>Global Service Requests</h1>
-            <p>Technical management of incoming offers and service status.</p>
+        <div id="icon2" style="text-align: center; margin-bottom: 30px;">
+            <img src="/static/imagenes/Mina.png" alt="Mina Logo">
         </div>
 
+        <h2 class="section-title" style="text-align: center;">Global Requests</h2>
         <div id="globalRequestList" class="request-grid">
-            <p>Connecting to database...</p>
+            <p style="text-align: center; padding: 20px;">Fetching from PostgreSQL...</p>
         </div>
     </main>
 
-    <div id="icon2"><img src="/static/imagenes/Mina.png"></div>
+    <div id="icon">
+        <img src="/static/imagenes/Csic.png" alt="Csic Logo Left" class="centered-icon icon-left">
+        <img src="/static/imagenes/MicroNano.png" alt="MicroNano Logo" class="centered-icon icon-right">
+    </div>
 
     <div class="side-bar" id="footer">
         <img src="/static/imagenes/CsicGris.png" alt="Footer Logo" class="logo-footer">
-        <div class="footer-info">
-            <small>Internal Management System - MiNa SGO</small>
+        <div class="social-links">
+            <a href="https://es-es.facebook.com/CSIC/" class="btn-social"><img src="https://cdn.pixabay.com/photo/2021/06/15/12/51/facebook-6338508_640.png" alt="Facebook"></a>
+            <a href="https://www.instagram.com/csic/" class="btn-social" id="insta"><img src="https://static.vecteezy.com/system/resources/thumbnails/018/930/691/small/instagram-logo-instagram-icon-transparent-free-png.png" alt="Instagram"></a>
+            <a href="https://x.com/csic" class="btn-social" id="twitter"><img src="https://1000logos.net/wp-content/uploads/2017/06/Twitter-Log%D0%BE-500x281.png" alt="Twitter/X"></a>
         </div>
     </div>
 
-    <script src="/static/js/ServicioTecnico.js"></script>
+    <script src="/static/js/ServicioTecnico.js" defer></script>
 </body>
 </html>

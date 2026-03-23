@@ -21,106 +21,105 @@
         </div>
     </div>
 
-
     <div id="imgCentral"><h1>MiNa Services Management</h1></div>
     
     <div class="form-wrapper">
-    <div id="icon2"><img src="/static/imagenes/Mina.png"></div>
-    <div id="sign">
-        <form id="registrationForm">
-            <h2>Sign up</h2>
-            
-            <div class="field">
-                <label for="name">Name:</label>
-                <input type="text" id="name" placeholder="Name" required>
-            </div>
-
-            <div class="field">
-                <label for="lastName">Last Name:</label>
-                <input type="text" id="lastName" placeholder="Last Name" required>
-            </div>
-
-            <div class="field">
-                <label for="email">Email:</label>
-                <input type="email" id="email" placeholder="Email" required>
-            </div>
-
-            <div class="field">
-                <label for="password">Password:</label>
-                <div class="password-container">
-                    <input type="password" id="password" placeholder="Password" required>
-                </div>
-                <span id="passwordMessage"></span>
-            </div>
-
-            <div class="field">
-                <label for="entity">Organization:</label>
-                <select id="entity" name="entity" required>
-                    <option selected disabled>select</option>
-                    <option value="mina">Internal (MiNa)</option>
-                    <option value="csic">CSIC</option>
-                    <option value="uam">UAM</option>
-                    <option value="universidad">University</option>
-                    <option value="opis">OPIS</option>
-                    <option value="empresa">Company</option>
-                </select>
-            </div>
-
-            <div id="extraFields" style="display: none;">
-                <div class="extra-row">
-                    <div class="field">
-                        <label for="group">Group:</label>
-                        <select id="group" name="group">
-                            <option selected disabled>select</option>
-                            <option value="finder">FINDER</option>
-                            <option value="bionano">BIONANOMECHANICS</option>
-                            <option value="es4term">ES4TERM</option>
-                            <option value="oms">OMS</option>
-                            <option value="mbe">MBE</option>
-                            <option value="metalnano">METALNANO</option>
-                        </select>
-                    </div>
-                    <div class="field">
-                        <label for="ip">IP:</label>
-                        <input type="text" id="ip" name="ip" placeholder="IP">
-                    </div>
+        <div id="icon2"><img src="/static/imagenes/Mina.png" alt="Mina Logo"></div>
+        <div id="sign">
+            <form id="registrationForm">
+                <h2>Sign up</h2>
+                
+                <div class="field">
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" placeholder="Name" required>
                 </div>
 
-                <div class="extra-row">
-                    <div class="field">
-                        <label for="account">Internal Account:</label>
-                        <input type="text" id="account" name="account" placeholder="Account">
+                <div class="field">
+                    <label for="lastName">Last Name:</label>
+                    <input type="text" id="lastName" placeholder="Last Name" required>
+                </div>
+
+                <div class="field">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" placeholder="Email" required>
+                </div>
+
+                <div class="field">
+                    <label for="password">Password:</label>
+                    <div class="password-container">
+                        <input type="password" id="password" placeholder="Password" required>
                     </div>
-                    <div class="field">
-                        <label for="project">Project Code:</label>
-                        <input type="text" id="project" name="project" placeholder="Project">
+                    <span id="passwordMessage"></span>
+                </div>
+
+                <div class="field">
+                    <label for="entity">Organization:</label>
+                    <select id="entity" name="entity" required>
+                        <option selected disabled>select</option>
+                        <option value="mina">Internal (MiNa)</option>
+                        <option value="csic">CSIC</option>
+                        <option value="uam">UAM</option>
+                        <option value="universidad">University</option>
+                        <option value="opis">OPIS</option>
+                        <option value="empresa">Company</option>
+                    </select>
+                </div>
+
+                <div id="extraFields" style="display: none;">
+                    <div class="extra-row">
+                        <div class="field">
+                            <label for="group">Group:</label>
+                            <select id="group" name="group">
+                                <option selected disabled>select</option>
+                                <option value="finder">FINDER</option>
+                                <option value="bionano">BIONANOMECHANICS</option>
+                                <option value="es4term">ES4TERM</option>
+                                <option value="oms">OMS</option>
+                                <option value="mbe">MBE</option>
+                                <option value="metalnano">METALNANO</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="ip">IP:</label>
+                            <input type="text" id="ip" name="ip" placeholder="IP">
+                        </div>
+                    </div>
+
+                    <div class="extra-row">
+                        <div class="field">
+                            <label for="account">Internal Account:</label>
+                            <input type="text" id="account" name="account" placeholder="Account">
+                        </div>
+                        <div class="field">
+                            <label for="project">Project Code:</label>
+                            <input type="text" id="project" name="project" placeholder="Project">
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <button type="submit">Sign up</button>
-        </form>
-
+                <button type="submit" id="btnSignUp">Sign up</button>
+                <a href="/static/html/ServicioLogin.html" style="display: block; text-align: center; margin-top: 15px;">Back to Log in</a>
+            </form>
+        </div>
     </div>
-    </div>
-        <div id="icon">
+
+    <div id="icon">
         <img src="/static/imagenes/Csic.png" alt="Csic Logo Left" class="centered-icon icon-left">
-        <img src="/static/imagenes/MicroNano.png" alt="Csic Logo Right" class="centered-icon icon-right">
+        <img src="/static/imagenes/MicroNano.png" alt="MicroNano Logo" class="centered-icon icon-right">
     </div>
+
     <div class="side-bar" id="footer">
         <img src="/static/imagenes/CsicGris.png" alt="Footer Logo" class="logo-footer">
-
         <div class="social-links">
             <a href="https://es-es.facebook.com/CSIC/" class="btn-social"><img src="https://cdn.pixabay.com/photo/2021/06/15/12/51/facebook-6338508_640.png" alt="Facebook"></a>
             <a href="https://www.instagram.com/csic/" class="btn-social" id="insta"><img src="https://static.vecteezy.com/system/resources/thumbnails/018/930/691/small/instagram-logo-instagram-icon-transparent-free-png.png" alt="Instagram"></a>
-            <a href="https://x.com/csic" class="btn-social" id = twitter><img src="https://1000logos.net/wp-content/uploads/2017/06/Twitter-Log%D0%BE-500x281.png" alt="Twitter/X"></a>
-            <a href="https://www.youtube.com/user/csicdptocomunicacion" class="btn-social" id = youtube><img src="https://static.vecteezy.com/system/resources/thumbnails/042/148/649/small/youtube-logo-youtube-social-media-icon-free-png.png" alt="Youtube"></a>
-            <a href="https://www.tiktok.com/@elcsic" class="btn-social" id = tiktok><img src="https://static.vecteezy.com/system/resources/thumbnails/065/386/723/small/tiktok-white-icon-logo-tiktok-app-transparent-background-premium-social-media-design-for-digital-download-free-png.png" alt="LinkedIn"></a>
-            <a href="https://bsky.app/profile/csic.es" class="btn-social" id = bsky><img src="https://images.seeklogo.com/logo-png/52/2/bluesky-logo-png_seeklogo-520643.png" alt="Bsky"></a>
+            <a href="https://x.com/csic" class="btn-social" id="twitter"><img src="https://1000logos.net/wp-content/uploads/2017/06/Twitter-Log%D0%BE-500x281.png" alt="Twitter/X"></a>
+            <a href="https://www.youtube.com/user/csicdptocomunicacion" class="btn-social" id="youtube"><img src="https://static.vecteezy.com/system/resources/thumbnails/042/148/649/small/youtube-logo-youtube-social-media-icon-free-png.png" alt="Youtube"></a>
+            <a href="https://www.tiktok.com/@elcsic" class="btn-social" id="tiktok"><img src="https://static.vecteezy.com/system/resources/thumbnails/065/386/723/small/tiktok-white-icon-logo-tiktok-app-transparent-background-premium-social-media-design-for-digital-download-free-png.png" alt="TikTok"></a>
+            <a href="https://bsky.app/profile/csic.es" class="btn-social" id="bsky"><img src="https://images.seeklogo.com/logo-png/52/2/bluesky-logo-png_seeklogo-520643.png" alt="Bsky"></a>
         </div>
     </div>
 
     <script src="/static/js/ServicioSign.js" defer></script>
-
 </body>
 </html>
