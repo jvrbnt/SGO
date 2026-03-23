@@ -1,58 +1,43 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login - MiNa SGO</title>
+    <link rel="stylesheet" href="/static/css/Servicio.css" />
     <link rel="stylesheet" href="/static/css/ServicioLogin.css" />
-  </head>
-  <body>
+</head>
+<body>
     <div id="icon">
-      <img
-        src="/static/imagenes/Csic.png"
-        alt="Csic Logo"
-        class="centered-icon icon-left"
-      />
-      <img
-        src="/static/imagenes/MicroNano.png"
-        alt="MicroNano Logo"
-        class="centered-icon icon-right"
-      />
+        <img src="/static/imagenes/Csic.png" alt="Csic Logo" class="centered-icon icon-left" />
+        <img src="/static/imagenes/MicroNano.png" alt="MicroNano Logo" class="centered-icon icon-right" />
     </div>
 
-    <div class="login-container">
-      <h1 id="title">Client Login</h1>
+    <div class="form-wrapper">
+        <div id="login">
+            <h2 id="title">Client Login</h2>
 
-      <form id="loginForm">
-        <div class="input-group">
-          <input type="email" id="email" placeholder="Email" required />
+            <form id="loginForm">
+                <input type="email" id="email" placeholder="Email" required />
+                <input type="password" id="password" placeholder="Password" required />
+                <button type="submit">Log In</button>
+            </form>
+
+            <div style="margin-top: 15px;">
+                <button type="button" id="techModeBtn" style="background-color: #555;">Staff Access</button>
+            </div>
+
+            <p style="text-align: center; margin-top: 15px; font-size: 14px;">
+                Don't have an account? 
+                <a href="/static/html/ServicioSign.html">Sign Up</a>
+            </p>
         </div>
-        <div class="input-group">
-          <input
-            type="password"
-            id="password"
-            placeholder="Password"
-            required
-          />
-        </div>
-        <button type="submit" class="btn-main">Log In</button>
-      </form>
-
-      <div class="mode-switcher">
-        <button type="button" id="techModeBtn" class="btn-staff">
-          Staff Access
-        </button>
-      </div>
-
-      <p class="footer-text">
-        Don't have an account? <a href="ServicioSign.html">Sign Up</a>
-      </p>
     </div>
 
     <div id="icon2">
-      <img src="/static/imagenes/Mina.png" alt="Mina Logo" />
+        <img src="/static/imagenes/Mina.png" alt="Mina Logo" />
     </div>
 
     <script src="/static/js/ServicioLogin.js"></script>
-  </body>
+</body>
 </html>
