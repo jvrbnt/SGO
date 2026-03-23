@@ -4,16 +4,25 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 import models, schemas
-from database import engine, LocalSession
+from database import engine, LocalSession, DB_AVAILABLE
 
 # 1. Create tables in PostgreSQL using the updated models
-models.Base.metadata.create_all(bind=engine)
+if DB_AVAILABLE:
+    try:
+        models.Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"WARNING: Could not connect to database — {e}")
+        import database
+        database.DB_AVAILABLE = False
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # 2. Database dependency
 def get_db():
+    import database
+    if not database.DB_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Database is not available")
     db = LocalSession()
     try:
         yield db
