@@ -61,42 +61,40 @@ def create_client(client_data: schemas.ClientCreateWeb, db: Session = Depends(ge
     db.commit()
     return {"message": "Client account created successfully"}
 
-@app.post("/api/client/login")
-def login_client(login_data: schemas.LoginRequest, db: Session = Depends(get_db)):
-    db_client = db.query(models.Client).filter(
+@app.post("/api/login")
+def unified_login(login_data: schemas.LoginRequest, db: Session = Depends(get_db)):
+    # 1. Busca primero si el email pertenece a un Cliente
+    client = db.query(models.Client).filter(
         models.Client.email == login_data.email,
         models.Client.hashed_password == login_data.password
     ).first()
+    
+    if client:
+        return {
+            "role": "client",
+            "email": client.email,
+            "first_name": client.first_name,
+            "last_name": client.last_name,
+            "profile_picture": client.profile_picture
+        }
 
-    if not db_client:
-        raise HTTPException(status_code=401, detail="Incorrect email or password")
-
-    return {
-        "role": "client",
-        "email": db_client.email,
-        "first_name": db_client.first_name,
-        "last_name": db_client.last_name,
-        "entity": db_client.entity,
-        "profile_picture": db_client.profile_picture
-    }
-
-@app.post("/api/technician/login")
-def login_technician(login_data: schemas.LoginRequest, db: Session = Depends(get_db)):
-    db_tech = db.query(models.Technician).filter(
+    # 2. Si no es cliente, busca si es un Técnico
+    tech = db.query(models.Technician).filter(
         models.Technician.email == login_data.email,
         models.Technician.hashed_password == login_data.password
     ).first()
+    
+    if tech:
+        return {
+            "role": "technician",
+            "email": tech.email,
+            "first_name": tech.first_name,
+            "last_name": tech.last_name,
+            "profile_picture": tech.profile_picture
+        }
 
-    if not db_tech:
-        raise HTTPException(status_code=401, detail="Technician access denied")
-
-    return {
-        "role": "technician",
-        "email": db_tech.email,
-        "first_name": db_tech.first_name,
-        "last_name": db_tech.last_name,
-        "profile_picture": db_tech.profile_picture
-    }
+    # 3. Si no existe en ninguna de las dos tablas, da error
+    raise HTTPException(status_code=401, detail="Credenciales incorrectas")
 
 # --- RUTAS DEL CATÁLOGO DE SERVICIOS ---
 

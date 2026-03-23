@@ -1,55 +1,42 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const loginForm = document.getElementById('loginForm');
-    const techModeBtn = document.getElementById('techModeBtn');
-    const loginTitle = document.getElementById('title');
-    
-    let isStaffMode = false;
+document.addEventListener("DOMContentLoaded", () => {
+  const loginForm = document.getElementById("loginForm");
 
-    if (techModeBtn) {
-        techModeBtn.addEventListener('click', () => {
-            isStaffMode = !isStaffMode;
-            if (loginTitle) {
-                loginTitle.textContent = isStaffMode ? "Staff Login" : "Log in";
-            }
-            techModeBtn.textContent = isStaffMode ? "Back to Client" : "Staff Access";
-            techModeBtn.style.backgroundColor = isStaffMode ? "var(--color-csic)" : "#555";
+  if (loginForm) {
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        // Ahora atacamos a la ruta unificada
+        const response = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
         });
-    }
 
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            console.log("Intentando hacer login. Modo Staff:", isStaffMode);
+        const data = await response.json();
 
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const endpoint = isStaffMode ? '/api/technician/login' : '/api/client/login';
+        if (response.ok) {
+          localStorage.setItem("currentUser", JSON.stringify(data));
 
-            try {
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-
-                const data = await response.json();
-                console.log("Respuesta del servidor:", data);
-
-                if (response.ok) {
-                    localStorage.setItem('currentUser', JSON.stringify(data));
-                    window.location.href = isStaffMode ? "/static/html/ServicioTecnico.html" : "/static/html/ServicioUsuario.html";
-                } else {
-                    // Controlamos si el error es de FastAPI (Array de validación 422)
-                    let errorMsg = data.detail;
-                    if (Array.isArray(errorMsg)) {
-                        errorMsg = "Formato de datos incorrecto. Revisa el email.";
-                    }
-                    alert("Error: " + errorMsg);
-                }
-            } catch (err) {
-                console.error("Error de conexión:", err);
-                alert("No se pudo conectar con el servidor backend.");
-            }
-        });
-    }
+          // El propio backend nos dice si es client o technician
+          if (data.role === "technician") {
+            window.location.href = "/static/html/ServicioTecnico.html";
+          } else {
+            window.location.href = "/static/html/ServicioUsuario.html";
+          }
+        } else {
+          let errorMsg = data.detail;
+          if (Array.isArray(errorMsg))
+            errorMsg = "Formato de datos incorrecto.";
+          alert("Error: " + errorMsg);
+        }
+      } catch (err) {
+        console.error("Error de conexión:", err);
+        alert("No se pudo conectar con el servidor backend.");
+      }
+    });
+  }
 });
