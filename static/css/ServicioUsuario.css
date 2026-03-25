@@ -117,14 +117,23 @@
   margin: 20px auto 0 auto;
 }
 
-/* Profile Styles */
+/* --- ESTILOS DEL MENÚ DE PERFIL (MERGE) --- */
+
 #profileContainer {
   position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
   cursor: pointer;
+  margin-right: 20px;
 }
+
+#userNameBar {
+  color: white;
+  font-weight: bold;
+  font-family: "Montserrat", sans-serif;
+}
+
 #userIcon {
   height: 45px;
   width: 45px;
