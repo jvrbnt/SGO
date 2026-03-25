@@ -1,8 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const activeUser = JSON.parse(localStorage.getItem('activeUser'));
     const DEFAULT_PHOTO = "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png";
 
-    if (!activeUser) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    
+    // 1. Redirección de seguridad
+    if (!currentUser || currentUser.role !== 'client') {
         window.location.href = "/static/html/ServicioLogin.html";
         return;
     }
