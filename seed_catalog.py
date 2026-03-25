@@ -4,17 +4,12 @@ import models
 def reset_catalog():
     db = LocalSession()
     try:
-        print("--- Limpiando base de datos ---")
-        # 1. Borrar ofertas de prueba antiguas para evitar bloqueos (Foreign Key)
+        print("--- Limpiando Catálogo ---")
         db.query(models.Service).delete()
         db.query(models.Offer).delete()
-        
-        # 2. Vaciar por completo el catálogo antiguo
         db.query(models.ServiceCatalog).delete()
-        print("Catálogo antiguo eliminado.")
 
-        # 3. Insertar la lista exclusiva y definitiva
-        servicios_reales = [
+        catalogo_servicios = [
             {"name": "Litografía por haz de electrones", "price_per_hour": 0.0},
             {"name": "Microscopía electrónica de barrido de alta resolución", "price_per_hour": 0.0},
             {"name": "Ataques de iones reactivos (RIE)", "price_per_hour": 0.0},
@@ -28,16 +23,14 @@ def reset_catalog():
             {"name": "Recubrimientos de SiOx, SiNx (PECVD)", "price_per_hour": 0.0}
         ]
 
-        print("--- Cargando nuevo catálogo ---")
-        for s in servicios_reales:
+        for s in catalogo_servicios:
             db.add(models.ServiceCatalog(name=s["name"], price_per_hour=s["price_per_hour"]))
-            print(f"Añadido: {s['name']}")
         
         db.commit()
-        print("ÉXITO: El catálogo ahora contiene ÚNICAMENTE los servicios solicitados.")
+        print("ÉXITO: Catálogo oficial cargado.")
     except Exception as e:
         db.rollback()
-        print(f"Error crítico al guardar en PostgreSQL: {e}")
+        print(f"Error: {e}")
     finally:
         db.close()
 
