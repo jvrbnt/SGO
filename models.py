@@ -52,9 +52,13 @@ class Offer(Base):
     __tablename__ = "offers"
 
     id = Column(Integer, primary_key=True, index=True)
-    status = Column(String, default="requested") # Estados: requested, technical_offer, accepted, finished
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    # Estados: requested, quoted, accepted, finished
+    status = Column(String, default="requested") 
     
+    created_at = Column(DateTime, default=datetime.datetime.now)
+    updated_at = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now) 
+    
+    technician_comment = Column(Text, nullable=True) # El comentario para el cliente  
     # Claves foráneas para identificar al cliente y al responsable técnico
     client_id = Column(Integer, ForeignKey("clients.id"))
     manager_id = Column(Integer, ForeignKey("technicians.id"), nullable=True)

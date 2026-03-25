@@ -29,7 +29,7 @@ def seed_demo_users():
             db.add(cliente)
         
         db.commit()
-        print("ÉXITO: Usuarios demo cargados (sin tocar el catálogo).")
+        print("ÉXITO: Usuarios demo cargados.")
     except Exception as e:
         db.rollback()
         print(f"Error: {e}")

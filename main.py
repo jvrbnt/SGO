@@ -160,3 +160,43 @@ def update_offer_status(offer_id: int, new_status: str, db: Session = Depends(ge
     offer.status = new_status
     db.commit()
     return {"message": f"Offer {offer_id} updated to {new_status}"}
+
+# --- TECHNICIAN REVIEW OPERATIONS ---
+
+@app.get("/api/technician/offers", response_model=List[schemas.OfferResponse])
+def get_all_offers(db: Session = Depends(get_db)):
+    return db.query(models.Offer).all()
+
+@app.get("/api/technician/offers/{offer_id}", response_model=schemas.OfferResponse)
+def get_single_offer(offer_id: int, db: Session = Depends(get_db)):
+    offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer not found")
+    return offer
+
+@app.put("/api/technician/offers/{offer_id}/review")
+def finalize_review_and_send(offer_id: int, review_data: dict, db: Session = Depends(get_db)):
+    offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer not found")
+
+    # Actualizamos estado a QUOTED (Presupuestada)
+    offer.status = "quoted"
+    offer.technician_comment = review_data.get("technician_comment")
+
+    # Actualizamos servicios (horas y notas)
+    for s_data in review_data.get("services", []):
+        service = db.query(models.Service).filter(models.Service.id == s_data["id"]).first()
+        if service:
+            service.hours = s_data["hours"]
+            service.comment = s_data["comment"]
+
+    db.commit()
+    return {"message": "Offer sent to client as QUOTED"}
+
+@app.patch("/api/technician/offers/{offer_id}")
+def update_status_simple(offer_id: int, new_status: str, db: Session = Depends(get_db)):
+    offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
+    offer.status = new_status
+    db.commit()
+    return {"message": "Status updated"}
