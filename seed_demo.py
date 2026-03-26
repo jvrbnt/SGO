@@ -1,34 +1,35 @@
 from database import LocalSession
 import models
 
-def seed_everything():
+def seed_demo_users():
     db = LocalSession()
     try:
-        # 1. Insertar Técnico Administrador
-        admin = models.Technician(
-            first_name="Javier",
-            last_name="Admin",
-            email="admin@mina.es",
-            hashed_password="admin", # En producción usar hash
-            profile_picture="https://cdn-icons-png.flaticon.com/512/4086/4086679.png"
-        )
-        db.add(admin)
+        print("--- Cargando Usuarios de Prueba ---")
+        # 1. Técnico de prueba
+        if not db.query(models.Technician).filter(models.Technician.email == "admin@mina.es").first():
+            admin = models.Technician(
+                first_name="Javier",
+                last_name="Admin",
+                email="admin@mina.es",
+                hashed_password="admin", 
+                profile_picture="https://cdn-icons-png.flaticon.com/512/4086/4086679.png"
+            )
+            db.add(admin)
 
-        # 2. Insertar Catálogo de Servicios (Basado en tus fotos)
-        services = [
-            {"name": "LITOGRAFÍA DE ELECTRONES", "price_per_hour": 44.0},
-            {"name": "LITOGRAFÍA ÓPTICA", "price_per_hour": 18.0},
-            {"name": "RIE", "price_per_hour": 22.0},
-            {"name": "PECVD", "price_per_hour": 20.0},
-            {"name": "EVAPORACIÓN", "price_per_hour": 18.0},
-            {"name": "SPUTTERING", "price_per_hour": 18.0},
-            {"name": "SEM", "price_per_hour": 42.0}
-        ]
-        for s in services:
-            db.add(models.ServiceCatalog(name=s["name"], price_per_hour=s["price_per_hour"]))
+        # 2. Cliente de prueba
+        if not db.query(models.Client).filter(models.Client.email == "cliente@csic.es").first():
+            cliente = models.Client(
+                first_name="Miguel",
+                last_name="Investigador",
+                email="cliente@csic.es",
+                hashed_password="password123",
+                entity="CSIC",
+                profile_picture="https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png"
+            )
+            db.add(cliente)
         
         db.commit()
-        print("Demo data (Admin + Catalog) loaded.")
+        print("ÉXITO: Usuarios demo cargados.")
     except Exception as e:
         db.rollback()
         print(f"Error: {e}")
@@ -36,4 +37,4 @@ def seed_everything():
         db.close()
 
 if __name__ == "__main__":
-    seed_everything()
+    seed_demo_users()

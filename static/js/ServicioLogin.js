@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (data.role === "technician") {
             window.location.href = "/static/html/ServicioTecnico.html";
           } else {
-            window.location.href = "/static/html/ServicioUsuario.html";
+            window.location.href = "/static/html/ServicioCliente.html";
           }
         } else {
           let errorMsg = data.detail;

@@ -1,8 +1,8 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
-from datetime import datetime # Importación necesaria para OfferResponse
+from datetime import datetime
 
-# --- CLIENT SCHEMAS ---
+# --- ESQUEMAS DE CLIENTE ---
 class ClientBase(BaseModel):
     first_name: str
     last_name: str
@@ -14,60 +14,71 @@ class ClientBase(BaseModel):
     project_id: Optional[str] = None
 
 class ClientCreateWeb(ClientBase):
-    password: str # Mandatory for web signup
+    password: str # Necesario para el registro desde la web
 
-class ClientCreateAdmin(ClientBase):
-    password: Optional[str] = None # Optional for technician-led registration
+class ClientResponse(ClientBase):
+    id: int
+    profile_picture: Optional[str] = None
+    class Config:
+        from_attributes = True
 
-# --- TECHNICIAN SCHEMAS ---
-class TechnicianCreate(BaseModel):
+# --- ESQUEMAS DE TÉCNICO ---
+class TechnicianResponse(BaseModel):
+    id: int
     first_name: str
     last_name: str
     email: EmailStr
-    password: str
+    profile_picture: Optional[str] = None
+    class Config:
+        from_attributes = True
 
-# --- LOGIN SCHEMAS ---
+# --- LOGIN Y CATÁLOGO ---
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
-# --- SERVICE CATALOG SCHEMAS ---
-class ServiceCatalogBase(BaseModel):
+class ServiceCatalogResponse(BaseModel):
+    id: int
     name: str
     price_per_hour: float
-
-class ServiceCatalogResponse(ServiceCatalogBase):
-    id: int
     class Config:
         from_attributes = True
 
-# --- SERVICE & OFFER SCHEMAS ---
+# --- ESQUEMAS DE SERVICIOS ---
 class ServiceBase(BaseModel):
     service_name: str
     hours: float
     comment: Optional[str] = None
 
-class ServiceCreate(ServiceBase):
-    pass
-
 class ServiceResponse(ServiceBase):
     id: int
-    status: str
-    technician_id: Optional[int] = None
-    catalog_id: Optional[int] = None # Añadido para trazabilidad con el catálogo
+    catalog_id: Optional[int] = None
     class Config:
         from_attributes = True
 
+# --- ESQUEMAS DE OFERTAs ---
+
 class OfferCreate(BaseModel):
     client_email: EmailStr
-    services: List[ServiceCreate]
+    services: List[ServiceBase]
 
 class OfferResponse(BaseModel):
     id: int
     status: str
-    created_at: datetime # Corregido: ya no requiere el prefijo datetime.
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    technician_comment: Optional[str] = None
     client_id: int
-    manager_id: Optional[int] = None
+    
+    # Datos anidados para que no salga N/A
+    client: ClientResponse 
     services: List[ServiceResponse]
+    
     class Config:
         from_attributes = True
+
+# Esquema para la actualización desde el panel de revisión
+class OfferReviewUpdate(BaseModel):
+    services: List[ServiceBase]
+    technician_comment: Optional[str] = None
+    status: str = "quoted"

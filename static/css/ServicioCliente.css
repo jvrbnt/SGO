@@ -117,18 +117,32 @@
   margin: 20px auto 0 auto;
 }
 
-/* Profile Styles */
+/* --- ESTILOS DEL MENÚ DE PERFIL (MERGE) --- */
+
 #profileContainer {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   cursor: pointer;
+  margin-right: 20px;
 }
+
+#userNameBar {
+  color: white;
+  font-weight: bold;
+  font-family: "Montserrat", sans-serif;
+}
+
 #userIcon {
   height: 45px;
   width: 45px;
   border-radius: 50%;
   border: 2px solid white;
   transition: transform 0.3s;
+  object-fit: cover;
 }
+
 #dropdownMenu {
   position: absolute;
   top: 55px;
@@ -140,6 +154,7 @@
   z-index: 1000;
   overflow: hidden;
 }
+
 .menu-option {
   width: 100%;
   padding: 12px;
@@ -149,13 +164,17 @@
   font-weight: 600;
   cursor: pointer;
   text-align: left;
+  color: #333;
 }
+
 .menu-option:hover {
   background-color: #f0f0f0;
 }
+
 .hidden {
   display: none !important;
 }
+
 #profileContainer:hover #userIcon {
   transform: scale(1.1);
 }
