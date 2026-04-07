@@ -21,11 +21,41 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  const techNameEl = document.getElementById("techName");
-  if (techNameEl) {
-    techNameEl.textContent = `${techData.first_name} ${techData.last_name}`;
+  // Cargar Nombre y Foto si existen
+  const userNameBar = document.getElementById("userNameBar");
+  if (userNameBar) {
+    userNameBar.textContent = techData.nickname || `${techData.first_name} ${techData.last_name}`;
   }
 
+  if (techData.profilePicture) {
+    const userIcon = document.getElementById("userIcon");
+    if (userIcon) userIcon.src = techData.profilePicture;
+  }
+
+  // Lógica del Menú Desplegable
+  const profileContainer = document.getElementById("profileContainer");
+  const dropdownMenu = document.getElementById("dropdownMenu");
+
+  if (profileContainer && dropdownMenu) {
+    profileContainer.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dropdownMenu.classList.toggle("hidden");
+    });
+
+    document.addEventListener("click", () => {
+      dropdownMenu.classList.add("hidden");
+    });
+  }
+
+  // Acción Editar Perfil
+  const editProfileBtn = document.getElementById("editProfile");
+  if (editProfileBtn) {
+    editProfileBtn.addEventListener("click", () => {
+      window.location.href = "/static/html/ServicioEditT.html";
+    });
+  }
+
+  // Acción Cerrar Sesión
   const logOutBtn = document.getElementById("logOut");
   if (logOutBtn) {
     logOutBtn.addEventListener("click", () => {
@@ -79,14 +109,12 @@ window.updateOfferStatus = async function (offerId, newStatus) {
 
 // --- 4. MODO REVISIÓN (FLUJO VÍCTOR) ---
 
-// Siguiendo las instrucciones: Al hacer clic en "Review", NO cambia el status.
 window.openReviewPanel = async function (offerId) {
   try {
     const response = await fetch(`/api/technician/offers/${offerId}`);
     if (!response.ok) throw new Error("No se pudo obtener la oferta");
     const offer = await response.json();
 
-    // Acceso a datos del cliente (vinculado por schemas.py)
     const client = offer.client || {};
 
     globalList.innerHTML = `
@@ -168,7 +196,7 @@ window.sendQuotedOffer = async function (offerId) {
       body: JSON.stringify({
         services: servicesData,
         technician_comment: comment,
-        status: "quoted", // Estado definitivo tras la revisión técnica
+        status: "quoted", 
       }),
     });
 
@@ -207,7 +235,7 @@ function renderOffers(offers) {
       const statusColor =
         {
           requested: "#17a2b8",
-          quoted: "#f39c12", // El naranja para el presupuesto enviado
+          quoted: "#f39c12", 
           accepted: "#27ae60",
           finished: "#2c3e50",
         }[offer.status] || "#6c757d";

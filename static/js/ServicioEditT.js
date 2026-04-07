@@ -1,30 +1,32 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const activeUser = JSON.parse(localStorage.getItem('activeUser'));
+    // Usamos 'currentUser' para ser consistentes con ServicioTecnico.js
+    const techData = JSON.parse(localStorage.getItem('currentUser'));
     const DEFAULT_PHOTO = "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png";
 
-    if (!activeUser) {
+    // Validar si es técnico y si hay sesión
+    if (!techData || techData.role !== "technician") {
         window.location.href = "/static/html/ServicioLogin.html";
         return;
     }
 
-    // --- NAME IN TOP BAR ---
+    // --- ACTUALIZAR BARRA SUPERIOR ---
     const updateBar = () => {
-        const name = activeUser.nickname || activeUser.name || "Technician";
+        const name = techData.nickname || `${techData.first_name} ${techData.last_name}`;
         document.getElementById("userNameBar").textContent = name;
-        document.getElementById("userIcon").src = activeUser.profilePicture || DEFAULT_PHOTO;
+        document.getElementById("userIcon").src = techData.profilePicture || DEFAULT_PHOTO;
     };
     updateBar();
 
-    // --- LOAD FORM DATA ---
-    document.getElementById("photoPreview").src = activeUser.profilePicture || DEFAULT_PHOTO;
-    document.getElementById("editNickname").value = activeUser.nickname || "";
+    // --- CARGAR DATOS EN EL FORMULARIO ---
+    document.getElementById("photoPreview").src = techData.profilePicture || DEFAULT_PHOTO;
+    document.getElementById("editNickname").value = techData.nickname || "";
 
-    // --- PHOTO MANAGEMENT ---
+    // --- GESTIÓN DE FOTO ---
     const btnChangePhoto = document.getElementById("btnChangePhoto");
     const btnRemovePhoto = document.getElementById("btnRemovePhoto");
     const inputPhotoFile = document.getElementById("inputPhotoFile");
     const photoPreview = document.getElementById("photoPreview");
-    let newPhotoBase64 = activeUser.profilePicture;
+    let newPhotoBase64 = techData.profilePicture || DEFAULT_PHOTO;
 
     btnChangePhoto.addEventListener("click", () => inputPhotoFile.click());
 
@@ -45,33 +47,35 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // --- SAVE CHANGES ---
+    // --- GUARDAR CAMBIOS ---
     document.getElementById("btnSaveChanges").addEventListener("click", () => {
-        activeUser.profilePicture = newPhotoBase64;
-        activeUser.nickname = document.getElementById("editNickname").value;
+        techData.profilePicture = newPhotoBase64;
+        techData.nickname = document.getElementById("editNickname").value;
 
-        // Update current session
-        localStorage.setItem('activeUser', JSON.stringify(activeUser));
+        // Actualizar sesión actual
+        localStorage.setItem('currentUser', JSON.stringify(techData));
 
-        // Update local user database
+        // Actualizar en la lista global de usuarios (si la usas para el login)
         let users = JSON.parse(localStorage.getItem('users')) || [];
-        const index = users.findIndex(u => u.email === activeUser.email);
+        const index = users.findIndex(u => u.email === techData.email);
         if (index !== -1) {
-            users[index] = activeUser;
+            users[index] = techData;
             localStorage.setItem('users', JSON.stringify(users));
         }
 
-        alert("Technician profile updated successfully");
+        alert("Perfil de técnico actualizado correctamente");
         window.location.reload();
     });
 
-    // --- NAVIGATION ---
+    // --- NAVEGACIÓN Y MENÚ ---
     const profileContainer = document.getElementById("profileContainer");
     const dropdownMenu = document.getElementById("dropdownMenu");
+
     profileContainer.addEventListener("click", (e) => {
         e.stopPropagation();
         dropdownMenu.classList.toggle("hidden");
     });
+
     document.addEventListener("click", () => dropdownMenu.classList.add("hidden"));
 
     document.getElementById("goToServices").addEventListener("click", () => {
@@ -79,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.getElementById("logOut").addEventListener("click", () => {
-        localStorage.removeItem('activeUser');
+        localStorage.removeItem('currentUser');
         window.location.href = "/static/html/ServicioLogin.html";
     });
 });

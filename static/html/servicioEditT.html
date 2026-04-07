@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Technician Profile - IMN</title>
-    <link rel="stylesheet" href="/static/css/ServicioEdit.css">
+    <link rel="stylesheet" href="/static/css/ServicioEditT.css">
     <link rel="stylesheet" href="/static/css/Servicio.css">
 </head>
 <body>
@@ -24,8 +24,8 @@
             <span id="userNameBar"></span>
             <img id="userIcon" src="https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png" alt="userIcon">
             <div id="dropdownMenu" class="hidden">
-                <button class="menu-option" id="goToServices">Request Management</button>
-                <button class="menu-option" id="logOut">Log Out</button>
+                <button class="menu-option" id="goToServices">Gestión de Ofertas</button>
+                <button class="menu-option" id="logOut">Cerrar Sesión</button>
             </div>
         </div>
     </div>
@@ -36,26 +36,26 @@
     </div>
     
     <div id="mainContainer">
-        <h2 class="section-title">Technician Profile Settings</h2>
+        <h2 class="section-title">Configuración de Perfil Técnico</h2>
         
         <div id="editForm">
             <div class="photo-section">
                 <img id="photoPreview" src="https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png" alt="Preview">
                 <input type="file" id="inputPhotoFile" accept="image/*" style="display: none;">
                 <div class="photo-buttons">
-                    <button type="button" id="btnChangePhoto" class="btn-secundario">Change Photo</button>
-                    <button type="button" id="btnRemovePhoto" class="btn-danger">Remove Photo</button>
+                    <button type="button" id="btnChangePhoto" class="btn-secundario">Cambiar Foto</button>
+                    <button type="button" id="btnRemovePhoto" class="btn-danger">Eliminar Foto</button>
                 </div>
             </div>
 
             <div class="fields-grid" style="grid-template-columns: 1fr;">
                 <div class="input-group">
-                    <label>Technician Username:</label>
-                    <input type="text" id="editNickname" placeholder="Your public name">
+                    <label>Apodo / Nombre Público:</label>
+                    <input type="text" id="editNickname" placeholder="Escribe tu apodo">
                 </div>
             </div>
 
-            <button id="btnSaveChanges">Save Changes</button>
+            <button id="btnSaveChanges">Guardar Cambios</button>
         </div>
     </div>
 
@@ -68,9 +68,9 @@
         <div class="social-links">
             <a href="https://es-es.facebook.com/CSIC/" class="btn-social"><img src="https://cdn.pixabay.com/photo/2021/06/15/12/51/facebook-6338508_640.png" alt="Facebook"></a>
             <a href="https://www.instagram.com/csic/" class="btn-social" id="insta"><img src="https://static.vecteezy.com/system/resources/thumbnails/018/930/691/small/instagram-logo-instagram-icon-transparent-free-png.png" alt="Instagram"></a>
-            <a href="https://x.com/csic" class="btn-social" id="twitter"><img src="https://1000logos.net/wp-content/uploads/2017/06/Twitter-Log%D0%BE-500x281.png" alt="Twitter/X"></a>
+            <a href="https://x.com/csic" class="btn-social" id="twitter"><img src="https://www.freepnglogos.com/elon-musk-twitter-rebrand-x-logo-2.png"></a>
             <a href="https://www.youtube.com/user/csicdptocomunicacion" class="btn-social" id="youtube"><img src="https://static.vecteezy.com/system/resources/thumbnails/042/148/649/small/youtube-logo-youtube-social-media-icon-free-png.png" alt="Youtube"></a>
-            <a href="https://www.tiktok.com/@elcsic" class="btn-social" id="tiktok"><img src="https://static.vecteezy.com/system/resources/thumbnails/065/386/723/small/tiktok-white-icon-logo-tiktok-app-transparent-background-premium-social-media-design-for-digital-download-free-png.png" alt="LinkedIn"></a>
+            <a href="https://www.tiktok.com/@elcsic" class="btn-social" id="tiktok"><img src="https://static.vecteezy.com/system/resources/thumbnails/065/386/723/small/tiktok-white-icon-logo-tiktok-app-transparent-background-premium-social-media-design-for-digital-download-free-png.png" alt="TikTok"></a>
             <a href="https://bsky.app/profile/csic.es" class="btn-social" id="bsky"><img src="https://images.seeklogo.com/logo-png/52/2/bluesky-logo-png_seeklogo-520643.png" alt="Bsky"></a>
         </div>
     </div>
