@@ -177,19 +177,19 @@ def get_single_offer(offer_id: int, db: Session = Depends(get_db)):
     return offer
 
 @app.put("/api/technician/offers/{offer_id}/review")
-def finalize_review_and_send(offer_id: int, review_data: dict, db: Session = Depends(get_db)):
+def finalize_review_and_send(offer_id: int, review_data: schemas.OfferReviewUpdate, db: Session = Depends(get_db)):
     offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
 
     offer.status = "quoted"
-    offer.technician_comment = review_data.get("technician_comment")
+    offer.technician_comment = review_data.technician_comment
 
     for s_data in review_data.get("services", []):
         service = db.query(models.Service).filter(models.Service.id == s_data["id"]).first()
         if service:
-            service.hours = s_data["hours"]
-            service.comment = s_data["comment"]
+            service.hours = s_data.hours
+            service.comment = s_data.comment
 
     db.commit()
     return {"message": "Offer sent to client as QUOTED"}
