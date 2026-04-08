@@ -163,9 +163,7 @@ def update_offer_status(offer_id: int, new_status: str, db: Session = Depends(ge
 
 # --- TECHNICIAN REVIEW OPERATIONS ---
 
-@app.get("/api/technician/offers", response_model=List[schemas.OfferResponse])
-def get_all_offers(db: Session = Depends(get_db)):
-    return db.query(models.Offer).all()
+
 
 @app.get("/api/technician/offers/{offer_id}", response_model=schemas.OfferResponse)
 def get_single_offer(offer_id: int, db: Session = Depends(get_db)):
@@ -175,21 +173,21 @@ def get_single_offer(offer_id: int, db: Session = Depends(get_db)):
     return offer
 
 @app.put("/api/technician/offers/{offer_id}/review")
-def finalize_review_and_send(offer_id: int, review_data: dict, db: Session = Depends(get_db)):
+def finalize_review_and_send(offer_id: int, review_data: schemas.OfferReviewUpdate, db: Session = Depends(get_db)):
     offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
 
     # Actualizamos estado a QUOTED (Presupuestada)
     offer.status = "quoted"
-    offer.technician_comment = review_data.get("technician_comment")
+    offer.technician_comment = review_data.technician_comment
 
     # Actualizamos servicios (horas y notas)
-    for s_data in review_data.get("services", []):
-        service = db.query(models.Service).filter(models.Service.id == s_data["id"]).first()
+    for s_data in review_data.services:
+        service = db.query(models.Service).filter(models.Service.id == s_data.id).first()
         if service:
-            service.hours = s_data["hours"]
-            service.comment = s_data["comment"]
+            service.hours = s_data.hours
+            service.comment = s_data.comment
 
     db.commit()
     return {"message": "Offer sent to client as QUOTED"}
