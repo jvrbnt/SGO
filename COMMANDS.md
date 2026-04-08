@@ -52,3 +52,7 @@
 2. **Abrir archivos y buscar:** `<<<< HEAD`
 3. **Tras limpiar el código:** `git add <archivo>`
 4. **Finalizar merge:** `git commit -m "Fix conflicts"`
+
+## 6. Seguridad
+
+1. **Instalar librería de argon:** `pip install argon2-cffi`

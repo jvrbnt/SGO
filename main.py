@@ -1,16 +1,37 @@
+import os
+from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
+from pathlib import Path
 from typing import List
+from argon2 import PasswordHasher, Type
+from argon2.exceptions import VerifyMismatchError
 
 import models, schemas
 from database import engine, LocalSession, DB_AVAILABLE
 
+# --- CONFIGURACIÓN DE SEGURIDAD ---
+load_dotenv()
+SECRET_PEPPER = os.getenv("SECRET_PEPPER")
+
+if not SECRET_PEPPER:
+    raise RuntimeError("¡ERROR: No se encontró la variable SECRET_PEPPER en el archivo .env!")
+
+# Configuración Híbrida de Argon2id
+ph = PasswordHasher(
+    time_cost=3,
+    memory_cost=65536,
+    parallelism=4,
+    hash_len=32,
+    salt_len=16,
+    type=Type.ID
+)
+
 # Inicialización de la base de datos
 if DB_AVAILABLE:
     try:
-        # Crea las tablas si no existen: clients, technicians, service_catalog, offers, services
         models.Base.metadata.create_all(bind=engine)
     except Exception as e:
         import database
@@ -18,10 +39,8 @@ if DB_AVAILABLE:
 
 app = FastAPI()
 
-# Configuración de archivos estáticos
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Dependencia para obtener la sesión de base de datos
 def get_db():
     if not DB_AVAILABLE:
         raise HTTPException(
@@ -45,11 +64,15 @@ def create_client(client_data: schemas.ClientCreateWeb, db: Session = Depends(ge
     if db.query(models.Client).filter(models.Client.email == client_data.email).first():
         raise HTTPException(status_code=400, detail="Email is already registered")
 
+    # Hasheo con Pepper y Argon2id
+    password_with_pepper = client_data.password + SECRET_PEPPER
+    hashed_pwd = ph.hash(password_with_pepper)
+
     new_client = models.Client(
         first_name=client_data.first_name,
         last_name=client_data.last_name,
         email=client_data.email,
-        hashed_password=client_data.password, 
+        hashed_password=hashed_pwd, 
         entity=client_data.entity,
         internal_account=client_data.internal_account,
         ip_address=client_data.ip_address,
@@ -63,37 +86,38 @@ def create_client(client_data: schemas.ClientCreateWeb, db: Session = Depends(ge
 
 @app.post("/api/login")
 def unified_login(login_data: schemas.LoginRequest, db: Session = Depends(get_db)):
-    # 1. Busca primero si el email pertenece a un Cliente
-    client = db.query(models.Client).filter(
-        models.Client.email == login_data.email,
-        models.Client.hashed_password == login_data.password
-    ).first()
-    
+    password_with_pepper = login_data.password + SECRET_PEPPER
+
+    # 1. Verificación para Clientes
+    client = db.query(models.Client).filter(models.Client.email == login_data.email).first()
     if client:
-        return {
-            "role": "client",
-            "email": client.email,
-            "first_name": client.first_name,
-            "last_name": client.last_name,
-            "profile_picture": client.profile_picture
-        }
+        try:
+            ph.verify(client.hashed_password, password_with_pepper)
+            return {
+                "role": "client",
+                "email": client.email,
+                "first_name": client.first_name,
+                "last_name": client.last_name,
+                "profile_picture": client.profile_picture
+            }
+        except VerifyMismatchError:
+            pass
 
-    # 2. Si no es cliente, busca si es un Técnico
-    tech = db.query(models.Technician).filter(
-        models.Technician.email == login_data.email,
-        models.Technician.hashed_password == login_data.password
-    ).first()
-    
+    # 2. Verificación para Técnicos
+    tech = db.query(models.Technician).filter(models.Technician.email == login_data.email).first()
     if tech:
-        return {
-            "role": "technician",
-            "email": tech.email,
-            "first_name": tech.first_name,
-            "last_name": tech.last_name,
-            "profile_picture": tech.profile_picture
-        }
+        try:
+            ph.verify(tech.hashed_password, password_with_pepper)
+            return {
+                "role": "technician",
+                "email": tech.email,
+                "first_name": tech.first_name,
+                "last_name": tech.last_name,
+                "profile_picture": tech.profile_picture
+            }
+        except VerifyMismatchError:
+            pass
 
-    # 3. Si no existe en ninguna de las dos tablas, da error
     raise HTTPException(status_code=401, detail="Credenciales incorrectas")
 
 # --- RUTAS DEL CATÁLOGO DE SERVICIOS ---
@@ -106,20 +130,16 @@ def get_catalog(db: Session = Depends(get_db)):
 
 @app.post("/api/client/offers")
 def create_offer(offer_in: schemas.OfferCreate, db: Session = Depends(get_db)):
-    # Localizamos al cliente exacto usando el email que nos manda el frontend
     client = db.query(models.Client).filter(models.Client.email == offer_in.client_email).first()
     if not client:
         raise HTTPException(status_code=404, detail="Client not found in database")
 
-    # Creación de la oferta base vinculada al ID real del cliente
     new_offer = models.Offer(client_id=client.id, status="requested")
     db.add(new_offer)
     db.commit()
     db.refresh(new_offer)
 
-    # Procesamiento de cada servicio solicitado
     for s in offer_in.services:
-        # Buscamos el servicio en el catálogo para guardar la referencia
         catalog_item = db.query(models.ServiceCatalog).filter(
             models.ServiceCatalog.name == s.service_name
         ).first()
@@ -138,30 +158,12 @@ def create_offer(offer_in: schemas.OfferCreate, db: Session = Depends(get_db)):
 
 @app.get("/api/client/my-offers", response_model=List[schemas.OfferResponse])
 def get_client_offers(email: str, db: Session = Depends(get_db)):
-    # Buscamos las ofertas usando el email que pasamos por parámetro en la URL
     client = db.query(models.Client).filter(models.Client.email == email).first()
     if not client:
         return []
     return db.query(models.Offer).filter(models.Offer.client_id == client.id).all()
 
 # --- RUTAS DE GESTIÓN DE OFERTAS (TÉCNICO) ---
-
-@app.get("/api/technician/offers", response_model=List[schemas.OfferResponse])
-def get_all_offers(db: Session = Depends(get_db)):
-    # Devuelve todas las solicitudes para el panel de staff
-    return db.query(models.Offer).all()
-
-@app.patch("/api/technician/offers/{offer_id}")
-def update_offer_status(offer_id: int, new_status: str, db: Session = Depends(get_db)):
-    offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
-    if not offer:
-        raise HTTPException(status_code=404, detail="Offer not found")
-    
-    offer.status = new_status
-    db.commit()
-    return {"message": f"Offer {offer_id} updated to {new_status}"}
-
-# --- TECHNICIAN REVIEW OPERATIONS ---
 
 @app.get("/api/technician/offers", response_model=List[schemas.OfferResponse])
 def get_all_offers(db: Session = Depends(get_db)):
@@ -180,11 +182,9 @@ def finalize_review_and_send(offer_id: int, review_data: dict, db: Session = Dep
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
 
-    # Actualizamos estado a QUOTED (Presupuestada)
     offer.status = "quoted"
     offer.technician_comment = review_data.get("technician_comment")
 
-    # Actualizamos servicios (horas y notas)
     for s_data in review_data.get("services", []):
         service = db.query(models.Service).filter(models.Service.id == s_data["id"]).first()
         if service:
