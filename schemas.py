@@ -77,8 +77,20 @@ class OfferResponse(BaseModel):
     class Config:
         from_attributes = True
 
+# Esquema para la actualización de servicios en el panel de revisión
+class ServiceUpdate(BaseModel):
+    id: int
+    hours: float
+    comment: Optional[str] = None
+
 # Esquema para la actualización desde el panel de revisión
 class OfferReviewUpdate(BaseModel):
-    services: List[ServiceBase]
+    services: List[ServiceUpdate]
     technician_comment: Optional[str] = None
     status: str = "quoted"
+    
+class TechnicianCreate(BaseModel):
+    first_name: str
+    last_name: str
+    email: EmailStr
+    password: str
