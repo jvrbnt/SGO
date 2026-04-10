@@ -1,4 +1,4 @@
-// --- 1. NAVEGACIÓN Y PESTAÑAS ---
+// --- 1. NAVIGATION AND TABS ---
 window.openTab = function (evt, tabName) {
   const tabContents = document.getElementsByClassName("tab-content");
   for (let i = 0; i < tabContents.length; i++) {
@@ -12,7 +12,7 @@ window.openTab = function (evt, tabName) {
   evt.currentTarget.classList.add("active");
 };
 
-// --- 2. INICIALIZACIÓN ---
+// --- 2. INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", () => {
   const techData = JSON.parse(localStorage.getItem("currentUser"));
 
@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // Cargar Nombre y Foto si existen
+  // Load Name and Photo if they exist
   const userNameBar = document.getElementById("userNameBar");
   if (userNameBar) {
     userNameBar.textContent = techData.nickname || `${techData.first_name} ${techData.last_name}`;
@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (userIcon) userIcon.src = techData.profilePicture;
   }
 
-  // Lógica del Menú Desplegable
+  // Dropdown Menu Logic
   const profileContainer = document.getElementById("profileContainer");
   const dropdownMenu = document.getElementById("dropdownMenu");
 
@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Acción Editar Perfil
+  // Edit Profile Action
   const editProfileBtn = document.getElementById("editProfile");
   if (editProfileBtn) {
     editProfileBtn.addEventListener("click", () => {
@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Acción Cerrar Sesión
+  // Logout Action
   const logOutBtn = document.getElementById("logOut");
   if (logOutBtn) {
     logOutBtn.addEventListener("click", () => {
@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 const globalList = document.getElementById("globalRequestList");
 
-// --- 3. COMUNICACIÓN CON API ---
+// --- 3. API COMMUNICATION ---
 
 window.loadAllOffers = async function () {
   try {
@@ -158,7 +158,7 @@ window.updateOfferStatus = async function (offerId, newStatus) {
   }
 };
 
-// --- 4. MODO REVISIÓN (FLUJO VÍCTOR) ---
+// --- 4. REVIEW MODE (TECHNICIAN WORKFLOW) ---
 
 window.openReviewPanel = async function (offerId, isMineTab) {
   try {
@@ -264,7 +264,7 @@ window.sendQuotedOffer = async function (offerId) {
   }
 };
 
-// --- 5. RENDERIZADO DE LA LISTA DE OFERTAS ---
+// --- 5. OFFER LIST RENDERING ---
 function renderAll() {
   const techData = JSON.parse(localStorage.getItem("currentUser"));
   const techId = techData ? techData.id : null;

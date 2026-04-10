@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const password = document.getElementById("password").value;
 
       try {
-        // Ahora atacamos a la ruta unificada
+        // Request to unified login route
         const response = await fetch("/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (response.ok) {
           localStorage.setItem("currentUser", JSON.stringify(data));
 
-          // El propio backend nos dice si es client o technician
+          // Backend identifies client or technician
           if (data.role === "technician") {
             window.location.href = "/tecnico";
           } else {

@@ -12,14 +12,14 @@ from argon2.exceptions import VerifyMismatchError
 from backend import models, schemas
 from backend.database import engine, LocalSession, DB_AVAILABLE
 
-# --- CONFIGURACIÓN DE SEGURIDAD ---
+# --- SECURITY CONFIGURATION ---
 load_dotenv()
 SECRET_PEPPER = os.getenv("SECRET_PEPPER")
 
 if not SECRET_PEPPER:
     raise RuntimeError("¡ERROR: No se encontró la variable SECRET_PEPPER en el archivo .env!")
 
-# Configuración Híbrida de Argon2id
+# Argon2id Hybrid Configuration
 ph = PasswordHasher(
     time_cost=3,
     memory_cost=65536,
@@ -29,7 +29,7 @@ ph = PasswordHasher(
     type=Type.ID
 )
 
-# Inicialización de la base de datos
+# Database Initialization
 if DB_AVAILABLE:
     try:
         models.Base.metadata.create_all(bind=engine)
@@ -81,14 +81,14 @@ async def read_edit_cliente():
 async def read_edit_tecnico():
     return FileResponse("frontend/templates/servicioEditT.html")
 
-# --- RUTAS DE AUTENTICACIÓN ---
+# --- AUTHENTICATION ROUTES ---
 
 @app.post("/api/client/signup")
 def create_client(client_data: schemas.ClientCreateWeb, db: Session = Depends(get_db)):
     if db.query(models.Client).filter(models.Client.email == client_data.email).first():
         raise HTTPException(status_code=400, detail="Email is already registered")
 
-    # Hasheo con Pepper y Argon2id
+    # Argon2id Hashing with Pepper
     password_with_pepper = client_data.password + SECRET_PEPPER
     hashed_pwd = ph.hash(password_with_pepper)
 
@@ -112,7 +112,7 @@ def create_client(client_data: schemas.ClientCreateWeb, db: Session = Depends(ge
 def unified_login(login_data: schemas.LoginRequest, db: Session = Depends(get_db)):
     password_with_pepper = login_data.password + SECRET_PEPPER
 
-    # 1. Verificación para Clientes
+    # 1. Client Verification
     client = db.query(models.Client).filter(models.Client.email == login_data.email).first()
     if client:
         try:
@@ -128,7 +128,7 @@ def unified_login(login_data: schemas.LoginRequest, db: Session = Depends(get_db
         except VerifyMismatchError:
             pass
 
-    # 2. Verificación para Técnicos
+    # 2. Technician Verification
     tech = db.query(models.Technician).filter(models.Technician.email == login_data.email).first()
     if tech:
         try:
@@ -146,13 +146,13 @@ def unified_login(login_data: schemas.LoginRequest, db: Session = Depends(get_db
 
     raise HTTPException(status_code=401, detail="Credenciales incorrectas")
 
-# --- RUTAS DEL CATÁLOGO DE SERVICIOS ---
+# --- SERVICE CATALOG ROUTES ---
 
 @app.get("/api/catalog", response_model=List[schemas.ServiceCatalogResponse])
 def get_catalog(db: Session = Depends(get_db)):
     return db.query(models.ServiceCatalog).all()
 
-# --- RUTAS DE GESTIÓN DE OFERTAS (CLIENTE) ---
+# --- OFFER MANAGEMENT ROUTES (CLIENT) ---
 
 @app.post("/api/client/offers")
 def create_offer(offer_in: schemas.OfferCreate, db: Session = Depends(get_db)):
@@ -189,7 +189,7 @@ def get_client_offers(email: str, db: Session = Depends(get_db)):
         return []
     return db.query(models.Offer).filter(models.Offer.client_id == client.id).all()
 
-# --- RUTAS DE GESTIÓN DE OFERTAS (TÉCNICO) ---
+# --- OFFER MANAGEMENT ROUTES (TECHNICIAN) ---
 
 @app.get("/api/technician/offers", response_model=List[schemas.OfferResponse])
 def get_all_offers(db: Session = Depends(get_db)):

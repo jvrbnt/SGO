@@ -16,7 +16,7 @@ Base = declarative_base()
 if SQLALCHEMY_DATABASE_URL:
     engine = create_engine(
         SQLALCHEMY_DATABASE_URL,
-        # Esto fuerza a que la comunicación no dé errores de decodificación
+        # This forces the communication to not give decoding errors
         connect_args={
             "options": "-c lc_messages=C",
             "client_encoding": "utf8"

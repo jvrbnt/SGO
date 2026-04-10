@@ -2,13 +2,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const DEFAULT_PHOTO = "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png";
     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
 
-    // Seguridad: Redirigir si no hay usuario
+    // Security: Redirect if no user is found
     if (!currentUser) {
         window.location.href = "/login";
         return;
     }
 
-    // --- ELEMENTOS DE LA UI ---
+    // --- UI ELEMENTS ---
     const userIconBar = document.getElementById("userIcon");
     const userNameBar = document.getElementById("userNameBar");
     const photoPreview = document.getElementById("photoPreview");
@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const editEntity = document.getElementById("editEntity");
     const internalFields = document.getElementById("internalFields");
 
-    // Función para actualizar los elementos visuales del perfil
+    // Function to update visual profile elements
     const updateUI = (user) => {
         const displayName = user.nickname || `${user.first_name || ""} ${user.last_name || ""}`.trim() || "User";
         userNameBar.textContent = displayName;
@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
         photoPreview.src = photo;
     };
 
-    // --- CARGA INICIAL DE DATOS ---
+    // --- INITIAL DATA LOAD ---
     updateUI(currentUser);
     editNickname.value = currentUser.nickname || "";
     editEntity.value = currentUser.entity || "CSIC";
@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("editProject").value = currentUser.project || "";
     }
 
-    // --- GESTIÓN DE FOTO ---
+    // --- PHOTO MANAGEMENT ---
     const inputPhotoFile = document.getElementById("inputPhotoFile");
     let currentPhotoBase64 = currentUser.profilePicture || DEFAULT_PHOTO;
 
@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     editEntity.addEventListener("change", (e) => toggleInternal(e.target.value));
 
-    // --- LÓGICA DEL MENÚ DESPLEGABLE ---
+    // --- DROPDOWN MENU LOGIC ---
     const profileContainer = document.getElementById("profileContainer");
     const dropdownMenu = document.getElementById("dropdownMenu");
 
@@ -80,12 +80,12 @@ document.addEventListener("DOMContentLoaded", () => {
         dropdownMenu.classList.toggle("hidden");
     });
 
-    // Cerrar el menú si se hace clic fuera
+    // Close the menu if clicked outside
     document.addEventListener("click", () => {
         dropdownMenu.classList.add("hidden");
     });
 
-    // --- BOTONES DEL MENÚ ---
+    // --- MENU BUTTONS ---
     document.getElementById("goToServices").addEventListener("click", () => {
         window.location.href = "/cliente";
     });
@@ -95,12 +95,12 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = "/login";
     });
 
-    // --- GUARDAR CAMBIOS ---
+    // --- SAVE CHANGES ---
     document.getElementById("btnSaveChanges").addEventListener("click", () => {
         const entity = editEntity.value;
         const nickname = editNickname.value.trim();
 
-        // Actualizar objeto currentUser
+        // Update currentUser object
         currentUser.nickname = nickname;
         currentUser.entity = entity;
         currentUser.profilePicture = currentPhotoBase64;
@@ -111,17 +111,17 @@ document.addEventListener("DOMContentLoaded", () => {
             currentUser.account = document.getElementById("editInternalAccount").value;
             currentUser.project = document.getElementById("editProject").value;
         } else {
-            // Limpiar datos internos si cambia de entidad
+            // Clear internal data if entity changes
             delete currentUser.group;
             delete currentUser.ip;
             delete currentUser.account;
             delete currentUser.project;
         }
 
-        // Guardar en localStorage
+        // Save to localStorage
         localStorage.setItem("currentUser", JSON.stringify(currentUser));
         
-        // Sincronizar con la lista global de usuarios
+        // Sync with global user list
         let users = JSON.parse(localStorage.getItem("users")) || [];
         const idx = users.findIndex(u => u.email === currentUser.email);
         if (idx !== -1) {
@@ -130,6 +130,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         alert("Profile updated successfully!");
-        updateUI(currentUser); // Reflejar cambios inmediatamente en la barra superior
+        updateUI(currentUser); // Reflect changes immediately on the top bar
     });
 });

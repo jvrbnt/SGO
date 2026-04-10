@@ -10,17 +10,17 @@ class Client(Base):
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=True) # Permitir nulo para registros manuales de técnicos
+    hashed_password = Column(String, nullable=True) # Allow null for manual technician registration
     entity = Column(String, nullable=False)
 
-    # Campos específicos para usuarios internos de MiNa
+    # Specific fields for MiNa internal users
     internal_account = Column(String, nullable=True)
     ip_address = Column(String, nullable=True)
     group_name = Column(String, nullable=True)
     project_id = Column(String, nullable=True)
     profile_picture = Column(String, nullable=True)
 
-    # Relación entre el cliente y sus múltiples solicitudes/ofertas
+    # Relationship between client and their multiple requests/offers
     offers = relationship("Offer", back_populates="client")
 
 class Technician(Base):
@@ -33,19 +33,19 @@ class Technician(Base):
     hashed_password = Column(String, nullable=False)
     profile_picture = Column(String, nullable=True)
 
-    # Ofertas donde el técnico actúa como responsable principal
+    # Offers where the technician acts as the main manager
     managed_offers = relationship("Offer", back_populates="manager")
-    # Servicios específicos asignados individualmente a este técnico
+    # Specific services assigned individually to this technician
     assigned_services = relationship("Service", back_populates="technician")
 
 class ServiceCatalog(Base):
     __tablename__ = "service_catalog"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True, nullable=False) # Nombre del servicio según el catálogo
-    price_per_hour = Column(Float, nullable=False) # Precio base para cálculos de presupuesto
+    name = Column(String, unique=True, index=True, nullable=False) # Service name according to catalog
+    price_per_hour = Column(Float, nullable=False) # Base price for budget calculations
 
-    # Referencia a los servicios que se han solicitado basados en este ítem
+    # Reference to services requested based on this item
     services = relationship("Service", back_populates="catalog_item")
 
 class Offer(Base):
@@ -59,7 +59,7 @@ class Offer(Base):
     updated_at = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now) 
     
     technician_comment = Column(Text, nullable=True) # El comentario para el cliente  
-    # Claves foráneas para identificar al cliente y al responsable técnico
+    # Foreign keys to identify client and technical manager
     client_id = Column(Integer, ForeignKey("clients.id"))
     manager_id = Column(Integer, ForeignKey("technicians.id"), nullable=True)
 
@@ -72,12 +72,12 @@ class Service(Base):
     __tablename__ = "services"
 
     id = Column(Integer, primary_key=True, index=True)
-    service_name = Column(String, nullable=False) # Nombre del servicio solicitado (copia del catálogo)
+    service_name = Column(String, nullable=False) # Name of requested service (catalog copy)
     hours = Column(Float, default=0.0)
     comment = Column(Text, nullable=True)
     status = Column(String, default="pending") # Estados: pending, doing, done
     
-    # Vinculación con la oferta madre, el técnico asignado y el origen en el catálogo
+    # Link with parent offer, assigned technician, and catalog origin
     offer_id = Column(Integer, ForeignKey("offers.id"))
     technician_id = Column(Integer, ForeignKey("technicians.id"), nullable=True)
     catalog_id = Column(Integer, ForeignKey("service_catalog.id"), nullable=True)

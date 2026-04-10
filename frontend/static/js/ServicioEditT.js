@@ -1,15 +1,15 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Usamos 'currentUser' para ser consistentes con ServicioTecnico.js
+    // Use currentUser to be consistent with Technician flow
     const techData = JSON.parse(localStorage.getItem('currentUser'));
     const DEFAULT_PHOTO = "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png";
 
-    // Validar si es técnico y si hay sesión
+    // Validate technician and session
     if (!techData || techData.role !== "technician") {
         window.location.href = "/login";
         return;
     }
 
-    // --- ACTUALIZAR BARRA SUPERIOR ---
+    // --- UPDATE TOP BAR ---
     const updateBar = () => {
         const name = techData.nickname || `${techData.first_name} ${techData.last_name}`;
         document.getElementById("userNameBar").textContent = name;
@@ -17,11 +17,11 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     updateBar();
 
-    // --- CARGAR DATOS EN EL FORMULARIO ---
+    // --- LOAD FORM DATA ---
     document.getElementById("photoPreview").src = techData.profilePicture || DEFAULT_PHOTO;
     document.getElementById("editNickname").value = techData.nickname || "";
 
-    // --- GESTIÓN DE FOTO ---
+    // --- PHOTO MANAGEMENT ---
     const btnChangePhoto = document.getElementById("btnChangePhoto");
     const btnRemovePhoto = document.getElementById("btnRemovePhoto");
     const inputPhotoFile = document.getElementById("inputPhotoFile");
@@ -47,15 +47,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // --- GUARDAR CAMBIOS ---
+    // --- SAVE CHANGES ---
     document.getElementById("btnSaveChanges").addEventListener("click", () => {
         techData.profilePicture = newPhotoBase64;
         techData.nickname = document.getElementById("editNickname").value;
 
-        // Actualizar sesión actual
+        // Update current session
         localStorage.setItem('currentUser', JSON.stringify(techData));
 
-        // Actualizar en la lista global de usuarios (si la usas para el login)
+        // Update in global user list
         let users = JSON.parse(localStorage.getItem('users')) || [];
         const index = users.findIndex(u => u.email === techData.email);
         if (index !== -1) {
@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.reload();
     });
 
-    // --- NAVEGACIÓN Y MENÚ ---
+    // --- NAVIGATION AND MENU ---
     const profileContainer = document.getElementById("profileContainer");
     const dropdownMenu = document.getElementById("dropdownMenu");
 

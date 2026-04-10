@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime
 
-# --- ESQUEMAS DE CLIENTE ---
+# --- CLIENT SCHEMAS ---
 class ClientBase(BaseModel):
     first_name: str
     last_name: str
@@ -14,7 +14,7 @@ class ClientBase(BaseModel):
     project_id: Optional[str] = None
 
 class ClientCreateWeb(ClientBase):
-    password: str # Necesario para el registro desde la web
+    password: str # Required for web registration
 
 class ClientResponse(ClientBase):
     id: int
@@ -22,7 +22,7 @@ class ClientResponse(ClientBase):
     class Config:
         from_attributes = True
 
-# --- ESQUEMAS DE TÉCNICO ---
+# --- TECHNICIAN SCHEMAS ---
 class TechnicianResponse(BaseModel):
     id: int
     first_name: str
@@ -32,7 +32,7 @@ class TechnicianResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# --- LOGIN Y CATÁLOGO ---
+# --- LOGIN AND CATALOG ---
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
@@ -44,7 +44,7 @@ class ServiceCatalogResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# --- ESQUEMAS DE SERVICIOS ---
+# --- SERVICE SCHEMAS ---
 class ServiceBase(BaseModel):
     service_name: str
     hours: float
@@ -58,7 +58,7 @@ class ServiceResponse(ServiceBase):
     class Config:
         from_attributes = True
 
-# --- ESQUEMAS DE OFERTAs ---
+# --- OFFER SCHEMAS ---
 
 class OfferCreate(BaseModel):
     client_email: EmailStr
@@ -73,7 +73,7 @@ class OfferResponse(BaseModel):
     client_id: int
     manager_id: Optional[int] = None
     
-    # Datos anidados para que no salga N/A
+    # Nested data representations
     client: ClientResponse 
     services: List[ServiceResponse]
     manager: Optional[TechnicianResponse] = None
@@ -81,13 +81,13 @@ class OfferResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# Esquema para la actualización de servicios en el panel de revisión
+# Schema for service update in review panel
 class ServiceUpdate(BaseModel):
     id: int
     hours: float
     comment: Optional[str] = None
 
-# Esquema para la actualización desde el panel de revisión
+# Schema for review panel updates
 class OfferReviewUpdate(BaseModel):
     services: List[ServiceUpdate]
     technician_comment: Optional[str] = None

@@ -5,7 +5,7 @@ const registrationForm = document.getElementById("registrationForm");
 const passwordInput = document.getElementById("password");
 const passwordStrengthMsg = document.getElementById("passwordMessage");
 
-// Gestión de visibilidad de campos adicionales para usuarios internos (MiNa)
+// Manage visibility of internal fields
 selectEntity.addEventListener("change", function () {
   if (this.value === "mina") {
     extraFields.style.display = "flex";
@@ -16,7 +16,7 @@ selectEntity.addEventListener("change", function () {
   }
 });
 
-// Indicador visual de la fortaleza de la contraseña
+// Visual password strength indicator
 passwordInput.addEventListener("input", function () {
   const pass = this.value;
   const hasLetters = /[a-zA-Z]/.test(pass);
@@ -33,11 +33,11 @@ passwordInput.addEventListener("input", function () {
   }
 });
 
-// Manejo del envío del formulario al backend
+// Form submission handler
 registrationForm.addEventListener("submit", async function (event) {
   event.preventDefault();
 
-  // Mapeo de campos del formulario a los atributos esperados por el esquema Pydantic
+  // Field mapping to Pydantic schema attributes
   const newClient = {
     first_name: document.getElementById("name").value,
     last_name: document.getElementById("lastName").value,
@@ -61,10 +61,10 @@ registrationForm.addEventListener("submit", async function (event) {
 
     if (response.ok) {
       alert(data.message || "Account created successfully");
-      // Redirección al login tras registro exitoso
+      // Redirect to login on success
       window.location.href = "/login";
     } else {
-      // Manejo de errores de validación o duplicados
+      // Handle validation or duplicate errors
       if (Array.isArray(data.detail)) {
         const errorMsg = data.detail
           .map((err) => `${err.loc[1]}: ${err.msg}`)

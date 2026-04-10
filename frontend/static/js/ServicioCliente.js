@@ -1,13 +1,13 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
 
-  // 1. SEGURIDAD: Solo clientes
+  // 1. SECURITY: Clients only
   if (!currentUser || currentUser.role !== "client") {
     window.location.href = "/login";
     return;
   }
 
-  // 2. UI: BARRA DE USUARIO
+  // 2. UI: USER BAR
   const displayName =
     currentUser.nickname ||
     `${currentUser.first_name || ""} ${currentUser.last_name || ""}`.trim() ||
@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("userIcon").src = currentUser.profilePicture;
   }
 
-  // 3. MENÚ DESPLEGABLE
+  // 3. DROPDOWN MENU
   const profileContainer = document.getElementById("profileContainer");
   const dropdownMenu = document.getElementById("dropdownMenu");
 
@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
   }
 
-  // 4. BOTONES DE NAVEGACIÓN
+  // 4. NAVIGATION BUTTONS
   document.getElementById("logOut")?.addEventListener("click", () => {
     localStorage.removeItem("currentUser");
     window.location.href = "/login";
@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "/editar-cliente";
   });
 
-  // 5. CARGAR CATÁLOGO DE SERVICIOS
+  // 5. LOAD SERVICE CATALOG
   async function loadCatalog() {
     const grid = document.getElementById("servicesGrid");
     try {
@@ -89,7 +89,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // 6. CARGAR MIS OFERTAS (CON LÓGICA DE VÍCTOR)
+  // 6. LOAD MY OFFERS (ADVANCED ASSIGNMENT LOGIC)
   window.loadMyRequests = async function () {
     const list = document.getElementById("requestList");
     try {
@@ -158,7 +158,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   };
 
-  // 7. ENVIAR NUEVA SOLICITUD
+  // 7. SUBMIT NEW REQUEST
   document
     .getElementById("btnSendRequest")
     ?.addEventListener("click", async () => {
@@ -196,7 +196,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
 
-  // 8. LÓGICA DE ACEPTACIÓN (VÍCTOR)
+  // 8. ACCEPTANCE LOGIC
   window.acceptQuotedOffer = async function (offerId) {
     if (
       !confirm("¿Confirmas que aceptas el presupuesto y las horas indicadas?")
@@ -221,7 +221,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await window.loadMyRequests();
 });
 
-// Función global para pestañas
+// Global function for tabs
 window.openTab = function (evt, tabName) {
   const contents = document.getElementsByClassName("tab-content");
   for (let i = 0; i < contents.length; i++) {

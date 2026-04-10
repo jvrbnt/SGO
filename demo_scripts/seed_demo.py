@@ -4,7 +4,7 @@ from argon2 import PasswordHasher, Type
 from backend.database import LocalSession
 import backend.models as models
 
-# --- CONFIGURACIÓN DE SEGURIDAD ---
+# --- SECURITY CONFIGURATION ---
 load_dotenv()
 SECRET_PEPPER = os.getenv("SECRET_PEPPER")
 
@@ -24,7 +24,7 @@ def seed_demo_users():
     db = LocalSession()
     try:
         print("--- Cargando Usuarios de Prueba ---")
-        # 1. Técnico de prueba
+        # 1. Demo Technician
         if not db.query(models.Technician).filter(models.Technician.email == "admin@mina.es").first():
             hashed_admin = ph.hash("admin" + SECRET_PEPPER)
             admin = models.Technician(
@@ -36,7 +36,7 @@ def seed_demo_users():
             )
             db.add(admin)
 
-        # 2. Cliente de prueba
+        # 2. Demo Client
         if not db.query(models.Client).filter(models.Client.email == "cliente@csic.es").first():
             hashed_client = ph.hash("password123" + SECRET_PEPPER)
             cliente = models.Client(

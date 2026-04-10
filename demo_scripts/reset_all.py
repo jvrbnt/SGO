@@ -7,17 +7,17 @@ from demo_scripts.create_admin import seed_technician
 def run_all():
     print("SISTEMA DE PREPARACIÓN DE BASE DE DATOS")
     
-    print("\n[1/4] RESETEANDO ESTRUCTURA DE TABLAS...")
+    print("\n[1/4] RESETTING TABLE STRUCTURE...")
     reset_db()
     
-    print("\n[2/4] CARGANDO CATÁLOGO DE SERVICIOS...")
+    print("\n[2/4] LOADING SERVICE CATALOG...")
     reset_catalog()
     
-    print("\n[3/4] CARGANDO USUARIOS DEMO...")
+    print("\n[3/4] LOADING DEMO USERS...")
     seed_demo_users()
 
-    print("\n[4/4] (OPCIONAL) CREAR TÉCNICO NUEVO MANUALMENTE")
-    resp = input("¿Deseas crear un técnico extra ahora mismo? (s/n): ")
+    print("\n[4/4] (OPTIONAL) CREATE NEW TECHNICIAN MANUALLY")
+    resp = input("Do you want to create an extra technician right now? (y/n): ")
     if resp.lower() in ('s', 'si', 'y', 'yes'):
         seed_technician()
 

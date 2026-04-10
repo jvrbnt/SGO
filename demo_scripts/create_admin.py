@@ -6,11 +6,11 @@ from backend.database import LocalSession
 from pydantic import ValidationError
 from argon2 import PasswordHasher, Type
 
-# --- CONFIGURACIÓN DE SEGURIDAD ---
+# --- SECURITY CONFIGURATION ---
 load_dotenv()
 SECRET_PEPPER = os.getenv("SECRET_PEPPER")
 
-# Misma configuración híbrida que el servidor
+# Same hybrid configuration as the server
 ph = PasswordHasher(
     time_cost=3,
     memory_cost=65536,
@@ -56,7 +56,7 @@ def seed_technician():
         print(f"\n[!] ERROR: El email {validated_data.email} ya está registrado.")
         return
 
-    # 4. Hasheo Híbrido con Pepper
+    # 4. Hybrid Hashing with Pepper
     password_with_pepper = validated_data.password + SECRET_PEPPER
     hashed_pwd = ph.hash(password_with_pepper)
 

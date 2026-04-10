@@ -4,7 +4,7 @@ import backend.models as models
 def reset_catalog():
     db = LocalSession()
     try:
-        print("--- Limpiando Catálogo ---")
+        print("--- Cleaning Catalog ---")
         db.query(models.Service).delete()
         db.query(models.Offer).delete()
         db.query(models.ServiceCatalog).delete()
@@ -27,7 +27,7 @@ def reset_catalog():
             db.add(models.ServiceCatalog(name=s["name"], price_per_hour=s["price_per_hour"]))
         
         db.commit()
-        print("ÉXITO: Catálogo oficial cargado.")
+        print("SUCCESS: Official catalog loaded.")
     except Exception as e:
         db.rollback()
         print(f"Error: {e}")
