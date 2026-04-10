@@ -113,6 +113,30 @@ window.assignOffer = async function (offerId) {
   }
 };
 
+window.assignService = async function (serviceId) {
+  const techData = JSON.parse(localStorage.getItem("currentUser"));
+  if (!techData || !techData.id) {
+    alert("Error: Technician ID not found. Return to login.");
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/api/technician/services/${serviceId}/assign?tech_id=${techData.id}`, {
+      method: "PATCH"
+    });
+    if (response.ok) {
+      window.loadAllOffers();
+      const myOffersBtn = document.querySelector(".tab-btn[onclick*='tabMisOfertas']");
+      if(myOffersBtn) myOffersBtn.click();
+    } else {
+      const error = await response.json();
+      alert("Error: " + (error.detail || "Error al asignar servicio"));
+    }
+  } catch (err) {
+    console.error("Network error:", err);
+  }
+};
+
 window.updateOfferStatus = async function (offerId, newStatus) {
   try {
     const response = await fetch(
@@ -246,7 +270,9 @@ function renderAll() {
   const techId = techData ? techData.id : null;
   
   const globalOffers = window.allOffers;
-  const myOffers = window.allOffers.filter(o => o.manager_id === techId);
+  const myOffers = window.allOffers.filter(o => 
+    o.manager_id === techId || o.services.some(s => s.technician_id === techId)
+  );
   
   renderOfferList(globalOffers, document.getElementById("globalRequestList"), true, techId);
   renderOfferList(myOffers, document.getElementById("myOffersList"), false, techId);
@@ -291,18 +317,34 @@ function renderOfferList(offers, container, isGlobal, techId) {
             <p style="margin: 0;"><strong>CLIENT ID:</strong> ${offer.client_id}</p>
             <p style="margin: 0;"><strong>DATE:</strong> ${new Date(offer.created_at).toLocaleDateString()}</p>
         </div>
-        <ul style="margin: 10px 0 20px 0; padding-left: 20px; color: #333;">
-            ${offer.services.map((s) => `<li><strong>${s.service_name}</strong>: ${s.hours}h</li>`).join("")}
-        </ul>
         
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <details style="margin: 10px 0 20px 0; padding: 10px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 6px;">
+            <summary style="cursor: pointer; font-weight: bold; color: #2c3e50;">Ver Servicios (${offer.services.length})</summary>
+            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+            ${offer.services.map((s) => `
+                <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px 12px; border: 1px solid #eee; border-radius: 4px;">
+                    <div style="font-size:14px; color:#333;">
+                        <strong>${s.service_name}</strong> (${s.hours}h)
+                    </div>
+                    <div>
+                        ${
+                          !s.technician_id
+                            ? `<button onclick="window.assignService(${s.id})" style="background:#8e44ad; color:white; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:11px; font-weight:bold;">Asignarme</button>`
+                            : s.technician_id !== techId
+                            ? `<span style="background:#e74c3c; color:white; padding:4px 10px; border-radius:4px; font-weight:bold; font-size:11px;">Técnico #${s.technician_id}</span>`
+                            : `<span style="background:#27ae60; color:white; padding:4px 10px; border-radius:4px; font-weight:bold; font-size:11px;">Mío</span>`
+                        }
+                    </div>
+                </div>
+            `).join("")}
+            </div>
+        </details>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 15px;">
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             ${
               isGlobal && !offer.manager_id
-                ? `<button onclick="window.assignOffer(${offer.id})" style="background:#8e44ad; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;">Asignarme</button>`
-                : isGlobal && offer.manager_id && offer.manager_id !== techId
-                ? `<span style="background:#e74c3c; color:white; padding:8px 15px; border-radius:4px; font-weight:bold; font-size:12px;">Asignada a otro técnico (#${offer.manager_id})</span>`
-                : isGlobal && offer.manager_id === techId
-                ? `<span style="background:#27ae60; color:white; padding:8px 15px; border-radius:4px; font-weight:bold; font-size:12px;">Asignada a mí</span>`
+                ? `<button onclick="window.assignOffer(${offer.id})" style="background:#8e44ad; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;">Manager de Oferta</button>`
                 : ""
             }
             ${
@@ -315,6 +357,16 @@ function renderOfferList(offers, container, isGlobal, techId) {
                 ? `<button onclick="window.updateOfferStatus(${offer.id}, 'finished')" style="background:#2c3e50; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;">Finish Work</button>`
                 : ""
             }
+          </div>
+          <div style="text-align: right;">
+            ${
+              isGlobal && offer.manager_id && offer.manager_id !== techId
+                ? `<span style="color:#e74c3c; font-weight:bold; font-size:12px;">Manager: Técnico #${offer.manager_id}</span>`
+                : isGlobal && offer.manager_id === techId
+                ? `<span style="color:#27ae60; font-weight:bold; font-size:12px;">Manager: Yo</span>`
+                : ""
+            }
+          </div>
         </div>
     `;
       container.appendChild(card);

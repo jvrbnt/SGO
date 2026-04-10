@@ -53,6 +53,7 @@ class ServiceBase(BaseModel):
 class ServiceResponse(ServiceBase):
     id: int
     catalog_id: Optional[int] = None
+    technician_id: Optional[int] = None
     class Config:
         from_attributes = True
 

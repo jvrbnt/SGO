@@ -211,3 +211,12 @@ def assign_offer(offer_id: int, tech_id: int, db: Session = Depends(get_db)):
     offer.manager_id = tech_id
     db.commit()
     return {"message": "Offer assigned successfully"}
+
+@app.patch("/api/technician/services/{service_id}/assign")
+def assign_service(service_id: int, tech_id: int, db: Session = Depends(get_db)):
+    service = db.query(models.Service).filter(models.Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+    service.technician_id = tech_id
+    db.commit()
+    return {"message": "Service assigned successfully"}
