@@ -16,9 +16,9 @@
 
 ## 2. Ejecución del Servidor (FastAPI)
 * **Ejecución Local:**
-  `uvicorn main:app --reload`
+  `uvicorn backend.main:app --reload`
 * **Ejecución en Red:**
-  `uvicorn main:app --host 0.0.0.0 --port 8000`
+  `uvicorn backend.main:app --host 0.0.0.0 --port 8000`
   *(Acceso desde otros PCs: http://TU_IP_LOCAL:8000)*
 
 ## 3. Flujo de Git y Ramas

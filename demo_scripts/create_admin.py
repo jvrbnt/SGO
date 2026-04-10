@@ -1,8 +1,8 @@
 import os
 from dotenv import load_dotenv
-import models
-import schemas
-from database import LocalSession
+import backend.models as models
+import backend.schemas as schemas
+from backend.database import LocalSession
 from pydantic import ValidationError
 from argon2 import PasswordHasher, Type
 

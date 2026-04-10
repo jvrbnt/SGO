@@ -23,9 +23,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
           // El propio backend nos dice si es client o technician
           if (data.role === "technician") {
-            window.location.href = "/static/html/ServicioTecnico.html";
+            window.location.href = "/tecnico";
           } else {
-            window.location.href = "/static/html/ServicioCliente.html";
+            window.location.href = "/cliente";
           }
         } else {
           let errorMsg = data.detail;

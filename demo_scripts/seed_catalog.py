@@ -1,5 +1,5 @@
-from database import LocalSession
-import models
+from backend.database import LocalSession
+import backend.models as models
 
 def reset_catalog():
     db = LocalSession()

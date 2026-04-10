@@ -9,8 +9,8 @@ from typing import List
 from argon2 import PasswordHasher, Type
 from argon2.exceptions import VerifyMismatchError
 
-import models, schemas
-from database import engine, LocalSession, DB_AVAILABLE
+from backend import models, schemas
+from backend.database import engine, LocalSession, DB_AVAILABLE
 
 # --- CONFIGURACIÓN DE SEGURIDAD ---
 load_dotenv()
@@ -34,12 +34,12 @@ if DB_AVAILABLE:
     try:
         models.Base.metadata.create_all(bind=engine)
     except Exception as e:
-        import database
+        import backend.database as database
         database.DB_AVAILABLE = False
 
 app = FastAPI()
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 
 def get_db():
     if not DB_AVAILABLE:
@@ -55,7 +55,31 @@ def get_db():
 
 @app.get("/")
 async def read_index():
-    return FileResponse("static/html/ServicioLogin.html")
+    return FileResponse("frontend/templates/ServicioLogin.html")
+
+@app.get("/login")
+async def read_login():
+    return FileResponse("frontend/templates/ServicioLogin.html")
+
+@app.get("/cliente")
+async def read_cliente():
+    return FileResponse("frontend/templates/ServicioCliente.html")
+
+@app.get("/tecnico")
+async def read_tecnico():
+    return FileResponse("frontend/templates/ServicioTecnico.html")
+
+@app.get("/registro")
+async def read_registro():
+    return FileResponse("frontend/templates/ServicioSign.html")
+
+@app.get("/editar-cliente")
+async def read_edit_cliente():
+    return FileResponse("frontend/templates/ServicioEdit.html")
+
+@app.get("/editar-tecnico")
+async def read_edit_tecnico():
+    return FileResponse("frontend/templates/servicioEditT.html")
 
 # --- RUTAS DE AUTENTICACIÓN ---
 

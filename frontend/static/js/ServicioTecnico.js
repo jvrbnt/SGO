@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const techData = JSON.parse(localStorage.getItem("currentUser"));
 
   if (!techData || techData.role !== "technician") {
-    window.location.href = "/static/html/ServicioLogin.html";
+    window.location.href = "/login";
     return;
   }
 
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const editProfileBtn = document.getElementById("editProfile");
   if (editProfileBtn) {
     editProfileBtn.addEventListener("click", () => {
-      window.location.href = "/static/html/ServicioEditT.html";
+      window.location.href = "/editar-tecnico";
     });
   }
 
@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (logOutBtn) {
     logOutBtn.addEventListener("click", () => {
       localStorage.removeItem("currentUser");
-      window.location.href = "/static/html/ServicioLogin.html";
+      window.location.href = "/login";
     });
   }
 
@@ -330,9 +330,7 @@ function renderOfferList(offers, container, isGlobal, techId) {
                         ${
                           !s.technician_id
                             ? `<button onclick="window.assignService(${s.id})" style="background:#8e44ad; color:white; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:11px; font-weight:bold;">Asignarme</button>`
-                            : s.technician_id !== techId
-                            ? `<span style="background:#e74c3c; color:white; padding:4px 10px; border-radius:4px; font-weight:bold; font-size:11px;">Técnico #${s.technician_id}</span>`
-                            : `<span style="background:#27ae60; color:white; padding:4px 10px; border-radius:4px; font-weight:bold; font-size:11px;">Mío</span>`
+                            : `<span style="background:${s.technician_id === techId ? '#27ae60' : '#e74c3c'}; color:white; padding:4px 10px; border-radius:4px; font-weight:bold; font-size:11px;">${s.technician ? s.technician.first_name + ' ' + s.technician.last_name : 'Técnico #' + s.technician_id}</span>`
                         }
                     </div>
                 </div>
@@ -360,10 +358,8 @@ function renderOfferList(offers, container, isGlobal, techId) {
           </div>
           <div style="text-align: right;">
             ${
-              isGlobal && offer.manager_id && offer.manager_id !== techId
-                ? `<span style="color:#e74c3c; font-weight:bold; font-size:12px;">Manager: Técnico #${offer.manager_id}</span>`
-                : isGlobal && offer.manager_id === techId
-                ? `<span style="color:#27ae60; font-weight:bold; font-size:12px;">Manager: Yo</span>`
+              offer.manager_id
+                ? `<span style="color:${offer.manager_id === techId ? '#27ae60' : '#e74c3c'}; font-weight:bold; font-size:12px;">Manager: ${offer.manager ? offer.manager.first_name + ' ' + offer.manager.last_name : 'Técnico #' + offer.manager_id}</span>`
                 : ""
             }
           </div>

@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // 1. SEGURIDAD: Solo clientes
   if (!currentUser || currentUser.role !== "client") {
-    window.location.href = "/static/html/ServicioLogin.html";
+    window.location.href = "/login";
     return;
   }
 
@@ -35,11 +35,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 4. BOTONES DE NAVEGACIÓN
   document.getElementById("logOut")?.addEventListener("click", () => {
     localStorage.removeItem("currentUser");
-    window.location.href = "/static/html/ServicioLogin.html";
+    window.location.href = "/login";
   });
 
   document.getElementById("editProfile")?.addEventListener("click", () => {
-    window.location.href = "/static/html/ServicioEdit.html";
+    window.location.href = "/editar-cliente";
   });
 
   // 5. CARGAR CATÁLOGO DE SERVICIOS

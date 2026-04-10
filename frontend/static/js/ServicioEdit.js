@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Seguridad: Redirigir si no hay usuario
     if (!currentUser) {
-        window.location.href = "/static/html/ServicioLogin.html";
+        window.location.href = "/login";
         return;
     }
 
@@ -87,12 +87,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- BOTONES DEL MENÚ ---
     document.getElementById("goToServices").addEventListener("click", () => {
-        window.location.href = "/static/html/ServicioCliente.html";
+        window.location.href = "/cliente";
     });
 
     document.getElementById("logOut").addEventListener("click", () => {
         localStorage.removeItem("currentUser");
-        window.location.href = "/static/html/ServicioLogin.html";
+        window.location.href = "/login";
     });
 
     // --- GUARDAR CAMBIOS ---

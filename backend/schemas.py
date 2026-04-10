@@ -54,6 +54,7 @@ class ServiceResponse(ServiceBase):
     id: int
     catalog_id: Optional[int] = None
     technician_id: Optional[int] = None
+    technician: Optional[TechnicianResponse] = None
     class Config:
         from_attributes = True
 
@@ -75,6 +76,7 @@ class OfferResponse(BaseModel):
     # Datos anidados para que no salga N/A
     client: ClientResponse 
     services: List[ServiceResponse]
+    manager: Optional[TechnicianResponse] = None
     
     class Config:
         from_attributes = True

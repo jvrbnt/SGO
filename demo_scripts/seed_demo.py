@@ -1,8 +1,8 @@
 import os
 from dotenv import load_dotenv
 from argon2 import PasswordHasher, Type
-from database import LocalSession
-import models
+from backend.database import LocalSession
+import backend.models as models
 
 # --- CONFIGURACIÓN DE SEGURIDAD ---
 load_dotenv()

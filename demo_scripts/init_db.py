@@ -1,5 +1,5 @@
-from database import engine, Base, LocalSession
-import models
+from backend.database import engine, Base, LocalSession
+import backend.models as models
 
 def reset_db():
     print("--- Droping and Creating Tables ---")

@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Validar si es técnico y si hay sesión
     if (!techData || techData.role !== "technician") {
-        window.location.href = "/static/html/ServicioLogin.html";
+        window.location.href = "/login";
         return;
     }
 
@@ -79,11 +79,11 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("click", () => dropdownMenu.classList.add("hidden"));
 
     document.getElementById("goToServices").addEventListener("click", () => {
-        window.location.href = "/static/html/ServicioTecnico.html";
+        window.location.href = "/tecnico";
     });
 
     document.getElementById("logOut").addEventListener("click", () => {
         localStorage.removeItem('currentUser');
-        window.location.href = "/static/html/ServicioLogin.html";
+        window.location.href = "/login";
     });
 });

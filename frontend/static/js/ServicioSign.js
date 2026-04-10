@@ -62,7 +62,7 @@ registrationForm.addEventListener("submit", async function (event) {
     if (response.ok) {
       alert(data.message || "Account created successfully");
       // Redirección al login tras registro exitoso
-      window.location.href = "/static/html/ServicioLogin.html";
+      window.location.href = "/login";
     } else {
       // Manejo de errores de validación o duplicados
       if (Array.isArray(data.detail)) {
