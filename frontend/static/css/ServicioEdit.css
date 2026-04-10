@@ -8,6 +8,13 @@
     border: 1px solid #eee;
 }
 
+.section-title {
+    font-family: 'Montserrat', sans-serif;
+    color: var(--color-csic);
+    margin-bottom: 30px;
+    font-weight: 700;
+}
+
 #editForm {
     display: flex;
     flex-direction: column;
@@ -23,6 +30,7 @@
     padding: 20px;
     border-radius: 8px;
 }
+
 
 #photoPreview {
     width: 120px;
@@ -64,8 +72,6 @@
     font-family: 'Montserrat', sans-serif;
 }
 
-/* --- PROFESSIONAL BUTTONS WITH HOVER --- */
-
 #btnSaveChanges {
     background-color: var(--color-csic);
     color: white;
@@ -83,11 +89,7 @@
 #btnSaveChanges:hover {
     background-color: var(--color-hover);
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(97, 1, 1, 0.3);
-}
-
-#btnSaveChanges:active {
-    transform: translateY(0);
+    box-shadow: 0 5px 15px rgba(175, 7, 31, 0.3);
 }
 
 .btn-secundario {
@@ -98,13 +100,6 @@
     cursor: pointer;
     font-weight: 600;
     font-family: 'Montserrat', sans-serif;
-    transition: all 0.3s ease;
-}
-
-.btn-secundario:hover {
-    background-color: #e2e2e2;
-    border-color: #bbb;
-    transform: scale(1.02);
 }
 
 .btn-danger {
@@ -116,24 +111,11 @@
     cursor: pointer;
     font-weight: 600;
     font-family: 'Montserrat', sans-serif;
-    transition: all 0.3s ease;
 }
 
-.btn-danger:hover {
-    background-color: #d93025;
-    color: white;
-    box-shadow: 0 4px 12px rgba(217, 48, 37, 0.2);
-    transform: scale(1.02);
-}
-
-/* --- TOP BAR ELEMENTS --- */
-.hidden-form { display: none; }
+/* Estilos para el Menú Desplegable */
 .hidden { display: none !important; }
-
-#profileContainer { display: flex; align-items: center; gap: 12px; position: relative; cursor: pointer; }
-#userNameBar { color: white; font-family: 'Montserrat', sans-serif; font-weight: 600; white-space: nowrap; }
-#userIcon { height: 45px; width: 45px; border-radius: 50%; border: 2px solid white; transition: transform 0.3s; }
-#profileContainer:hover #userIcon { transform: scale(1.1); }
+.hidden-form { display: none; }
 
 #dropdownMenu { 
     position: absolute; 
@@ -156,5 +138,11 @@
     cursor: pointer; 
     text-align: left; 
     transition: background 0.2s;
+    font-family: 'Montserrat', sans-serif;
+    color: #333;
 }
-.menu-option:hover { background-color: #f0f0f0; }
+
+.menu-option:hover { 
+    background-color: #f0f0f0; 
+    color: var(--color-csic);
+}
