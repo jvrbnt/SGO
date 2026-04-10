@@ -49,21 +49,35 @@
       </div>
 
       <div class="tabs-container" style="width: 100%;">
-        <button class="tab-btn active" onclick="openTab(event, 'tabGestion')">
-          Gestión de Ofertas
+        <button class="tab-btn active" onclick="openTab(event, 'tabGlobales')">
+          Ofertas Globales
+        </button>
+        <button class="tab-btn" onclick="openTab(event, 'tabMisOfertas')">
+          Mis Ofertas
         </button>
         <button class="tab-btn" onclick="openTab(event, 'tabFacturacion')">
           Facturación
         </button>
       </div>
 
-      <div id="tabGestion" class="tab-content active" style="width: 100%;">
+      <div id="tabGlobales" class="tab-content active" style="width: 100%;">
         <h2 class="section-title" style="text-align: center">
           Ofertas Globales
         </h2>
         <div id="globalRequestList">
           <p style="text-align: center; padding: 20px">
             Cargando ofertas desde PostgreSQL...
+          </p>
+        </div>
+      </div>
+
+      <div id="tabMisOfertas" class="tab-content" style="width: 100%;">
+        <h2 class="section-title" style="text-align: center">
+          Mis Ofertas
+        </h2>
+        <div id="myOffersList">
+          <p style="text-align: center; padding: 20px">
+            Cargando tus ofertas asignadas...
           </p>
         </div>
       </div>

@@ -69,6 +69,7 @@ class OfferResponse(BaseModel):
     updated_at: Optional[datetime] = None
     technician_comment: Optional[str] = None
     client_id: int
+    manager_id: Optional[int] = None
     
     # Datos anidados para que no salga N/A
     client: ClientResponse 

@@ -77,12 +77,39 @@ window.loadAllOffers = async function () {
     if (!response.ok) throw new Error("Failed to fetch offers");
 
     const offers = await response.json();
-    renderOffers(offers);
+    window.allOffers = offers;
+    renderAll();
   } catch (error) {
     console.error("Error loading technician offers:", error);
+    const globalList = document.getElementById("globalRequestList");
     if (globalList) {
       globalList.innerHTML = `<p style="color: red; text-align: center;">Error conectando con la base de datos.</p>`;
     }
+  }
+};
+
+window.assignOffer = async function (offerId) {
+  const techData = JSON.parse(localStorage.getItem("currentUser"));
+  if (!techData || !techData.id) {
+    alert("Error: Technician ID not found. Return to login.");
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/api/technician/offers/${offerId}/assign?tech_id=${techData.id}`, {
+      method: "PATCH"
+    });
+    if (response.ok) {
+      window.loadAllOffers();
+      // Jump to "Mis Ofertas" tab automatically
+      const myOffersBtn = document.querySelector(".tab-btn[onclick*='tabMisOfertas']");
+      if(myOffersBtn) myOffersBtn.click();
+    } else {
+      const error = await response.json();
+      alert("Error: " + (error.detail || "Error al asignar oferta"));
+    }
+  } catch (err) {
+    console.error("Network error:", err);
   }
 };
 
@@ -109,15 +136,17 @@ window.updateOfferStatus = async function (offerId, newStatus) {
 
 // --- 4. MODO REVISIÓN (FLUJO VÍCTOR) ---
 
-window.openReviewPanel = async function (offerId) {
+window.openReviewPanel = async function (offerId, isMineTab) {
   try {
     const response = await fetch(`/api/technician/offers/${offerId}`);
     if (!response.ok) throw new Error("No se pudo obtener la oferta");
     const offer = await response.json();
 
     const client = offer.client || {};
+    
+    const targetContainer = isMineTab ? document.getElementById("myOffersList") : document.getElementById("globalRequestList");
 
-    globalList.innerHTML = `
+    targetContainer.innerHTML = `
         <div style="background: #fff; padding: 25px; border: 2px solid #3498db; border-radius: 8px;">
             <div style="display:flex; justify-content:space-between; margin-bottom:20px; align-items:center;">
                 <h2 style="margin:0; color:#3498db;">REVIEW MODE: OFFER #${offer.id}</h2>
@@ -212,16 +241,27 @@ window.sendQuotedOffer = async function (offerId) {
 };
 
 // --- 5. RENDERIZADO DE LA LISTA DE OFERTAS ---
-function renderOffers(offers) {
-  if (!globalList) return;
-  globalList.innerHTML = "";
-  globalList.style.display = "flex";
-  globalList.style.flexDirection = "column";
-  globalList.style.gap = "15px";
+function renderAll() {
+  const techData = JSON.parse(localStorage.getItem("currentUser"));
+  const techId = techData ? techData.id : null;
+  
+  const globalOffers = window.allOffers;
+  const myOffers = window.allOffers.filter(o => o.manager_id === techId);
+  
+  renderOfferList(globalOffers, document.getElementById("globalRequestList"), true, techId);
+  renderOfferList(myOffers, document.getElementById("myOffersList"), false, techId);
+}
+
+function renderOfferList(offers, container, isGlobal, techId) {
+  if (!container) return;
+  container.innerHTML = "";
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = "15px";
 
   if (offers.length === 0) {
-    globalList.innerHTML =
-      "<p style='text-align:center; padding: 20px; color: #666;'>No hay solicitudes en el sistema.</p>";
+    container.innerHTML =
+      "<p style='text-align:center; padding: 20px; color: #666;'>No hay solicitudes en esta sección.</p>";
     return;
   }
 
@@ -257,18 +297,26 @@ function renderOffers(offers) {
         
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             ${
-              offer.status === "requested" || offer.status === "quoted"
-                ? `<button onclick="window.openReviewPanel(${offer.id})" style="background:#3498db; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;">Review</button>`
+              isGlobal && !offer.manager_id
+                ? `<button onclick="window.assignOffer(${offer.id})" style="background:#8e44ad; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;">Asignarme</button>`
+                : isGlobal && offer.manager_id && offer.manager_id !== techId
+                ? `<span style="background:#e74c3c; color:white; padding:8px 15px; border-radius:4px; font-weight:bold; font-size:12px;">Asignada a otro técnico (#${offer.manager_id})</span>`
+                : isGlobal && offer.manager_id === techId
+                ? `<span style="background:#27ae60; color:white; padding:8px 15px; border-radius:4px; font-weight:bold; font-size:12px;">Asignada a mí</span>`
                 : ""
             }
-            
             ${
-              offer.status === "accepted"
+              (!isGlobal || (isGlobal && offer.manager_id === techId)) && (offer.status === "requested" || offer.status === "quoted")
+                ? `<button onclick="window.openReviewPanel(${offer.id}, ${!isGlobal})" style="background:#3498db; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;">Review</button>`
+                : ""
+            }
+            ${
+              (!isGlobal || (isGlobal && offer.manager_id === techId)) && offer.status === "accepted"
                 ? `<button onclick="window.updateOfferStatus(${offer.id}, 'finished')" style="background:#2c3e50; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;">Finish Work</button>`
                 : ""
             }
         </div>
     `;
-      globalList.appendChild(card);
+      container.appendChild(card);
     });
 }

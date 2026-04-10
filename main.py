@@ -94,6 +94,7 @@ def unified_login(login_data: schemas.LoginRequest, db: Session = Depends(get_db
         try:
             ph.verify(client.hashed_password, password_with_pepper)
             return {
+                "id": client.id,
                 "role": "client",
                 "email": client.email,
                 "first_name": client.first_name,
@@ -109,6 +110,7 @@ def unified_login(login_data: schemas.LoginRequest, db: Session = Depends(get_db
         try:
             ph.verify(tech.hashed_password, password_with_pepper)
             return {
+                "id": tech.id,
                 "role": "technician",
                 "email": tech.email,
                 "first_name": tech.first_name,
@@ -200,3 +202,12 @@ def update_status_simple(offer_id: int, new_status: str, db: Session = Depends(g
     offer.status = new_status
     db.commit()
     return {"message": "Status updated"}
+
+@app.patch("/api/technician/offers/{offer_id}/assign")
+def assign_offer(offer_id: int, tech_id: int, db: Session = Depends(get_db)):
+    offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer not found")
+    offer.manager_id = tech_id
+    db.commit()
+    return {"message": "Offer assigned successfully"}
