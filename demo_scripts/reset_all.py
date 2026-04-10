@@ -1,4 +1,7 @@
 import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from demo_scripts.init_db import reset_db
 from demo_scripts.seed_catalog import reset_catalog
 from demo_scripts.seed_demo import seed_demo_users
