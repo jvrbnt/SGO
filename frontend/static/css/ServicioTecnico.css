@@ -56,3 +56,58 @@
 .menu-option { width: 100%; padding: 12px; border: none; background: none; font-family: 'Montserrat', sans-serif; font-weight: 600; cursor: pointer; text-align: left; }
 .menu-option:hover { background-color: #f0f0f0; }
 .hidden { display: none !important; }
+
+/* --- OFFER CARD BUTTONS --- */
+.btn-card {
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    transition: filter 0.15s ease;
+}
+.btn-card:hover {
+    filter: brightness(0.85);
+}
+
+.btn-manager   { background: #8e44ad; color: white; }
+.btn-unassign  { background: #c0392b; color: white; }
+.btn-review    { background: #3498db; color: white; }
+.btn-finish    { background: #2c3e50; color: white; }
+.btn-back      { background: #666;    color: white; }
+.btn-send      { background: #27ae60; color: white; width: 100%; margin-top: 20px; font-size: 16px; padding: 15px; }
+
+/* Service row assign button (full-height) */
+.btn-assign-service {
+    background: #8e44ad;
+    color: white;
+    border: none;
+    padding: 0 14px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: bold;
+    font-family: 'Montserrat', sans-serif;
+    height: 100%;
+    transition: filter 0.15s ease;
+}
+.btn-assign-service:hover {
+    filter: brightness(0.85);
+}
+
+.btn-unassign-service {
+    background: #c0392b;
+    color: white;
+    border: none;
+    padding: 0 14px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: bold;
+    font-family: 'Montserrat', sans-serif;
+    height: 100%;
+    transition: filter 0.15s ease;
+}
+.btn-unassign-service:hover {
+    filter: brightness(0.85);
+}

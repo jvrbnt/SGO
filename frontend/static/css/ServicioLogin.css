@@ -71,6 +71,36 @@
     font-family: 'Montserrat', sans-serif;
 }
 
+.password-container {
+    position: relative;
+    width: 100%;
+}
+
+.password-container input {
+    width: 100%;
+    padding-right: 36px;
+    box-sizing: border-box;
+}
+
+.eye-toggle {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    user-select: none;
+    line-height: 0;
+    color: #999;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.eye-toggle:hover {
+    color: #555;
+}
+
+
 /* --- EXTRA FIELDS STYLE (HORIZONTAL) --- */
 #extraFields {
     display: none; 
@@ -109,7 +139,7 @@
     color: #555;
 }
 
-#login form:invalid button, #registrationForm:invalid button {
+#login form:invalid button[type="submit"], #registrationForm:invalid button[type="submit"] {
     opacity: 0.5;
     filter: grayscale(1);
     cursor: not-allowed;
@@ -118,8 +148,4 @@
 #passwordMessage {
     font-weight: bold;
     font-size: 12px;
-}
-
-.password-container {
-    width: 100%;
-}
+}

@@ -244,3 +244,25 @@ def assign_service(service_id: int, tech_id: int, db: Session = Depends(get_db))
     service.technician_id = tech_id
     db.commit()
     return {"message": "Service assigned successfully"}
+
+@app.patch("/api/technician/services/{service_id}/unassign")
+def unassign_service(service_id: int, tech_id: int, db: Session = Depends(get_db)):
+    service = db.query(models.Service).filter(models.Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+    if service.technician_id != tech_id:
+        raise HTTPException(status_code=403, detail="Only the assigned technician can unassign themselves")
+    service.technician_id = None
+    db.commit()
+    return {"message": "Service unassigned successfully"}
+
+@app.patch("/api/technician/offers/{offer_id}/unassign")
+def unassign_offer(offer_id: int, tech_id: int, db: Session = Depends(get_db)):
+    offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer not found")
+    if offer.manager_id != tech_id:
+        raise HTTPException(status_code=403, detail="Only the current manager can unassign themselves")
+    offer.manager_id = None
+    db.commit()
+    return {"message": "Offer unassigned successfully"}
