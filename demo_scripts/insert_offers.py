@@ -60,7 +60,7 @@ try:
                         
             new_service = models.Service(
                 service_name=s_name,
-                hours=random.uniform(1, 6),
+                hours=random.randint(1, 6),
                 comment=f"Lo quiero rápidito ponte en marcha con la {s_name}",
                 offer_id=new_offer.id,
                 catalog_id=catalog_id
