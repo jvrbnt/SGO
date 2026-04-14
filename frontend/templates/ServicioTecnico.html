@@ -64,6 +64,13 @@
         <h2 class="section-title" style="text-align: center">
           Ofertas Globales
         </h2>
+        <div class="status-filter-buttons" id="globalFilters">
+          <button class="filter-btn global-btn active" data-status="all" onclick="setFilter('global', 'all', this)">All</button>
+          <button class="filter-btn global-btn" data-status="requested" onclick="setFilter('global', 'requested', this)">Requested</button>
+          <button class="filter-btn global-btn" data-status="quoted" onclick="setFilter('global', 'quoted', this)">Quoted</button>
+          <button class="filter-btn global-btn" data-status="accepted" onclick="setFilter('global', 'accepted', this)">Accepted</button>
+          <button class="filter-btn global-btn" data-status="finished" onclick="setFilter('global', 'finished', this)">Finished</button>
+        </div>
         <div id="globalRequestList">
           <p style="text-align: center; padding: 20px">
             Cargando ofertas desde PostgreSQL...
@@ -75,6 +82,13 @@
         <h2 class="section-title" style="text-align: center">
           Mis Ofertas
         </h2>
+        <div class="status-filter-buttons" id="myFilters">
+          <button class="filter-btn my-btn active" data-status="all" onclick="setFilter('my', 'all', this)">All</button>
+          <button class="filter-btn my-btn" data-status="requested" onclick="setFilter('my', 'requested', this)">Requested</button>
+          <button class="filter-btn my-btn" data-status="quoted" onclick="setFilter('my', 'quoted', this)">Quoted</button>
+          <button class="filter-btn my-btn" data-status="accepted" onclick="setFilter('my', 'accepted', this)">Accepted</button>
+          <button class="filter-btn my-btn" data-status="finished" onclick="setFilter('my', 'finished', this)">Finished</button>
+        </div>
         <div id="myOffersList">
           <p style="text-align: center; padding: 20px">
             Cargando tus ofertas asignadas...

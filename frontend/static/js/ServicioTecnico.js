@@ -317,14 +317,37 @@ window.sendQuotedOffer = async function (offerId) {
 };
 
 // --- 5. OFFER LIST RENDERING ---
+window.currentGlobalFilter = 'all';
+window.currentMyFilter = 'all';
+
+window.setFilter = function(type, status, btnElement) {
+  if (type === 'global') {
+    window.currentGlobalFilter = status;
+    document.querySelectorAll('.global-btn').forEach(btn => btn.classList.remove('active'));
+  } else {
+    window.currentMyFilter = status;
+    document.querySelectorAll('.my-btn').forEach(btn => btn.classList.remove('active'));
+  }
+  btnElement.classList.add('active');
+  renderAll();
+};
+
 function renderAll() {
   const techData = JSON.parse(localStorage.getItem("currentUser"));
   const techId = techData ? techData.id : null;
   
-  const globalOffers = window.allOffers;
-  const myOffers = window.allOffers.filter(o => 
-    o.manager_id === techId || o.services.some(s => s.technician_id === techId)
+  let globalOffers = window.allOffers || [];
+  let myOffers = globalOffers.filter(o => 
+    o.manager_id === techId || (o.services && o.services.some(s => s.technician_id === techId))
   );
+
+  if (window.currentGlobalFilter !== 'all') {
+    globalOffers = globalOffers.filter(o => o.status === window.currentGlobalFilter);
+  }
+  
+  if (window.currentMyFilter !== 'all') {
+    myOffers = myOffers.filter(o => o.status === window.currentMyFilter);
+  }
   
   renderOfferList(globalOffers, document.getElementById("globalRequestList"), true, techId);
   renderOfferList(myOffers, document.getElementById("myOffersList"), false, techId);
