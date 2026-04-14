@@ -211,8 +211,8 @@ def finalize_review_and_send(offer_id: int, review_data: schemas.OfferReviewUpda
     offer.status = "quoted"
     offer.technician_comment = review_data.technician_comment
 
-    for s_data in review_data.get("services", []):
-        service = db.query(models.Service).filter(models.Service.id == s_data["id"]).first()
+    for s_data in review_data.services:
+        service = db.query(models.Service).filter(models.Service.id == s_data.id).first()
         if service:
             service.hours = s_data.hours
             service.comment = s_data.comment
