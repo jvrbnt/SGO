@@ -75,43 +75,37 @@ body {
   font-weight: 400;
 }
 
-#icon,
-#icon2 {
-  display: flex;
-  justify-content: center;
-  padding: 20px 0;
-}
-
-/* Container for the two centered logos */
 #icon {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  padding: 40px 60px !important;
+  margin-top: 40px !important;
+  box-sizing: border-box !important;
+  gap: 20px !important;
+}
+
+#icon2 {
+  margin-bottom: 0 !important;
+  margin-top: 0 !important;
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 120px;
-  margin-top: 80px;
 }
 
-/* Style for the two centered logo images */
-.centered-icon {
-  height: auto;
-  width: 250px;
-  transition: transform 0.3s ease;
+#icon .centered-icon,
+#icon #icon2 img {
+  height: 70px !important;
+  width: auto !important;
+  object-fit: contain !important;
+  margin: 0 !important;
 }
 
-/* Shift to the left */
-.icon-left {
-  margin-right: -40px;
-  width: 500px;
-}
-
-/* Shift to the right */
-.icon-right {
-  margin-left: -40px;
-}
-
-#icon2 img {
-  width: 250px;
-  height: auto;
+#icon .social-links {
+  position: static !important;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 #imgCentral {
@@ -153,8 +147,10 @@ body {
   height: 60px;
   display: flex;
   align-items: center;
-  justify-content: center; /* Centers the main content (logo) */
-  position: relative; /* Positions social links absolutely */
+  justify-content: center;
+  /* Centers the main content (logo) */
+  position: relative;
+  /* Positions social links absolutely */
   padding: 0 40px;
   height: 100px;
   box-sizing: border-box;
@@ -169,7 +165,8 @@ body {
 .social-links {
   display: flex;
   gap: 10px;
-  position: absolute; /* Positions social links to the right */
+  position: absolute;
+  /* Positions social links to the right */
   right: 40px;
 }
 
@@ -224,6 +221,7 @@ body {
   margin-bottom: 20px;
   gap: 5px;
 }
+
 .tab-btn {
   background-color: #f1f1f1;
   border: 1px solid #ccc;
@@ -236,26 +234,32 @@ body {
   color: #555;
   transition: all 0.3s;
 }
+
 .tab-btn:hover {
   background-color: #e2e6ea;
 }
+
 .tab-btn.active {
   background-color: var(--color-csic);
   color: white;
   border-color: var(--color-csic);
 }
+
 .tab-content {
   display: none;
   animation: fadeIn 0.4s;
 }
+
 .tab-content.active {
   display: block;
 }
+
 @keyframes fadeIn {
   from {
     opacity: 0;
     transform: translateY(5px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

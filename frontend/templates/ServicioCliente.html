@@ -1,71 +1,66 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Panel de Cliente - MiNa</title>
-    <link rel="stylesheet" href="/static/css/ServicioCliente.css" />
-    <link rel="stylesheet" href="/static/css/Servicio.css" />
-  </head>
-  <body>
-    <div class="side-bar">
-      <div class="top-contact-info">
-        <div>
-          <img
-            src="https://cdn.iconscout.com/icon/premium/png-256-thumb/correo-electronico-icon-svg-png-download-11866287.png?f=webp&w=128"
-            alt="email"
-          />
-          <h6>mina.imn@csic.es</h6>
-        </div>
-        <div>
-          <img
-            src="https://static.vecteezy.com/system/resources/thumbnails/068/203/105/small/simple-blue-gradient-telephone-receiver-icon-isolated-on-transparent-background-png.png"
-            alt="phone"
-          />
-          <h6>+34 91 806 07 00</h6>
-        </div>
-      </div>
 
-      <div id="profileContainer">
-        <span id="userNameBar"></span>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Cliente - MiNa</title>
+  <link rel="stylesheet" href="/static/css/ServicioCliente.css" />
+  <link rel="stylesheet" href="/static/css/Servicio.css" />
+</head>
+
+<body>
+  <div class="side-bar">
+    <div class="top-contact-info">
+      <div>
         <img
-          id="userIcon"
-          src="https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png"
-          alt="userIcon"
-          style="cursor: pointer; width: 40px; height: 40px; border-radius: 50%"
-        />
-        <div id="dropdownMenu" class="hidden">
-          <button class="menu-option" id="editProfile">Editar Perfil</button>
-          <button class="menu-option" id="logOut">Cerrar Sesión</button>
-        </div>
+          src="https://cdn.iconscout.com/icon/premium/png-256-thumb/correo-electronico-icon-svg-png-download-11866287.png?f=webp&w=128"
+          alt="email" />
+        <h6>mina.imn@csic.es</h6>
+      </div>
+      <div>
+        <img
+          src="https://static.vecteezy.com/system/resources/thumbnails/068/203/105/small/simple-blue-gradient-telephone-receiver-icon-isolated-on-transparent-background-png.png"
+          alt="phone" />
+        <h6>+34 91 806 07 00</h6>
       </div>
     </div>
 
-    <div id="imgCentral"><h1>MiNa Services Management</h1></div>
-
-    <div id="mainContainer">
-      <div id="icon2" style="text-align: center; margin-bottom: 20px">
-        <img src="/static/imagenes/Mina.png" alt="Mina Logo" />
+    <div id="profileContainer">
+      <span id="userNameBar"></span>
+      <img id="userIcon"
+        src="https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png"
+        alt="userIcon" style="cursor: pointer; width: 40px; height: 40px; border-radius: 50%" />
+      <div id="dropdownMenu" class="hidden">
+        <button class="menu-option" id="editProfile">Editar Perfil</button>
+        <button class="menu-option" id="logOut">Cerrar Sesión</button>
       </div>
+    </div>
+  </div>
 
-      <div class="tabs-container" style="width: 100%">
-        <button class="tab-btn active" onclick="openTab(event, 'tabGenerar')">
-          Generar Oferta
-        </button>
-        <button class="tab-btn" onclick="openTab(event, 'tabMisOfertas')">
-          Mis Ofertas
-        </button>
-        <button class="tab-btn" onclick="openTab(event, 'tabFacturacion')">
-          Facturación
-        </button>
-      </div>
+  <div id="imgCentral">
+    <h1>MiNa Services Management</h1>
+  </div>
 
-      <div id="tabGenerar" class="tab-content active" style="width: 100%">
-        <h2 class="section-title">Catálogo de Servicios</h2>
-        <div id="servicesGrid"></div>
-        <button
-          id="btnSendRequest"
-          style="
+  <div id="mainContainer">
+
+
+    <div class="tabs-container" style="width: 100%">
+      <button class="tab-btn active" onclick="openTab(event, 'tabGenerar')">
+        Generar Oferta
+      </button>
+      <button class="tab-btn" onclick="openTab(event, 'tabMisOfertas')">
+        Mis Ofertas
+      </button>
+      <button class="tab-btn" onclick="openTab(event, 'tabFacturacion')">
+        Facturación
+      </button>
+    </div>
+
+    <div id="tabGenerar" class="tab-content active" style="width: 100%">
+      <h2 class="section-title">Catálogo de Servicios</h2>
+      <div id="servicesGrid"></div>
+      <button id="btnSendRequest" style="
             margin-top: 20px;
             background-color: var(--color-csic);
             color: white;
@@ -75,56 +70,50 @@
             border-radius: 4px;
             cursor: pointer;
             width: 100%;
-          "
-        >
-          Generar Oferta Seleccionada
-        </button>
-      </div>
-
-      <div id="tabMisOfertas" class="tab-content" style="width: 100%">
-        <h2 class="section-title">Historial de Ofertas</h2>
-        <div id="requestList"></div>
-      </div>
-
-      <div
-        id="tabFacturacion"
-        class="tab-content"
-        style="width: 100%; padding: 20px"
-      >
-        <h2 class="section-title">Módulo de Facturación</h2>
-        <p>En desarrollo.</p>
-      </div>
+          ">
+        Generar Oferta Seleccionada
+      </button>
     </div>
 
-    <div id="icon">
-      <img
-        src="/static/imagenes/Csic.png"
-        alt="Csic Logo Left"
-        class="centered-icon icon-left"
-      />
-      <img
-        src="/static/imagenes/MicroNano.png"
-        alt="MicroNano Logo"
-        class="centered-icon icon-right"
-      />
+    <div id="tabMisOfertas" class="tab-content" style="width: 100%">
+      <h2 class="section-title">Historial de Ofertas</h2>
+      <div id="requestList"></div>
     </div>
 
-    <div class="side-bar" id="footer">
-      <img
-        src="/static/imagenes/CsicGris.png"
-        alt="Footer Logo"
-        class="logo-footer"
-      />
-      <div class="social-links">
-            <a href="https://es-es.facebook.com/CSIC/" class="btn-social"><img src="https://cdn.pixabay.com/photo/2021/06/15/12/51/facebook-6338508_640.png" alt="Facebook"></a>
-            <a href="https://www.instagram.com/csic/" class="btn-social" id="insta"><img src="https://static.vecteezy.com/system/resources/thumbnails/018/930/691/small/instagram-logo-instagram-icon-transparent-free-png.png" alt="Instagram"></a>
-            <a href="https://x.com/csic" class="btn-social" id="twitter"><img src="https://www.freepnglogos.com/elon-musk-twitter-rebrand-x-logo-2.png"></a>
-            <a href="https://www.youtube.com/user/csicdptocomunicacion" class="btn-social" id="youtube"><img src="https://static.vecteezy.com/system/resources/thumbnails/042/148/649/small/youtube-logo-youtube-social-media-icon-free-png.png" alt="Youtube"></a>
-            <a href="https://www.tiktok.com/@elcsic" class="btn-social" id="tiktok"><img src="https://static.vecteezy.com/system/resources/thumbnails/065/386/723/small/tiktok-white-icon-logo-tiktok-app-transparent-background-premium-social-media-design-for-digital-download-free-png.png" alt="TikTok"></a>
-            <a href="https://bsky.app/profile/csic.es" class="btn-social" id="bsky"><img src="https://images.seeklogo.com/logo-png/52/2/bluesky-logo-png_seeklogo-520643.png" alt="Bsky"></a>
-        </div>
+    <div id="tabFacturacion" class="tab-content" style="width: 100%; padding: 20px">
+      <h2 class="section-title">Módulo de Facturación</h2>
+      <p>En desarrollo.</p>
     </div>
+  </div>
 
-    <script src="/static/js/ServicioCliente.js" defer></script>
-  </body>
+  <div id="icon">
+    <img src="/static/imagenes/Csic.png" alt="Csic Logo" class="centered-icon" />
+    <div id="icon2">
+      <img src="/static/imagenes/Mina.png" alt="Mina Logo" />
+    </div>
+    <img src="/static/imagenes/MicroNano.png" alt="MicroNano Logo" class="centered-icon" />
+    <div class="social-links">
+      <a href="https://es-es.facebook.com/CSIC/" class="btn-social"><img
+          src="https://cdn.pixabay.com/photo/2021/06/15/12/51/facebook-6338508_640.png" alt="Facebook"></a>
+      <a href="https://www.instagram.com/csic/" class="btn-social" id="insta"><img
+          src="https://static.vecteezy.com/system/resources/thumbnails/018/930/691/small/instagram-logo-instagram-icon-transparent-free-png.png"
+          alt="Instagram"></a>
+      <a href="https://x.com/csic" class="btn-social" id="twitter"><img
+          src="https://www.freepnglogos.com/elon-musk-twitter-rebrand-x-logo-2.png"></a>
+      <a href="https://www.youtube.com/user/csicdptocomunicacion" class="btn-social" id="youtube"><img
+          src="https://static.vecteezy.com/system/resources/thumbnails/042/148/649/small/youtube-logo-youtube-social-media-icon-free-png.png"
+          alt="Youtube"></a>
+      <a href="https://www.tiktok.com/@elcsic" class="btn-social" id="tiktok"><img
+          src="https://static.vecteezy.com/system/resources/thumbnails/065/386/723/small/tiktok-white-icon-logo-tiktok-app-transparent-background-premium-social-media-design-for-digital-download-free-png.png"
+          alt="TikTok"></a>
+      <a href="https://bsky.app/profile/csic.es" class="btn-social" id="bsky"><img
+          src="https://images.seeklogo.com/logo-png/52/2/bluesky-logo-png_seeklogo-520643.png" alt="Bsky"></a>
+    </div>
+  </div>
+
+  <div class="side-bar" id="footer"></div>
+
+  <script src="/static/js/ServicioCliente.js" defer></script>
+</body>
+
 </html>
