@@ -5,6 +5,7 @@
   gap: 40px;
   width: 90%;
   margin: 30px auto;
+  padding-top: 80px; /* Clear fixed top bar */
 }
 
 #services,

@@ -39,7 +39,15 @@
 }
 
 /* --- REUSE OF PREVIOUS STYLES --- */
-#mainContainer { display: flex; flex-direction: column; align-items: center; gap: 40px; width: 90%; margin: 30px auto; }
+#mainContainer { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    gap: 40px; 
+    width: 90%; 
+    margin: 30px auto; 
+    padding-top: 80px; /* Clear fixed top bar */
+}
 #requests { background-color: white; border-radius: 12px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #eee; width: 100%; }
 .section-title { color: var(--color-csic); font-size: 26px; font-family: 'Montserrat', sans-serif; font-weight: 700; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 3px solid var(--color-csic); }
 #globalRequestList { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; width: 100%; }
@@ -143,4 +151,102 @@
     border-color: var(--color-csic);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
+
+/* --- COMMENT VIEWER MODAL --- */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 0.2s ease;
+}
+
+.modal-content {
+    background: white;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modalIn 0.3s ease-out;
+}
+
+@keyframes modalIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+    background: var(--color-csic);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+}
+
+.modal-body {
+    padding: 20px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #333;
+    max-height: 400px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid #eee;
+}
+
+.btn-modal-close {
+    background: var(--color-csic);
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* Eye button styles */
+.btn-view-comment {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, transform 0.1s;
+}
+
+.btn-view-comment:hover {
+    color: var(--color-csic);
+    transform: scale(1.1);
+}
+
 

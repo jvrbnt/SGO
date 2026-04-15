@@ -2,7 +2,7 @@ import os
 import sys
 import random
 
-# Añadimos el directorio padre al path para encontrar la carpeta 'backend'
+# Add parent directory to path to find 'backend' folder
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from backend import models
@@ -11,46 +11,46 @@ from backend.database import LocalSession
 db = LocalSession()
 
 try:
-    print("Obteniendo clientes y catálogo de servicios de la base de datos...")
+    print("Fetching clients and service catalog from database...")
     clients = db.query(models.Client).all()
     
     if not clients:
-        print("Error: No hay clientes en la base de datos. Por favor, ejecuta primero insert_clients.py")
+        print("Error: No clients found in database. Please run insert_clients.py first.")
         sys.exit(1)
         
     catalog_items = db.query(models.ServiceCatalog).all()
     
-    # Si no hay catálogo, utilizamos una lista genérica
+    # Use generic list if catalog is empty
     if not catalog_items:
-        service_names = ["Fabricación de máscaras", "Caracterización eléctrica", "Litografía óptica", "Deposición de metales", "Ataque reactivo"]
+        service_names = ["Mask Fabrication", "Electrical Characterization", "Optical Lithography", "Metal Deposition", "Reactive Etching"]
         catalog_items = None
-        print("Aviso: El catálogo de servicios está vacío. Se usarán nombres de servicio por defecto.")
+        print("Warning: Service catalog is empty. Using default service names.")
     else:
         service_names = [item.name for item in catalog_items]
 
-    print("Empezando a crear 20 ofertas...")
+    print("Starting to create 20 sample offers...")
     
     for i in range(20):
         client = random.choice(clients)
         
-        # Crear nueva oferta
+        # Create new offer
         new_offer = models.Offer(
             client_id=client.id,
             status="requested"
         )
         db.add(new_offer)
-        db.flush() # Para obtener el ID de la oferta
+        db.flush() # Get offer ID
         
         num_services = random.randint(1, 5)
         
-        # Seleccionar servicios únicos para esta oferta
+        # Select unique services for this offer
         if len(service_names) >= num_services:
             selected_services = random.sample(service_names, num_services)
         else:
             selected_services = random.choices(service_names, k=num_services)
             
         for s_name in selected_services:
-            # Encontrar el item del catálogo si existe
+            # Find catalog item if exists
             catalog_id = None
             if catalog_items:
                 for item in catalog_items:
@@ -61,17 +61,17 @@ try:
             new_service = models.Service(
                 service_name=s_name,
                 hours=random.randint(1, 6),
-                comment=f"Lo quiero rápidito ponte en marcha con la {s_name}",
+                comment=f"Please proceed with {s_name} as soon as possible.",
                 offer_id=new_offer.id,
                 catalog_id=catalog_id
             )
             db.add(new_service)
             
     db.commit()
-    print("¡Éxito! Se han creado 20 ofertas con servicios asignados exitosamente.")
+    print("Success! 20 offers with assigned services have been created successfully.")
     
 except Exception as e:
-    print(f"Error al crear las ofertas: {e}")
+    print(f"Error creating offers: {e}")
     db.rollback()
 finally:
     db.close()

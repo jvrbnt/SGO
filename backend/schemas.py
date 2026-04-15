@@ -40,7 +40,10 @@ class LoginRequest(BaseModel):
 class ServiceCatalogResponse(BaseModel):
     id: int
     name: str
-    price_per_hour: float
+    price1: float
+    price2: Optional[float] = None
+    price3: Optional[float] = None
+    price4: Optional[float] = None
     class Config:
         from_attributes = True
 
@@ -50,11 +53,20 @@ class ServiceBase(BaseModel):
     hours: float
     comment: Optional[str] = None
 
+class ServiceCreateInline(BaseModel):
+    service_name: str
+    hours: float = 0.0
+    comment: Optional[str] = None
+
 class ServiceResponse(ServiceBase):
     id: int
     catalog_id: Optional[int] = None
     technician_id: Optional[int] = None
+    quoted_price: Optional[float] = None
+    is_deleted: bool = False
+    added_by_technician: bool = False
     technician: Optional[TechnicianResponse] = None
+    catalog_item: Optional[ServiceCatalogResponse] = None
     class Config:
         from_attributes = True
 
@@ -85,6 +97,7 @@ class OfferResponse(BaseModel):
 class ServiceUpdate(BaseModel):
     id: int
     hours: float
+    quoted_price: Optional[float] = None
     comment: Optional[str] = None
 
 # Schema for review panel updates

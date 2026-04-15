@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Panel de Cliente - MiNa</title>
+  <title>Client Portal - MiNa</title>
   <link rel="stylesheet" href="/static/css/ServicioCliente.css" />
   <link rel="stylesheet" href="/static/css/Servicio.css" />
 </head>
@@ -32,33 +32,31 @@
         src="https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png"
         alt="userIcon" style="cursor: pointer; width: 40px; height: 40px; border-radius: 50%" />
       <div id="dropdownMenu" class="hidden">
-        <button class="menu-option" id="editProfile">Editar Perfil</button>
-        <button class="menu-option" id="logOut">Cerrar Sesión</button>
+        <button class="menu-option" id="editProfile">Edit Profile</button>
+        <button class="menu-option" id="logOut">Log Out</button>
       </div>
     </div>
   </div>
 
-  <div id="imgCentral">
-    <h1>MiNa Services Management</h1>
-  </div>
+
 
   <div id="mainContainer">
 
 
     <div class="tabs-container" style="width: 100%">
       <button class="tab-btn active" onclick="openTab(event, 'tabGenerar')">
-        Generar Oferta
+        Create Offer
       </button>
       <button class="tab-btn" onclick="openTab(event, 'tabMisOfertas')">
-        Mis Ofertas
+        My Offers
       </button>
       <button class="tab-btn" onclick="openTab(event, 'tabFacturacion')">
-        Facturación
+        Billing
       </button>
     </div>
 
     <div id="tabGenerar" class="tab-content active" style="width: 100%">
-      <h2 class="section-title">Catálogo de Servicios</h2>
+      <h2 class="section-title">Service Catalog</h2>
       <div id="servicesGrid"></div>
       <button id="btnSendRequest" style="
             margin-top: 20px;
@@ -71,18 +69,18 @@
             cursor: pointer;
             width: 100%;
           ">
-        Generar Oferta Seleccionada
+        Create Selected Offer
       </button>
     </div>
 
     <div id="tabMisOfertas" class="tab-content" style="width: 100%">
-      <h2 class="section-title">Historial de Ofertas</h2>
+      <h2 class="section-title">Offer History</h2>
       <div id="requestList"></div>
     </div>
 
     <div id="tabFacturacion" class="tab-content" style="width: 100%; padding: 20px">
-      <h2 class="section-title">Módulo de Facturación</h2>
-      <p>En desarrollo.</p>
+      <h2 class="section-title">Billing Module</h2>
+      <p>Under development.</p>
     </div>
   </div>
 

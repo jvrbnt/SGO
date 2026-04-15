@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
             localStorage.setItem('users', JSON.stringify(users));
         }
 
-        alert("Perfil de técnico actualizado correctamente");
+        alert("Technician profile updated successfully!");
         window.location.reload();
     });
 

@@ -17,7 +17,7 @@ load_dotenv()
 SECRET_PEPPER = os.getenv("SECRET_PEPPER")
 
 if not SECRET_PEPPER:
-    raise RuntimeError("¡ERROR: No se encontró la variable SECRET_PEPPER en el archivo .env!")
+    raise RuntimeError("ERROR: SECRET_PEPPER variable not found in .env file!")
 
 # Argon2id Hybrid Configuration
 ph = PasswordHasher(
@@ -144,7 +144,7 @@ def unified_login(login_data: schemas.LoginRequest, db: Session = Depends(get_db
         except VerifyMismatchError:
             pass
 
-    raise HTTPException(status_code=401, detail="Credenciales incorrectas")
+    raise HTTPException(status_code=401, detail="Incorrect credentials")
 
 # --- SERVICE CATALOG ROUTES ---
 
@@ -213,9 +213,11 @@ def finalize_review_and_send(offer_id: int, review_data: schemas.OfferReviewUpda
 
     for s_data in review_data.services:
         service = db.query(models.Service).filter(models.Service.id == s_data.id).first()
-        if service:
+        if service and not service.is_deleted:
             service.hours = s_data.hours
             service.comment = s_data.comment
+            if s_data.quoted_price is not None:
+                service.quoted_price = s_data.quoted_price
 
     db.commit()
     return {"message": "Offer sent to client as QUOTED"}
@@ -265,4 +267,43 @@ def unassign_offer(offer_id: int, tech_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=403, detail="Only the current manager can unassign themselves")
     offer.manager_id = None
     db.commit()
-    return {"message": "Offer unassigned successfully"}
+    return {"message": "Offer unassigned successfully"}
+
+@app.delete("/api/technician/services/{service_id}")
+def delete_service(service_id: int, db: Session = Depends(get_db)):
+    service = db.query(models.Service).filter(models.Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+    
+    if service.offer.status not in ["requested", "quoted"]:
+        raise HTTPException(status_code=400, detail=f"Cannot delete services from an offer in '{service.offer.status}' status")
+        
+    service.is_deleted = True
+    db.commit()
+    return {"message": "Service logically deleted"}
+
+@app.post("/api/technician/offers/{offer_id}/services")
+def add_service_to_offer(offer_id: int, service_in: schemas.ServiceCreateInline, db: Session = Depends(get_db)):
+    offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer not found")
+    
+    if offer.status not in ["requested", "quoted"]:
+        raise HTTPException(status_code=400, detail=f"Cannot add services to an offer in '{offer.status}' status")
+
+    catalog_item = db.query(models.ServiceCatalog).filter(
+        models.ServiceCatalog.name == service_in.service_name
+    ).first()
+    
+    new_service = models.Service(
+        service_name=service_in.service_name,
+        hours=service_in.hours,
+        comment=service_in.comment,
+        offer_id=offer.id,
+        catalog_id=catalog_item.id if catalog_item else None,
+        added_by_technician=True
+    )
+    db.add(new_service)
+    db.commit()
+    db.refresh(new_service)
+    return {"message": "Service added successfully", "service_id": new_service.id}

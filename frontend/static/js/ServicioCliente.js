@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const displayName =
     currentUser.nickname ||
     `${currentUser.first_name || ""} ${currentUser.last_name || ""}`.trim() ||
-    "Investigador";
+    "Researcher";
   document.getElementById("userNameBar").textContent = displayName;
 
   if (currentUser.profilePicture) {
@@ -65,10 +65,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                         <span class="icono-mas">+</span>
                     </div>
                     <div class="formulario-horas" style="display:none; flex:1; align-items:center; padding:0 15px; gap:15px; background:#fff;">
-                        <label style="font-size:12px; font-weight:bold;">HORAS:</label>
+                        <label style="font-size:12px; font-weight:bold;">HOURS:</label>
                         <input type="number" step="0.5" min="0" class="input-horas" style="width:60px; padding:5px;">
-                        <label style="font-size:12px; font-weight:bold;">NOTA:</label>
-                        <input type="text" class="input-comentario" placeholder="Opcional..." style="flex-grow:1; padding:5px;">
+                        <label style="font-size:12px; font-weight:bold;">NOTE:</label>
+                        <input type="text" class="input-comentario" placeholder="Optional..." style="flex-grow:1; padding:5px;">
                     </div>
                 `;
         grid.appendChild(fila);
@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
       });
     } catch (e) {
-      grid.innerHTML = "<p>Error cargando catálogo.</p>";
+      grid.innerHTML = "<p>Error loading catalog.</p>";
     }
   }
 
@@ -99,9 +99,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       const offers = await response.json();
 
       list.innerHTML = "";
+      list.style.display = "grid";
+      list.style.gridTemplateColumns = "repeat(auto-fill, minmax(400px, 1fr))"; // 3 por línea en pantallas grandes
+      list.style.gap = "25px";
+      list.style.alignItems = "start";
+      list.style.marginBottom = "30px";
       if (offers.length === 0) {
         list.innerHTML =
-          "<p style='text-align:center; padding:20px;'>No tienes ofertas aún.</p>";
+          "<p style='text-align:center; padding:20px;'>You have no offers yet.</p>";
         return;
       }
 
@@ -110,7 +115,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         .forEach((offer) => {
           const div = document.createElement("div");
           div.style.cssText =
-            "border:1px solid #ccc; padding:20px; border-radius:8px; background:#fff; margin-bottom:15px; position:relative;";
+            "border:1px solid #e2e8f0; padding:24px; border-radius:12px; background:#fff; position:relative; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); transition: transform 0.2s, box-shadow 0.2s;";
+          div.onmouseover = () => { div.style.transform = 'translateY(-4px)'; div.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; };
+          div.onmouseout = () => { div.style.transform = 'translateY(0)'; div.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)'; };
 
           const statusColors = {
             requested: "#17a2b8",
@@ -121,40 +128,104 @@ document.addEventListener("DOMContentLoaded", async () => {
           const color = statusColors[offer.status] || "#666";
 
           div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;">
-                        <strong style="color:#004a8f;">OFERTA #${offer.id}</strong>
-                        <span style="background:${color}; color:white; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:bold;">${offer.status.toUpperCase()}</span>
-                    </div>
-                    <div style="font-size:13px; color:#555; margin-bottom:10px;">Fecha: ${new Date(offer.created_at).toLocaleDateString()}</div>
-                    
-                    <ul style="padding-left:15px; font-size:14px;">
-                        ${offer.services.map((s) => `<li><strong>${s.service_name}</strong>: ${s.hours}h ${s.comment ? `<br><i style="color:#888;">"${s.comment}"</i>` : ""}</li>`).join("")}
-                    </ul>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;">
+              <strong style="color:#004a8f;">OFFER #${offer.id}</strong>
+              <span style="background:${color}; color:white; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:bold;">${offer.status.toUpperCase()}</span>
+            </div>
+            <div style="font-size:13px; color:#555; margin-bottom:10px;">Date: ${new Date(offer.created_at).toLocaleDateString()}</div>
 
-                    ${
-                      offer.technician_comment
-                        ? `
-                        <div style="background:#fff8e1; border-left:4px solid #f39c12; padding:10px; margin-top:15px; font-size:13px;">
-                            <strong>Nota del técnico:</strong> ${offer.technician_comment}
-                        </div>
-                    `
-                        : ""
-                    }
+            ${offer.status === 'quoted' ? `
+              <!-- QUOTED: tabla de precios destacada -->
+              <div style="background:#f0f7ff; border:2px solid #3498db; border-radius:8px; padding:15px; margin-bottom:15px;">
+                <h4 style="margin:0 0 12px 0; color:#2563eb; font-size:14px; display:flex; align-items:center; gap:8px;">
+                  QUOTATION
+                </h4>
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                  <thead>
+                    <tr style="border-bottom:2px solid #c8d8ff; color:#2563eb;">
+                      <th style="padding:6px 8px; text-align:left; font-weight:600;">Service</th>
+                      <th style="padding:6px 8px; text-align:right; font-weight:600;">Hours</th>
+                      <th style="padding:6px 8px; text-align:right; font-weight:600;">Price</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${offer.services.map(s => {
+                      const isDel = s.is_deleted;
+                      const isAdded = s.added_by_technician;
+                      const colorStyle = isDel ? 'color: #94a3b8;' : 'color:#333;';
+                      const label = isDel ? ' <span style="color:#ef4444; font-size:11px; font-weight:bold; text-decoration:none;">(Deleted by technician)</span>' : 
+                                    (isAdded ? ' <span style="color:#10b981; font-size:11px; font-weight:bold;">(Added by technician)</span>' : '');
+                      
+                      const nameDisplay = isDel ? `<span style="text-decoration:line-through;">${s.service_name}</span>` : s.service_name;
+                      const hoursDisplay = isDel ? `<span style="text-decoration:line-through;">${s.hours}h</span>` : `${s.hours}h`;
 
-                    ${
-                      offer.status === "quoted"
-                        ? `
-                        <button onclick="window.acceptQuotedOffer(${offer.id})" style="width:100%; margin-top:15px; background:#28a745; color:white; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer;">
-                            ACEPTAR PRESUPUESTO Y CONFIRMAR TRABAJO
-                        </button>
-                    `
-                        : ""
-                    }
-                `;
+                      return `
+                        <tr style="border-bottom:1px solid #dce8ff;">
+                          <td style="padding:6px 8px; ${colorStyle}">${nameDisplay}${label}</td>
+                          <td style="padding:6px 8px; text-align:right; color:#555;">${hoursDisplay}</td>
+                          <td style="padding:6px 8px; text-align:right; font-weight:600; color:#2563eb;">
+                            ${isDel ? '0.00 €' : (s.quoted_price != null ? s.quoted_price.toFixed(2) + ' €' : '—')}
+                          </td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                  <tfoot>
+                    <tr style="border-top:2px solid #3498db; background:#e8f2ff;">
+                      <td colspan="2" style="padding:8px; font-weight:bold; color:#1e40af; font-size:14px;">TOTAL</td>
+                      <td style="padding:8px; text-align:right; font-weight:bold; color:#1e40af; font-size:16px;">
+                        ${offer.services.filter(s => !s.is_deleted).reduce((acc, s) => acc + (s.quoted_price ?? 0), 0).toFixed(2)} €
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            ` : (offer.status === 'accepted' || offer.status === 'finished') && offer.services.some(s => s.quoted_price != null) ? `
+              <!-- ACCEPTED / FINISHED: resumen compacto de precios -->
+              <div style="background:#f6fff8; border:1px solid #28a745; border-radius:6px; padding:12px; margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <span style="font-size:13px; color:#1a6b33; font-weight:600;">Accepted quotation</span>
+                  <span style="font-size:16px; font-weight:bold; color:#1a6b33;">
+                    ${offer.services.filter(s => !s.is_deleted).reduce((acc, s) => acc + (s.quoted_price ?? 0), 0).toFixed(2)} € total
+                  </span>
+                </div>
+                <ul style="margin:0; padding-left:16px; font-size:13px; color:#555;">
+                  ${offer.services.map(s => {
+                    if (s.is_deleted) return ''; // Don't show deleted in compact summary
+                    const isAdded = s.added_by_technician;
+                    return `
+                      <li style="margin-bottom:3px;">
+                        ${s.service_name} — ${s.hours}h
+                        ${isAdded ? '<small style="color:#10b981; font-weight:bold;">(Added by technician)</small>' : ''}
+                        ${s.quoted_price != null ? `<span style="color:#1a6b33; font-weight:600;">(${s.quoted_price.toFixed(2)} €)</span>` : ''}
+                      </li>
+                    `;
+                  }).join('')}
+                </ul>
+              </div>
+            ` : `
+              <!-- REQUESTED: lista simple sin precios -->
+              <ul style="padding-left:15px; font-size:14px; margin-bottom:10px;">
+                ${offer.services.map(s => `<li><strong>${s.service_name}</strong>: ${s.hours}h ${s.comment ? `<br><i style="color:#888;">"${s.comment}"</i>` : ''}</li>`).join('')}
+              </ul>
+            `}
+
+            ${offer.technician_comment ? `
+              <div style="background:#fff8e1; border-left:4px solid #f39c12; padding:10px; margin-top:5px; font-size:13px; word-break: break-word; overflow-wrap: anywhere;">
+                <strong>Technician's note:</strong> ${offer.technician_comment}
+              </div>
+            ` : ''}
+
+            ${offer.status === 'quoted' ? `
+              <button onclick="window.acceptQuotedOffer(${offer.id})" style="width:100%; margin-top:15px; background:#28a745; color:white; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:14px;">
+                ACCEPT QUOTATION AND CONFIRM WORK
+              </button>
+            ` : ''}
+          `;
           list.appendChild(div);
         });
     } catch (e) {
-      console.error("Error cargando historial", e);
+      console.error("Error loading history", e);
     }
   };
 
@@ -179,7 +250,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
 
       if (requestedServices.length === 0)
-        return alert("Selecciona al menos un servicio con horas.");
+        return alert("Select at least one service with hours.");
 
       const res = await fetch("/api/client/offers", {
         method: "POST",
@@ -191,7 +262,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
 
       if (res.ok) {
-        alert("Solicitud enviada con éxito.");
+        alert("Request sent successfully.");
         location.reload();
       }
     });
@@ -199,7 +270,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 8. ACCEPTANCE LOGIC
   window.acceptQuotedOffer = async function (offerId) {
     if (
-      !confirm("¿Confirmas que aceptas el presupuesto y las horas indicadas?")
+      !confirm("Do you confirm that you accept the quotation and the indicated hours?")
     )
       return;
 
@@ -212,7 +283,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
 
     if (res.ok) {
-      alert("Oferta aceptada. El técnico ha sido notificado.");
+      alert("Offer accepted. The technician has been notified.");
       window.loadMyRequests();
     }
   };

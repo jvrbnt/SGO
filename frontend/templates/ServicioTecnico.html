@@ -33,33 +33,31 @@
         src="https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png"
         alt="userIcon" />
       <div id="dropdownMenu" class="hidden">
-        <button class="menu-option" id="editProfile">Editar Perfil</button>
-        <button class="menu-option" id="logOut">Cerrar Sesión</button>
+        <button class="menu-option" id="editProfile">Edit Profile</button>
+        <button class="menu-option" id="logOut">Log Out</button>
       </div>
     </div>
   </div>
 
-  <div id="imgCentral">
-    <h1>MiNa Staff Portal</h1>
-  </div>
+
 
   <div id="mainContainer">
 
     <div class="tabs-container" style="width: 100%;">
       <button class="tab-btn active" onclick="openTab(event, 'tabGlobales')">
-        Ofertas Globales
+        Global Offers
       </button>
       <button class="tab-btn" onclick="openTab(event, 'tabMisOfertas')">
-        Mis Ofertas
+        My Offers
       </button>
       <button class="tab-btn" onclick="openTab(event, 'tabFacturacion')">
-        Facturación
+        Billing
       </button>
     </div>
 
     <div id="tabGlobales" class="tab-content active" style="width: 100%;">
       <h2 class="section-title" style="text-align: center">
-        Ofertas Globales
+        Global Offers
       </h2>
       <div class="status-filter-buttons" id="globalFilters">
         <button class="filter-btn global-btn active" data-status="all"
@@ -75,14 +73,14 @@
       </div>
       <div id="globalRequestList">
         <p style="text-align: center; padding: 20px">
-          Cargando ofertas desde PostgreSQL...
+          Loading offers from database...
         </p>
       </div>
     </div>
 
     <div id="tabMisOfertas" class="tab-content" style="width: 100%;">
       <h2 class="section-title" style="text-align: center">
-        Mis Ofertas
+        My Offers
       </h2>
       <div class="status-filter-buttons" id="myFilters">
         <button class="filter-btn my-btn active" data-status="all" onclick="setFilter('my', 'all', this)">All</button>
@@ -96,14 +94,14 @@
       </div>
       <div id="myOffersList">
         <p style="text-align: center; padding: 20px">
-          Cargando tus ofertas asignadas...
+          Loading your assigned offers...
         </p>
       </div>
     </div>
 
     <div id="tabFacturacion" class="tab-content" style="width: 100%; padding: 20px">
-      <h2 class="section-title">Módulo de Facturación</h2>
-      <p>En desarrollo.</p>
+      <h2 class="section-title">Billing Module</h2>
+      <p>Under development.</p>
     </div>
   </div>
 

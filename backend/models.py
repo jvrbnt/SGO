@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Float, DateTime, Text
+from sqlalchemy import Column, Integer, String, ForeignKey, Float, DateTime, Text, Boolean
 from sqlalchemy.orm import relationship
 import datetime
 from backend.database import Base
@@ -43,7 +43,10 @@ class ServiceCatalog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True, nullable=False) # Service name according to catalog
-    price_per_hour = Column(Float, nullable=False) # Base price for budget calculations
+    price1 = Column(Float, nullable=False)  # Former price_per_hour — base price (MiNa internal users)
+    price2 = Column(Float, nullable=False)   # Price for external CSIC users
+    price3 = Column(Float, nullable=False)   # Price for universities / OPIS
+    price4 = Column(Float, nullable=False)   # Price for companies
 
     # Reference to services requested based on this item
     services = relationship("Service", back_populates="catalog_item")
@@ -74,8 +77,11 @@ class Service(Base):
     id = Column(Integer, primary_key=True, index=True)
     service_name = Column(String, nullable=False) # Name of requested service (catalog copy)
     hours = Column(Float, default=0.0)
+    quoted_price = Column(Float, nullable=True)  # Final price set by technician (price/h × hours, editable)
     comment = Column(Text, nullable=True)
     status = Column(String, default="pending") # Estados: pending, doing, done
+    is_deleted = Column(Boolean, default=False) # Logically deleted by technician
+    added_by_technician = Column(Boolean, default=False) # Added by technician during review
     
     # Link with parent offer, assigned technician, and catalog origin
     offer_id = Column(Integer, ForeignKey("offers.id"))

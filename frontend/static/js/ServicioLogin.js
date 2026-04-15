@@ -50,12 +50,12 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
           let errorMsg = data.detail;
           if (Array.isArray(errorMsg))
-            errorMsg = "Formato de datos incorrecto.";
+            errorMsg = "Incorrect data format.";
           alert("Error: " + errorMsg);
         }
       } catch (err) {
-        console.error("Error de conexión:", err);
-        alert("No se pudo conectar con el servidor backend.");
+        console.error("Connection error:", err);
+        alert("Could not connect to the backend server.");
       }
     });
   }

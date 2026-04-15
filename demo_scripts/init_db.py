@@ -6,7 +6,7 @@ from backend.database import engine, Base, LocalSession
 import backend.models as models
 
 def reset_db():
-    print("--- Droping and Creating Tables ---")
+    print("--- Dropping and Creating Tables ---")
     # Drop prior models and create new schema
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
