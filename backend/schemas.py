@@ -56,6 +56,7 @@ class ServiceBase(BaseModel):
 class ServiceCreateInline(BaseModel):
     service_name: str
     hours: float = 0.0
+    original_hours: Optional[float] = None
     comment: Optional[str] = None
 
 class ServiceResponse(ServiceBase):
@@ -63,6 +64,7 @@ class ServiceResponse(ServiceBase):
     catalog_id: Optional[int] = None
     technician_id: Optional[int] = None
     quoted_price: Optional[float] = None
+    original_hours: Optional[float] = None
     is_deleted: bool = False
     added_by_technician: bool = False
     technician: Optional[TechnicianResponse] = None

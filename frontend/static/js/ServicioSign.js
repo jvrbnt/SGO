@@ -56,13 +56,23 @@ passwordInput.addEventListener("input", function () {
 registrationForm.addEventListener("submit", async function (event) {
   event.preventDefault();
 
+  const entityMapping = {
+    "mina": "Internal",
+    "csic": "CSIC",
+    "uam": "UAM",
+    "universidad": "University",
+    "opis": "OPIS",
+    "empresa": "Company"
+  };
+  const mappedEntity = entityMapping[selectEntity.value] || selectEntity.value;
+
   // Field mapping to Pydantic schema attributes
   const newClient = {
     first_name: document.getElementById("name").value,
     last_name: document.getElementById("lastName").value,
     email: document.getElementById("email").value,
     password: passwordInput.value,
-    entity: selectEntity.value,
+    entity: mappedEntity,
     internal_account: document.getElementById("account")?.value || null,
     ip_address: document.getElementById("ip")?.value || null,
     group_name: document.getElementById("group")?.value || null,

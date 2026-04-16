@@ -223,7 +223,7 @@ function getPriceField(entity) {
   return 'price1'; // fallback
 }
 
-window.openReviewPanel = async function (offerId, isMineTab, readOnly = false) {
+window.openReviewPanel = async function (offerId, isMineTab, readOnly = false, previousEdits = null) {
   try {
     const response = await fetch(`/api/technician/offers/${offerId}`);
     if (!response.ok) throw new Error("Could not retrieve offer details");
@@ -245,6 +245,9 @@ window.openReviewPanel = async function (offerId, isMineTab, readOnly = false) {
 
     // Build service rows (only active ones)
     const activeServices = offer.services.filter(s => !s.is_deleted);
+    const hasManager = offer.manager_id != null;
+    const allServicesAssigned = activeServices.length > 0 && activeServices.every(s => s.technician_id != null);
+    const canSend = hasManager && allServicesAssigned;
     const serviceRows = activeServices.map((s) => {
       const catalogPrices = s.catalog_item || {};
       const pricePerHour = catalogPrices[priceField] ?? 0;
@@ -255,10 +258,15 @@ window.openReviewPanel = async function (offerId, isMineTab, readOnly = false) {
           <td style="padding:10px; white-space:nowrap; color:#555;">
             <span class="rev-price-ph" style="display:inline-block; background:#f0f4ff; border:1px solid #c8d8ff; border-radius:4px; padding:5px 10px; font-weight:600; color:#2563eb; font-size:13px; min-width:70px; text-align:center;">${pricePerHour.toFixed(2)} €/h</span>
           </td>
-          <td style="padding:10px;">
-            <input type="number" class="rev-hours" data-id="${s.id}" data-pph="${pricePerHour}" value="${s.hours}" step="0.5" min="0"
+          <td style="padding:10px; display:flex; align-items:center; gap:5px;">
+            <input type="number" class="rev-hours" data-id="${s.id}" data-pph="${pricePerHour}" data-original="${s.original_hours !== null ? s.original_hours : s.hours}" value="${s.hours}" step="0.5" min="0"
               style="width:65px; padding:5px; border:1px solid #ccc; border-radius:4px;"
               ${readOnly ? 'disabled style="width:65px;padding:5px;border:1px solid #ccc;border-radius:4px;background:#f3f4f6;color:#888;cursor:not-allowed;"' : `oninput="window.updateRowPrice('${s.id}', this.value, ${pricePerHour})"`}>
+            ${(!s.added_by_technician && !readOnly) ? `
+              <button class="btn-reset-hours" data-id="${s.id}" style="display:${parseFloat(s.hours) !== parseFloat(s.original_hours !== null ? s.original_hours : s.hours) ? 'inline-block' : 'none'}; background:none; border:none; cursor:pointer; color:var(--color-csic); padding:2px;" title="Reset to original hours" onclick="window.resetHours('${s.id}')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rotate-ccw"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+              </button>
+            ` : ''}
           </td>
           <td style="padding:10px;">
             <input type="number" class="rev-total-price" data-id="${s.id}" value="${s.quoted_price ?? totalPrice}" step="0.01" min="0"
@@ -364,9 +372,14 @@ window.openReviewPanel = async function (offerId, isMineTab, readOnly = false) {
             This offer has already been sent to the client and cannot be modified from here.
           </div>
         ` : `
-          <button onclick="window.sendQuotedOffer(${offer.id})" class="btn-card btn-send">
+          <button onclick="window.sendQuotedOffer(${offer.id})" class="btn-card btn-send" ${!canSend ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>
             SEND QUOTED OFFER TO CLIENT
           </button>
+          ${!canSend ? `
+            <div style="background:#fce4e4; border:1px solid #f8aaaa; border-radius:6px; padding:10px; margin-top:10px; font-size:12px; color:#cc0000;">
+              <strong>Note:</strong> You can only send the quotation when the offer has a Manager assigned AND all services have technicians assigned.
+            </div>
+          ` : ''}
         `}
       </div>
     `;
@@ -377,6 +390,10 @@ window.openReviewPanel = async function (offerId, isMineTab, readOnly = false) {
       document.querySelectorAll('.rev-total-price').forEach(inp => {
         inp.addEventListener('input', window.recalcGrandTotal);
       });
+    }
+    
+    if (previousEdits) {
+      window.restoreEdits(previousEdits);
     }
   } catch (err) {
     console.error("Error opening review panel:", err);
@@ -390,6 +407,25 @@ window.updateRowPrice = function (serviceId, hoursVal, pricePerHour) {
   const totalInput = document.querySelector(`.rev-total-price[data-id="${serviceId}"]`);
   if (totalInput) totalInput.value = total;
   window.recalcGrandTotal();
+  
+  const input = document.querySelector(`.rev-hours[data-id="${serviceId}"]`);
+  const resetBtn = document.querySelector(`.btn-reset-hours[data-id="${serviceId}"]`);
+  if (input && resetBtn) {
+    const original = parseFloat(input.dataset.original);
+    if (parseFloat(hoursVal) !== original) {
+      resetBtn.style.display = 'inline-block';
+    } else {
+      resetBtn.style.display = 'none';
+    }
+  }
+};
+
+window.resetHours = function(serviceId) {
+  const input = document.querySelector(`.rev-hours[data-id="${serviceId}"]`);
+  if(input) {
+    input.value = input.dataset.original;
+    window.updateRowPrice(serviceId, input.value, parseFloat(input.dataset.pph));
+  }
 };
 
 // Recalculate grand total from all rev-total-price inputs
@@ -442,7 +478,40 @@ window.sendQuotedOffer = async function (offerId) {
   }
 };
 
+window.captureEdits = function() {
+  const edits = {};
+  document.querySelectorAll(".rev-hours").forEach(inp => {
+    const id = inp.dataset.id;
+    edits[id] = {
+      hours: inp.value,
+      note: document.querySelector(`.rev-notes[data-id="${id}"]`)?.value || "",
+      quotedPrice: document.querySelector(`.rev-total-price[data-id="${id}"]`)?.value || ""
+    };
+  });
+  edits.globalComment = document.getElementById("globalComment")?.value || "";
+  return edits;
+};
+
+window.restoreEdits = function(edits) {
+  if(!edits) return;
+  document.querySelectorAll(".rev-hours").forEach(inp => {
+    const id = inp.dataset.id;
+    const edit = edits[id];
+    if (edit) {
+      inp.value = edit.hours;
+      const noteInp = document.querySelector(`.rev-notes[data-id="${id}"]`);
+      if(noteInp) noteInp.value = edit.note;
+      const priceInp = document.querySelector(`.rev-total-price[data-id="${id}"]`);
+      if(priceInp) priceInp.value = edit.quotedPrice;
+      window.updateRowPrice(id, edit.hours, parseFloat(inp.dataset.pph));
+    }
+  });
+  const gc = document.getElementById("globalComment");
+  if(gc && edits.globalComment !== undefined) gc.value = edits.globalComment;
+};
+
 window.deleteServiceFromOffer = async function (serviceId, offerId, isMineTab, serviceName) {
+  const previousEdits = window.captureEdits ? window.captureEdits() : null;
   if (!confirm(`Are you sure you want to delete "${serviceName}"?`)) return;
 
   try {
@@ -450,7 +519,7 @@ window.deleteServiceFromOffer = async function (serviceId, offerId, isMineTab, s
       method: "DELETE"
     });
     if (response.ok) {
-      window.openReviewPanel(offerId, isMineTab);
+      window.openReviewPanel(offerId, isMineTab, false, previousEdits);
     } else {
       const err = await response.json();
       alert(`Error: ${err.detail || "Could not delete service"}`);
@@ -468,6 +537,8 @@ window.addServiceToOffer = async function (offerId, isMineTab) {
     alert("Please select a service from the catalog and indicate the number of hours.");
     return;
   }
+  
+  const previousEdits = window.captureEdits ? window.captureEdits() : null;
 
   try {
     const response = await fetch(`/api/technician/offers/${offerId}/services`, {
@@ -479,7 +550,7 @@ window.addServiceToOffer = async function (offerId, isMineTab) {
       })
     });
     if (response.ok) {
-      window.openReviewPanel(offerId, isMineTab);
+      window.openReviewPanel(offerId, isMineTab, false, previousEdits);
     } else {
       const err = await response.json();
       alert(`Error: ${err.detail || "Could not add service"}`);
@@ -582,7 +653,7 @@ function renderOfferList(offers, container, isGlobal, techId) {
                     <div style="display:flex; align-items:stretch;">
                         ${!s.technician_id
           ? `<button onclick="window.assignService(${s.id})" class="btn-assign-service">Assign to me</button>`
-          : s.technician_id === techId
+          : s.technician_id === techId && offer.status === 'requested'
             ? `<button onclick="window.unassignService(${s.id})" class="btn-unassign-service">Unassign</button>`
             : ''
         }
@@ -594,7 +665,7 @@ function renderOfferList(offers, container, isGlobal, techId) {
         
         <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 15px;">
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            ${offer.manager_id === techId ? `<button onclick="window.unassignOffer(${offer.id})" class="btn-card btn-unassign">Release Offer</button>` : `<button onclick="window.assignOffer(${offer.id})" class="btn-card btn-manager">Manage Offer</button>`}
+            ${offer.manager_id === techId ? (offer.status === 'requested' ? `<button onclick="window.unassignOffer(${offer.id})" class="btn-card btn-unassign">Release Offer</button>` : '') : `<button onclick="window.assignOffer(${offer.id})" class="btn-card btn-manager">Manage Offer</button>`}
             ${
         // Review button always visible; readOnly when not 'requested'
         `<button onclick="window.openReviewPanel(${offer.id}, ${!isGlobal}, ${offer.status !== 'requested'})" class="btn-card btn-review">Review</button>`

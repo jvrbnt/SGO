@@ -77,6 +77,7 @@ class Service(Base):
     id = Column(Integer, primary_key=True, index=True)
     service_name = Column(String, nullable=False) # Name of requested service (catalog copy)
     hours = Column(Float, default=0.0)
+    original_hours = Column(Float, default=0.0)
     quoted_price = Column(Float, nullable=True)  # Final price set by technician (price/h × hours, editable)
     comment = Column(Text, nullable=True)
     status = Column(String, default="pending") # Estados: pending, doing, done

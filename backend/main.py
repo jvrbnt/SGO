@@ -173,6 +173,7 @@ def create_offer(offer_in: schemas.OfferCreate, db: Session = Depends(get_db)):
         new_service = models.Service(
             service_name=s.service_name,
             hours=s.hours,
+            original_hours=s.hours,
             comment=s.comment,
             offer_id=new_offer.id,
             catalog_id=catalog_item.id if catalog_item else None
@@ -252,6 +253,8 @@ def unassign_service(service_id: int, tech_id: int, db: Session = Depends(get_db
     service = db.query(models.Service).filter(models.Service.id == service_id).first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
+    if service.offer.status != "requested":
+        raise HTTPException(status_code=400, detail="Cannot unassign from an offer that is already quoted, accepted, or finished.")
     if service.technician_id != tech_id:
         raise HTTPException(status_code=403, detail="Only the assigned technician can unassign themselves")
     service.technician_id = None
@@ -263,6 +266,8 @@ def unassign_offer(offer_id: int, tech_id: int, db: Session = Depends(get_db)):
     offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
+    if offer.status != "requested":
+        raise HTTPException(status_code=400, detail="Cannot unassign from an offer that is already quoted, accepted, or finished.")
     if offer.manager_id != tech_id:
         raise HTTPException(status_code=403, detail="Only the current manager can unassign themselves")
     offer.manager_id = None
@@ -298,6 +303,7 @@ def add_service_to_offer(offer_id: int, service_in: schemas.ServiceCreateInline,
     new_service = models.Service(
         service_name=service_in.service_name,
         hours=service_in.hours,
+        original_hours=service_in.hours,
         comment=service_in.comment,
         offer_id=offer.id,
         catalog_id=catalog_item.id if catalog_item else None,

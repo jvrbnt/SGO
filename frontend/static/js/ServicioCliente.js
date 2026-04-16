@@ -150,14 +150,27 @@ document.addEventListener("DOMContentLoaded", async () => {
                   </thead>
                   <tbody>
                     ${offer.services.map(s => {
+                      if (s.is_deleted && s.added_by_technician) return '';
                       const isDel = s.is_deleted;
                       const isAdded = s.added_by_technician;
+                      const isEdited = !isDel && !isAdded && s.original_hours !== null && parseFloat(s.hours) !== parseFloat(s.original_hours);
+
                       const colorStyle = isDel ? 'color: #94a3b8;' : 'color:#333;';
-                      const label = isDel ? ' <span style="color:#ef4444; font-size:11px; font-weight:bold; text-decoration:none;">(Deleted by technician)</span>' : 
-                                    (isAdded ? ' <span style="color:#10b981; font-size:11px; font-weight:bold;">(Added by technician)</span>' : '');
+                      let label = '';
+                      if (isDel) {
+                         label = ' <span style="color:#ef4444; font-size:11px; font-weight:bold; text-decoration:none;">(Deleted by technician)</span>';
+                      } else if (isAdded) {
+                         label = ' <span style="color:#10b981; font-size:11px; font-weight:bold;">(Added by technician)</span>';
+                      } else if (isEdited) {
+                         label = ' <span style="color:#f59e0b; font-size:11px; font-weight:bold;">(Edited by technician)</span>';
+                      }
                       
                       const nameDisplay = isDel ? `<span style="text-decoration:line-through;">${s.service_name}</span>` : s.service_name;
-                      const hoursDisplay = isDel ? `<span style="text-decoration:line-through;">${s.hours}h</span>` : `${s.hours}h`;
+                      let hoursDisplay = isDel ? `<span style="text-decoration:line-through;">${s.hours}h</span>` : `${s.hours}h`;
+                      
+                      if (isEdited) {
+                          hoursDisplay = `<span style="text-decoration:line-through; color:#94a3b8; font-size:11px; margin-right:4px;">${s.original_hours}h</span><span style="color:#f59e0b; font-weight:bold;">${s.hours}h</span>`;
+                      }
 
                       return `
                         <tr style="border-bottom:1px solid #dce8ff;">
@@ -193,11 +206,17 @@ document.addEventListener("DOMContentLoaded", async () => {
                   ${offer.services.map(s => {
                     if (s.is_deleted) return ''; // Don't show deleted in compact summary
                     const isAdded = s.added_by_technician;
+                    const isEdited = !isAdded && s.original_hours !== null && parseFloat(s.hours) !== parseFloat(s.original_hours);
+                    let hoursDisplay = `${s.hours}h`;
+                    if (isEdited) {
+                       hoursDisplay = `<span style="text-decoration:line-through; color:#94a3b8; font-size:11px; margin-right:4px;">${s.original_hours}h</span><span style="color:#f59e0b; font-weight:bold;">${s.hours}h</span>`;
+                    }
                     return `
                       <li style="margin-bottom:3px;">
-                        ${s.service_name} — ${s.hours}h
-                        ${isAdded ? '<small style="color:#10b981; font-weight:bold;">(Added by technician)</small>' : ''}
-                        ${s.quoted_price != null ? `<span style="color:#1a6b33; font-weight:600;">(${s.quoted_price.toFixed(2)} €)</span>` : ''}
+                        ${s.service_name} — ${hoursDisplay}
+                        ${isAdded ? '<small style="color:#10b981; font-weight:bold; margin-left:4px;">(Added by technician)</small>' : ''}
+                        ${isEdited ? '<small style="color:#f59e0b; font-weight:bold; margin-left:4px;">(Edited by technician)</small>' : ''}
+                        ${s.quoted_price != null ? `<span style="color:#1a6b33; font-weight:600; margin-left:4px;">(${s.quoted_price.toFixed(2)} €)</span>` : ''}
                       </li>
                     `;
                   }).join('')}
