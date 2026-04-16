@@ -65,6 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   window.loadAllOffers();
+  window.loadCatalogPrices();
 });
 
 const globalList = document.getElementById("globalRequestList");
@@ -718,5 +719,167 @@ window.closeCommentModal = function () {
   if (modal) {
     modal.style.opacity = "0";
     setTimeout(() => modal.remove(), 200);
+  }
+};
+
+// --- 6. PRICE MANAGEMENT ---
+window.loadCatalogPrices = async function () {
+  try {
+    const response = await fetch("/api/catalog");
+    if (!response.ok) throw new Error("Failed to fetch catalog");
+    const catalog = await response.json();
+    window.catalogPrices = catalog;
+    window.renderPricesTable();
+  } catch (error) {
+    console.error("Error loading catalog prices:", error);
+    const container = document.getElementById("pricesTableContainer");
+    if (container) {
+      container.innerHTML = `<p style="color: red; text-align: center;">Error loading catalog prices.</p>`;
+    }
+  }
+};
+
+window.renderPricesTable = function () {
+  const container = document.getElementById("pricesTableContainer");
+  if (!container || !window.catalogPrices) return;
+
+  const tableHtml = `
+    <table style="width:100%; border-collapse:collapse; font-size:14px;">
+      <thead>
+        <tr style="text-align:left; border-bottom:2px solid #eee; color:#666;">
+          <th style="padding:12px 10px;">SERVICE NAME</th>
+          <th style="padding:12px 10px;">INTERNAL (€/h)</th>
+          <th style="padding:12px 10px;">CSIC/UAM (€/h)</th>
+          <th style="padding:12px 10px;">UNIV/OPIS (€/h)</th>
+          <th style="padding:12px 10px;">COMPANY (€/h)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${window.catalogPrices.map(item => `
+          <tr style="border-bottom:1px solid #eee; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+            <td style="padding:12px 10px; font-weight:600; color:#1e293b;">${item.name}</td>
+            <td style="padding:12px 10px;">
+              <button class="price-edit-btn" onclick="window.openPriceEditor(${item.id}, '${item.name.replace(/'/g, "\\'")}', 'Internal', 'price1', ${item.price1})">
+                ${item.price1.toFixed(2)} €/h
+              </button>
+            </td>
+            <td style="padding:12px 10px;">
+              <button class="price-edit-btn" onclick="window.openPriceEditor(${item.id}, '${item.name.replace(/'/g, "\\'")}', 'CSIC/UAM', 'price2', ${item.price2 || 0})">
+                ${(item.price2 || 0).toFixed(2)} €/h
+              </button>
+            </td>
+            <td style="padding:12px 10px;">
+              <button class="price-edit-btn" onclick="window.openPriceEditor(${item.id}, '${item.name.replace(/'/g, "\\'")}', 'University/OPIS', 'price3', ${item.price3 || 0})">
+                ${(item.price3 || 0).toFixed(2)} €/h
+              </button>
+            </td>
+            <td style="padding:12px 10px;">
+              <button class="price-edit-btn" onclick="window.openPriceEditor(${item.id}, '${item.name.replace(/'/g, "\\'")}', 'Company', 'price4', ${item.price4 || 0})">
+                ${(item.price4 || 0).toFixed(2)} €/h
+              </button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+
+  container.innerHTML = tableHtml;
+  
+  // Add some styles if not already in CSS
+  if (!document.getElementById('price-table-styles')) {
+    const style = document.createElement('style');
+    style.id = 'price-table-styles';
+    style.innerHTML = `
+      .price-edit-btn {
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        padding: 5px 10px;
+        cursor: pointer;
+        font-weight: 500;
+        color: #334155;
+        transition: all 0.2s;
+        width: 100%;
+        text-align: center;
+      }
+      .price-edit-btn:hover {
+        background: #e2e8f0;
+        border-color: #94a3b8;
+        color: #0f172a;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+};
+
+let currentEditingItem = null;
+
+window.openPriceEditor = function (itemId, serviceName, entityLabel, field, currentPrice) {
+  currentEditingItem = { itemId, field };
+  const modal = document.getElementById("priceEditModal");
+  const context = document.getElementById("priceEditContext");
+  const input = document.getElementById("newPriceInput");
+
+  if (modal && context && input) {
+    context.innerHTML = `New price for <span style="color:var(--color-csic); border-bottom: 2px solid #e2e8f0; padding-bottom: 2px;">${serviceName}</span><br>specifically for <span style="color:#2563eb; font-weight: 700;">${entityLabel}</span>:`;
+    input.value = currentPrice;
+    modal.style.display = "flex";
+    modal.style.opacity = "1";
+    input.focus();
+  }
+};
+
+window.closePriceModal = function () {
+  const modal = document.getElementById("priceEditModal");
+  if (modal) {
+    modal.style.opacity = "0";
+    setTimeout(() => {
+      modal.style.display = "none";
+      currentEditingItem = null;
+    }, 200);
+  }
+};
+
+window.savePriceUpdate = async function () {
+  if (!currentEditingItem) return;
+
+  const newVal = parseFloat(document.getElementById("newPriceInput").value);
+  if (isNaN(newVal) || newVal < 0) {
+    alert("Please enter a valid price.");
+    return;
+  }
+
+  const fieldNames = {
+    price1: "Internal (MiNa)",
+    price2: "CSIC / UAM",
+    price3: "University / OPIS",
+    price4: "External Company"
+  };
+
+  const humanFieldName = fieldNames[currentEditingItem.field] || currentEditingItem.field;
+  const serviceName = window.catalogPrices.find(i => i.id === currentEditingItem.itemId)?.name;
+
+  if (!confirm(`Are you sure you want to update the hourly rate to ${newVal} €/h for ${humanFieldName} in "${serviceName}"?\n\nThis change will impact all current 'Requested' offers.`)) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/catalog/${currentEditingItem.itemId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ [currentEditingItem.field]: newVal })
+    });
+
+    if (response.ok) {
+      window.closePriceModal();
+      window.loadCatalogPrices();
+    } else {
+      const error = await response.json();
+      alert("Error updating price: " + (error.detail || "Unknown error"));
+    }
+  } catch (error) {
+    console.error("Error saving price update:", error);
+    alert("Failed to connect to the server.");
   }
 };

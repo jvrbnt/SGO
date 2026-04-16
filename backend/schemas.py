@@ -47,6 +47,12 @@ class ServiceCatalogResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class ServiceCatalogPriceUpdate(BaseModel):
+    price1: Optional[float] = None
+    price2: Optional[float] = None
+    price3: Optional[float] = None
+    price4: Optional[float] = None
+
 # --- SERVICE SCHEMAS ---
 class ServiceBase(BaseModel):
     service_name: str

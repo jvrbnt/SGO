@@ -53,6 +53,9 @@
       <button class="tab-btn" onclick="openTab(event, 'tabFacturacion')">
         Billing
       </button>
+      <button class="tab-btn" onclick="openTab(event, 'tabPrecios')">
+        Prices
+      </button>
     </div>
 
     <div id="tabGlobales" class="tab-content active" style="width: 100%;">
@@ -102,6 +105,38 @@
     <div id="tabFacturacion" class="tab-content" style="width: 100%; padding: 20px">
       <h2 class="section-title">Billing Module</h2>
       <p>Under development.</p>
+    </div>
+
+    <div id="tabPrecios" class="tab-content" style="width: 100%;">
+      <h2 class="section-title" style="text-align: center">Service Prices</h2>
+      <div id="pricesTableContainer"
+        style="overflow-x: auto; background: #fff; border-radius: 8px; border: 1px solid #ccc; padding: 20px;">
+        <p style="text-align: center; color: #666;">Loading prices...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Price Edit Modal -->
+  <div id="priceEditModal" class="modal-backdrop" style="display:none; opacity:1;">
+    <div style="background:white; width:320px; border-radius:12px; overflow:hidden; box-shadow:0 20px 40px rgba(0,0,0,0.25); animation:modalIn 0.25s ease-out;">
+      <!-- Header -->
+      <div style="background:var(--color-csic); color:white; padding:10px 18px; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-weight:700; font-size:14px; font-family:'Montserrat',sans-serif;">Edit Price</span>
+        <button onclick="window.closePriceModal()" style="background:none; border:none; color:white; font-size:20px; cursor:pointer; line-height:1;">&times;</button>
+      </div>
+      <!-- Body -->
+      <div style="padding:14px 20px 10px;">
+        <p id="priceEditContext" style="margin:0 0 10px 0; font-size:13px; font-weight:500; color:#475569; line-height:1.35; font-family:'Montserrat',sans-serif;"></p>
+        <label for="newPriceInput" style="display:block; margin-bottom:4px; font-size:10px; font-weight:700; color:#94a3b8; letter-spacing:0.8px; font-family:'Montserrat',sans-serif;">NEW HOURLY PRICE (€/h)</label>
+        <input type="number" id="newPriceInput" step="0.01" min="0"
+          style="display:block; width:100%; box-sizing:border-box; padding:8px 12px; border:2px solid #e2e8f0; border-radius:6px; font-size:16px; font-weight:700; color:#1e293b; outline:none; transition:border-color 0.2s; text-align:center; font-family:'Montserrat',sans-serif;"
+          onfocus="this.style.borderColor='var(--color-csic)'" onblur="this.style.borderColor='#e2e8f0'">
+      </div>
+      <!-- Footer -->
+      <div style="padding:8px 20px 16px; display:flex; gap:8px;">
+        <button onclick="window.savePriceUpdate()" class="btn-card" style="flex:2; background:#10b981; color:white; padding:9px 0; margin:0; font-size:12px;">SAVE CHANGES</button>
+        <button onclick="window.closePriceModal()" class="btn-card" style="flex:1; background:#ef4444; color:white; padding:9px 0; margin:0; font-size:12px;">CANCEL</button>
+      </div>
     </div>
   </div>
 

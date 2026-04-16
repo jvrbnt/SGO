@@ -152,6 +152,25 @@ def unified_login(login_data: schemas.LoginRequest, db: Session = Depends(get_db
 def get_catalog(db: Session = Depends(get_db)):
     return db.query(models.ServiceCatalog).all()
 
+@app.put("/api/catalog/{item_id}", response_model=schemas.ServiceCatalogResponse)
+def update_catalog_price(item_id: int, price_update: schemas.ServiceCatalogPriceUpdate, db: Session = Depends(get_db)):
+    catalog_item = db.query(models.ServiceCatalog).filter(models.ServiceCatalog.id == item_id).first()
+    if not catalog_item:
+        raise HTTPException(status_code=404, detail="Catalog item not found")
+
+    if price_update.price1 is not None:
+        catalog_item.price1 = price_update.price1
+    if price_update.price2 is not None:
+        catalog_item.price2 = price_update.price2
+    if price_update.price3 is not None:
+        catalog_item.price3 = price_update.price3
+    if price_update.price4 is not None:
+        catalog_item.price4 = price_update.price4
+
+    db.commit()
+    db.refresh(catalog_item)
+    return catalog_item
+
 # --- OFFER MANAGEMENT ROUTES (CLIENT) ---
 
 @app.post("/api/client/offers")
@@ -312,4 +331,4 @@ def add_service_to_offer(offer_id: int, service_in: schemas.ServiceCreateInline,
     db.add(new_service)
     db.commit()
     db.refresh(new_service)
-    return {"message": "Service added successfully", "service_id": new_service.id}
+    return {"message": "Service added successfully", "service_id": new_service.id}
