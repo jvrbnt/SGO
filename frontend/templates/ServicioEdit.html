@@ -111,7 +111,47 @@
         </div>
     </div>
 
-    <div class="side-bar" id="footer"></div>
+    <div class="side-bar" id="footer" style="display:flex; justify-content:center; align-items:center; gap:30px; font-size:14px; padding:0 20px;">
+      <div style="display:flex; gap:10px; font-weight:bold; align-items:center;">
+        <span style="cursor:pointer; color:#0f172a; padding:4px 8px;" onclick="changeLanguage('en')">English</span>
+        <span style="color:#64748b;">|</span>
+        <span style="cursor:pointer; color:#0f172a; padding:4px 8px;" onclick="changeLanguage('es')">Español</span>
+      </div>
+      <div style="width:2px; height:20px; background-color:#cbd5e1;"></div>
+      <div style="display:flex; gap:20px; font-weight:600; align-items:center;">
+        <a href="/Contacto.html" style="color:#0f172a; text-decoration:none;">Contact</a>
+        <a href="/AvisoLegal.html" style="color:#0f172a; text-decoration:none;">Legal Notice</a>
+        <a href="/Cookies.html" style="color:#0f172a; text-decoration:none;">Cookies Policy</a>
+        <a href="/Proteccion.html" style="color:#0f172a; text-decoration:none;">Data Protection Policy</a>
+        <span style="color:#cbd5e1;">|</span>
+        <a href="/login" style="color:#0f172a; text-decoration:none;">Log In</a>
+        <a href="/registro" style="color:#0f172a; text-decoration:none;">Sign Up</a>
+      </div>
+      <div id="google_translate_element" style="display:none;"></div>
+      <script type="text/javascript">
+        function googleTranslateElementInit() {
+          new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'en,es', autoDisplay: false}, 'google_translate_element');
+        }
+        function changeLanguage(langCode) {
+          if (langCode === 'en') {
+              document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+              document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=" + location.hostname + "; path=/;";
+          } else {
+              document.cookie = "googtrans=/en/" + langCode + "; expires=Thu, 01 Jan 2030 00:00:00 UTC; path=/;";
+              document.cookie = "googtrans=/en/" + langCode + "; expires=Thu, 01 Jan 2030 00:00:00 UTC; domain=" + location.hostname + "; path=/;";
+          }
+          location.reload();
+        }
+      </script>
+      <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+      <style>
+        iframe.goog-te-banner-frame { display: none !important; }
+        body { position: static !important; top: 0px !important; }
+        html { position: static !important; top: 0px !important; }
+        #goog-gt-tt, .goog-te-balloon-frame { display: none !important; }
+        .goog-text-highlight { background-color: transparent !important; box-shadow: none !important; border: none !important; }
+      </style>
+    </div>
 
     <script src="/static/js/ServicioEdit.js" defer></script>
 </body>

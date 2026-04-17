@@ -29,6 +29,8 @@ class TechnicianResponse(BaseModel):
     last_name: str
     email: EmailStr
     profile_picture: Optional[str] = None
+    privilege_level: str
+
     class Config:
         from_attributes = True
 
@@ -78,6 +80,26 @@ class ServiceResponse(ServiceBase):
     class Config:
         from_attributes = True
 
+# --- INVOICE SCHEMAS ---
+class InvoiceBase(BaseModel):
+    client_id: int
+    technician_id: int
+    total_price: float
+    comment: Optional[str] = None
+
+class InvoiceCreate(InvoiceBase):
+    offer_ids: List[int]
+
+class InvoiceResponse(InvoiceBase):
+    id: int
+    status: str
+    created_at: datetime
+    technician_first_name: Optional[str] = None
+    technician_last_name: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
 # --- OFFER SCHEMAS ---
 
 class OfferCreate(BaseModel):
@@ -92,6 +114,7 @@ class OfferResponse(BaseModel):
     technician_comment: Optional[str] = None
     client_id: int
     manager_id: Optional[int] = None
+    invoice_id: Optional[int] = None
     
     # Nested data representations
     client: ClientResponse 
@@ -119,3 +142,4 @@ class TechnicianCreate(BaseModel):
     last_name: str
     email: EmailStr
     password: str
+    privilege_level: str = "Technician"

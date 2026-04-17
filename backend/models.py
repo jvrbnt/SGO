@@ -32,6 +32,7 @@ class Technician(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     profile_picture = Column(String, nullable=True)
+    privilege_level = Column(String, nullable=False, default="Technician")
 
     # Offers where the technician acts as the main manager
     managed_offers = relationship("Offer", back_populates="manager")
@@ -51,11 +52,27 @@ class ServiceCatalog(Base):
     # Reference to services requested based on this item
     services = relationship("Service", back_populates="catalog_item")
 
+class Invoice(Base):
+    __tablename__ = "invoices"
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey("clients.id"), nullable=False)
+    technician_id = Column(Integer, ForeignKey("technicians.id"), nullable=False)
+    total_price = Column(Float, nullable=False, default=0.0)
+    comment = Column(Text, nullable=True)
+    status = Column(String, default="invoiced")
+    created_at = Column(DateTime, default=datetime.datetime.now)
+
+    # Relationships
+    client = relationship("Client")
+    technician = relationship("Technician")
+    offers = relationship("Offer", back_populates="invoice")
+
 class Offer(Base):
     __tablename__ = "offers"
 
     id = Column(Integer, primary_key=True, index=True)
-    # Estados: requested, quoted, accepted, finished
+    # Estados: requested, quoted, accepted, invoiced, finished
     status = Column(String, default="requested") 
     
     created_at = Column(DateTime, default=datetime.datetime.now)
@@ -65,11 +82,13 @@ class Offer(Base):
     # Foreign keys to identify client and technical manager
     client_id = Column(Integer, ForeignKey("clients.id"))
     manager_id = Column(Integer, ForeignKey("technicians.id"), nullable=True)
+    invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=True)
 
     # Relaciones
     client = relationship("Client", back_populates="offers")
     manager = relationship("Technician", back_populates="managed_offers")
     services = relationship("Service", back_populates="offer", cascade="all, delete-orphan")
+    invoice = relationship("Invoice", back_populates="offers")
 
 class Service(Base):
     __tablename__ = "services"

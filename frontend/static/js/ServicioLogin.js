@@ -1,4 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // Clear any existing session to enforce logout when visiting login page
+  localStorage.removeItem("currentUser");
+
   // --- Password visibility toggle ---
   const togglePassword = document.getElementById("togglePassword");
   const passwordInput  = document.getElementById("password");

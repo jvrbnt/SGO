@@ -66,6 +66,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.loadAllOffers();
   window.loadCatalogPrices();
+  window.loadBillingClients();
+
+  // Adjust UI based on privilege level
+  if (techData.privilege_level === "Admin" || techData.privilege_level === "Mod") {
+    const tabPreciosBtn = document.getElementById("tabPreciosBtn");
+    if (tabPreciosBtn) tabPreciosBtn.textContent = "Dashboard";
+
+    if (techData.privilege_level === "Admin") {
+      const adminPanel = document.getElementById("adminPanel");
+      if (adminPanel) adminPanel.style.display = "flex";
+      window.loadAdminTechnicians();
+    }
+  }
 });
 
 const globalList = document.getElementById("globalRequestList");
@@ -298,7 +311,7 @@ window.openReviewPanel = async function (offerId, isMineTab, readOnly = false, p
       <div style="background:#fff; padding:25px; border:2px solid #3498db; border-radius:8px;">
         <div style="display:flex; justify-content:space-between; margin-bottom:20px; align-items:center;">
           <h2 style="margin:0; color:#3498db;">REVIEW MODE: OFFER #${offer.id}</h2>
-          <button onclick="window.loadAllOffers()" class="btn-card btn-back">← BACK TO LIST</button>
+          <button onclick="window.backToListFromReview(${offer.id})" class="btn-card btn-back">← BACK TO LIST</button>
         </div>
 
         <div style="display:grid; grid-template-columns:${isInternal ? '1fr 1fr' : '1fr'}; gap:20px; background:#f9f9f9; padding:15px; border-radius:6px; margin-bottom:20px; font-size:14px;">
@@ -392,13 +405,24 @@ window.openReviewPanel = async function (offerId, isMineTab, readOnly = false, p
         inp.addEventListener('input', window.recalcGrandTotal);
       });
     }
-    
+
     if (previousEdits) {
       window.restoreEdits(previousEdits);
+    } else if (window.offerDrafts && window.offerDrafts[offer.id]) {
+      window.restoreEdits(window.offerDrafts[offer.id]);
     }
   } catch (err) {
     console.error("Error opening review panel:", err);
   }
+};
+
+window.offerDrafts = window.offerDrafts || {};
+
+window.backToListFromReview = function (offerId) {
+  if (window.captureEdits) {
+    window.offerDrafts[offerId] = window.captureEdits();
+  }
+  window.loadAllOffers();
 };
 
 // Live update total price when hours change
@@ -408,7 +432,7 @@ window.updateRowPrice = function (serviceId, hoursVal, pricePerHour) {
   const totalInput = document.querySelector(`.rev-total-price[data-id="${serviceId}"]`);
   if (totalInput) totalInput.value = total;
   window.recalcGrandTotal();
-  
+
   const input = document.querySelector(`.rev-hours[data-id="${serviceId}"]`);
   const resetBtn = document.querySelector(`.btn-reset-hours[data-id="${serviceId}"]`);
   if (input && resetBtn) {
@@ -421,9 +445,9 @@ window.updateRowPrice = function (serviceId, hoursVal, pricePerHour) {
   }
 };
 
-window.resetHours = function(serviceId) {
+window.resetHours = function (serviceId) {
   const input = document.querySelector(`.rev-hours[data-id="${serviceId}"]`);
-  if(input) {
+  if (input) {
     input.value = input.dataset.original;
     window.updateRowPrice(serviceId, input.value, parseFloat(input.dataset.pph));
   }
@@ -448,7 +472,7 @@ window.sendQuotedOffer = async function (offerId) {
     const row = h.closest("tr");
     const noteEl = row.querySelector(".rev-notes");
     const totalEl = row.querySelector(".rev-total-price");
-    
+
     return {
       id: parseInt(h.dataset.id),
       hours: parseFloat(h.value),
@@ -470,6 +494,9 @@ window.sendQuotedOffer = async function (offerId) {
 
     if (response.ok) {
       alert("Review finalized. Offer sent to the client.");
+      if (window.offerDrafts && window.offerDrafts[offerId]) {
+        delete window.offerDrafts[offerId];
+      }
       window.loadAllOffers();
     } else {
       alert("Error sending the offer.");
@@ -479,7 +506,7 @@ window.sendQuotedOffer = async function (offerId) {
   }
 };
 
-window.captureEdits = function() {
+window.captureEdits = function () {
   const edits = {};
   document.querySelectorAll(".rev-hours").forEach(inp => {
     const id = inp.dataset.id;
@@ -493,22 +520,22 @@ window.captureEdits = function() {
   return edits;
 };
 
-window.restoreEdits = function(edits) {
-  if(!edits) return;
+window.restoreEdits = function (edits) {
+  if (!edits) return;
   document.querySelectorAll(".rev-hours").forEach(inp => {
     const id = inp.dataset.id;
     const edit = edits[id];
     if (edit) {
       inp.value = edit.hours;
       const noteInp = document.querySelector(`.rev-notes[data-id="${id}"]`);
-      if(noteInp) noteInp.value = edit.note;
+      if (noteInp) noteInp.value = edit.note;
       const priceInp = document.querySelector(`.rev-total-price[data-id="${id}"]`);
-      if(priceInp) priceInp.value = edit.quotedPrice;
+      if (priceInp) priceInp.value = edit.quotedPrice;
       window.updateRowPrice(id, edit.hours, parseFloat(inp.dataset.pph));
     }
   });
   const gc = document.getElementById("globalComment");
-  if(gc && edits.globalComment !== undefined) gc.value = edits.globalComment;
+  if (gc && edits.globalComment !== undefined) gc.value = edits.globalComment;
 };
 
 window.deleteServiceFromOffer = async function (serviceId, offerId, isMineTab, serviceName) {
@@ -538,7 +565,7 @@ window.addServiceToOffer = async function (offerId, isMineTab) {
     alert("Please select a service from the catalog and indicate the number of hours.");
     return;
   }
-  
+
   const previousEdits = window.captureEdits ? window.captureEdits() : null;
 
   try {
@@ -624,6 +651,7 @@ function renderOfferList(offers, container, isGlobal, techId) {
           requested: "#17a2b8",
           quoted: "#f39c12",
           accepted: "#27ae60",
+          invoiced: "#9b59b6",
           finished: "#2c3e50",
         }[offer.status] || "#6c757d";
 
@@ -640,9 +668,12 @@ function renderOfferList(offers, container, isGlobal, techId) {
         </div>
         
         <details data-offer-id="${offer.id}" style="margin: 10px 0 20px 0; padding: 10px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 6px;">
-            <summary style="cursor: pointer; font-weight: bold; color: #2c3e50;">View Services (${offer.services.length})</summary>
+            <summary style="cursor: pointer; font-weight: bold; color: #2c3e50;">View Services (${offer.services.filter(s => !s.is_deleted).length})</summary>
             <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
-            ${offer.services.map((s) => `
+            ${offer.services
+          .filter(s => !s.is_deleted)
+          .sort((a, b) => a.service_name.localeCompare(b.service_name))
+          .map((s) => `
                 <div style="display: flex; justify-content: space-between; align-items: stretch; background: white; padding: 0; border: 1px solid #eee; border-radius: 4px; gap: 0; overflow: hidden;">
                     <div style="font-size:14px; color:#333; flex: 1; padding: 8px 12px;">
                         <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
@@ -653,11 +684,11 @@ function renderOfferList(offers, container, isGlobal, techId) {
                     </div>
                     <div style="display:flex; align-items:stretch;">
                         ${!s.technician_id
-          ? `<button onclick="window.assignService(${s.id})" class="btn-assign-service">Assign to me</button>`
-          : s.technician_id === techId && offer.status === 'requested'
-            ? `<button onclick="window.unassignService(${s.id})" class="btn-unassign-service">Unassign</button>`
-            : ''
-        }
+              ? `<button onclick="window.assignService(${s.id})" class="btn-assign-service">Assign to me</button>`
+              : s.technician_id === techId && offer.status === 'requested'
+                ? `<button onclick="window.unassignService(${s.id})" class="btn-unassign-service">Unassign</button>`
+                : ''
+            }
                     </div>
                 </div>
             `).join("")}
@@ -666,12 +697,13 @@ function renderOfferList(offers, container, isGlobal, techId) {
         
         <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 15px;">
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            ${offer.manager_id === techId ? (offer.status === 'requested' ? `<button onclick="window.unassignOffer(${offer.id})" class="btn-card btn-unassign">Release Offer</button>` : '') : `<button onclick="window.assignOffer(${offer.id})" class="btn-card btn-manager">Manage Offer</button>`}
-            ${
-        // Review button always visible; readOnly when not 'requested'
-        `<button onclick="window.openReviewPanel(${offer.id}, ${!isGlobal}, ${offer.status !== 'requested'})" class="btn-card btn-review">Review</button>`
-        }
-            ${offer.status === 'accepted' ? `<button onclick="window.updateOfferStatus(${offer.id}, 'finished')" class="btn-card btn-finish">Finish Work</button>` : ''}
+            ${offer.manager_id === techId 
+              ? (offer.status === 'requested' ? `<button onclick="window.unassignOffer(${offer.id})" class="btn-card btn-unassign">Release Offer</button>` : '') 
+              : (!offer.manager_id 
+                  ? `<button onclick="window.assignOffer(${offer.id})" class="btn-card btn-manager">Manage Offer</button>` 
+                  : '')
+            }
+            <button onclick="window.openReviewPanel(${offer.id}, ${!isGlobal}, ${offer.status !== 'requested'})" class="btn-card btn-review">Review</button>
           </div>
           <div style="text-align: right;">
             ${offer.manager_id
@@ -739,11 +771,57 @@ window.loadCatalogPrices = async function () {
   }
 };
 
+window.pendingPriceChanges = window.pendingPriceChanges || {};
+
 window.renderPricesTable = function () {
   const container = document.getElementById("pricesTableContainer");
   if (!container || !window.catalogPrices) return;
 
-  const tableHtml = `
+  const techData = JSON.parse(localStorage.getItem("currentUser"));
+  const canEdit = techData && (techData.privilege_level === "Admin" || techData.privilege_level === "Mod");
+  const pending = window.pendingPriceChanges || {};
+  const pendingCount = Object.keys(pending).reduce((acc, id) => acc + Object.keys(pending[id]).length, 0);
+
+  function renderCell(item, field, label, dbPrice) {
+    const pendingEntry = pending[item.id] && pending[item.id][field];
+    if (pendingEntry) {
+      return `
+        <td style="padding:8px 10px; background:#fff8e1; border:1px solid #f59e0b; border-radius:4px;">
+          <button class="price-edit-btn" onclick="window.openPriceEditor(${item.id}, '${item.name.replace(/'/g, "\\'") }', '${label}', '${field}', ${pendingEntry.newPrice})"
+            style="background:transparent; border:none; width:100%; text-align:left; cursor:pointer; padding:0;">
+            <span style="text-decoration:line-through; color:#94a3b8; font-size:11px; display:block;">${pendingEntry.oldPrice.toFixed(2)} €/h</span>
+            <span style="color:#f59e0b; font-weight:700; font-size:14px;">${pendingEntry.newPrice.toFixed(2)} €/h</span>
+          </button>
+        </td>`;
+    } else {
+      return `
+        <td style="padding:12px 10px;">
+          ${canEdit ? `<button class="price-edit-btn" onclick="window.openPriceEditor(${item.id}, '${item.name.replace(/'/g, "\\'") }', '${label}', '${field}', ${dbPrice})">${dbPrice.toFixed(2)} €/h</button>` : `<span style="font-weight:bold; color:var(--color-csic);">${dbPrice.toFixed(2)} €/h</span>`}
+        </td>`;
+    }
+  }
+
+  const rows = [...window.catalogPrices].sort((a, b) => a.name.localeCompare(b.name)).map(item => `
+    <tr style="border-bottom:1px solid #eee; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+      <td style="padding:12px 10px; font-weight:600; color:#1e293b;">${item.name}</td>
+      ${renderCell(item, 'price1', 'Internal', item.price1)}
+      ${renderCell(item, 'price2', 'CSIC/UAM', item.price2 || 0)}
+      ${renderCell(item, 'price3', 'University/OPIS', item.price3 || 0)}
+      ${renderCell(item, 'price4', 'Company', item.price4 || 0)}
+    </tr>
+  `).join('');
+
+  const pendingBar = canEdit && pendingCount > 0 ? `
+    <div style="margin-top:20px; padding:15px 20px; background:#fff8e1; border:2px solid #f59e0b; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+      <span style="color:#92400e; font-weight:600; font-size:14px;">⚠️ ${pendingCount} unsaved change${pendingCount > 1 ? 's' : ''}. Click <strong>Save All</strong> to commit to the database.</span>
+      <div style="display:flex; gap:10px;">
+        <button onclick="window.cancelAllPrices()" style="background:#ef4444; color:white; border:none; padding:9px 20px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:13px;">CANCEL</button>
+        <button onclick="window.saveAllPrices()" style="background:#10b981; color:white; border:none; padding:9px 20px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:13px;">SAVE ALL CHANGES</button>
+      </div>
+    </div>
+  ` : '';
+
+  container.innerHTML = `
     <table style="width:100%; border-collapse:collapse; font-size:14px;">
       <thead>
         <tr style="text-align:left; border-bottom:2px solid #eee; color:#666;">
@@ -754,38 +832,11 @@ window.renderPricesTable = function () {
           <th style="padding:12px 10px;">COMPANY (€/h)</th>
         </tr>
       </thead>
-      <tbody>
-        ${window.catalogPrices.map(item => `
-          <tr style="border-bottom:1px solid #eee; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
-            <td style="padding:12px 10px; font-weight:600; color:#1e293b;">${item.name}</td>
-            <td style="padding:12px 10px;">
-              <button class="price-edit-btn" onclick="window.openPriceEditor(${item.id}, '${item.name.replace(/'/g, "\\'")}', 'Internal', 'price1', ${item.price1})">
-                ${item.price1.toFixed(2)} €/h
-              </button>
-            </td>
-            <td style="padding:12px 10px;">
-              <button class="price-edit-btn" onclick="window.openPriceEditor(${item.id}, '${item.name.replace(/'/g, "\\'")}', 'CSIC/UAM', 'price2', ${item.price2 || 0})">
-                ${(item.price2 || 0).toFixed(2)} €/h
-              </button>
-            </td>
-            <td style="padding:12px 10px;">
-              <button class="price-edit-btn" onclick="window.openPriceEditor(${item.id}, '${item.name.replace(/'/g, "\\'")}', 'University/OPIS', 'price3', ${item.price3 || 0})">
-                ${(item.price3 || 0).toFixed(2)} €/h
-              </button>
-            </td>
-            <td style="padding:12px 10px;">
-              <button class="price-edit-btn" onclick="window.openPriceEditor(${item.id}, '${item.name.replace(/'/g, "\\'")}', 'Company', 'price4', ${item.price4 || 0})">
-                ${(item.price4 || 0).toFixed(2)} €/h
-              </button>
-            </td>
-          </tr>
-        `).join('')}
-      </tbody>
+      <tbody>${rows}</tbody>
     </table>
+    ${pendingBar}
   `;
 
-  container.innerHTML = tableHtml;
-  
   // Add some styles if not already in CSS
   if (!document.getElementById('price-table-styles')) {
     const style = document.createElement('style');
@@ -816,7 +867,7 @@ window.renderPricesTable = function () {
 let currentEditingItem = null;
 
 window.openPriceEditor = function (itemId, serviceName, entityLabel, field, currentPrice) {
-  currentEditingItem = { itemId, field };
+  currentEditingItem = { itemId, field, currentPrice };
   const modal = document.getElementById("priceEditModal");
   const context = document.getElementById("priceEditContext");
   const input = document.getElementById("newPriceInput");
@@ -841,7 +892,8 @@ window.closePriceModal = function () {
   }
 };
 
-window.savePriceUpdate = async function () {
+// Stage the price change locally — does NOT call the API yet
+window.savePriceUpdate = function () {
   if (!currentEditingItem) return;
 
   const newVal = parseFloat(document.getElementById("newPriceInput").value);
@@ -850,36 +902,421 @@ window.savePriceUpdate = async function () {
     return;
   }
 
-  const fieldNames = {
-    price1: "Internal (MiNa)",
-    price2: "CSIC / UAM",
-    price3: "University / OPIS",
-    price4: "External Company"
-  };
+  const { itemId, field, currentPrice } = currentEditingItem;
 
-  const humanFieldName = fieldNames[currentEditingItem.field] || currentEditingItem.field;
-  const serviceName = window.catalogPrices.find(i => i.id === currentEditingItem.itemId)?.name;
+  // Store pending change (keep original DB price for the strikethrough)
+  if (!window.pendingPriceChanges[itemId]) {
+    window.pendingPriceChanges[itemId] = {};
+  }
+  // If reverting to the DB value, remove the pending entry
+  const dbItem = window.catalogPrices.find(i => i.id === itemId);
+  const dbPrice = dbItem ? (dbItem[field] || 0) : currentPrice;
+  if (newVal === dbPrice && window.pendingPriceChanges[itemId][field]) {
+    delete window.pendingPriceChanges[itemId][field];
+    if (Object.keys(window.pendingPriceChanges[itemId]).length === 0) {
+      delete window.pendingPriceChanges[itemId];
+    }
+  } else {
+    window.pendingPriceChanges[itemId][field] = { oldPrice: dbPrice, newPrice: newVal };
+  }
 
-  if (!confirm(`Are you sure you want to update the hourly rate to ${newVal} €/h for ${humanFieldName} in "${serviceName}"?\n\nThis change will impact all current 'Requested' offers.`)) {
+  window.closePriceModal();
+  // Re-render table to show the pending state
+  window.renderPricesTable();
+};
+
+// Commit all pending changes to the server
+window.saveAllPrices = async function () {
+  const pending = window.pendingPriceChanges;
+  const entries = [];
+  Object.keys(pending).forEach(itemId => {
+    const changes = pending[itemId];
+    entries.push({ itemId: parseInt(itemId), changes });
+  });
+
+  if (entries.length === 0) return;
+
+  const totalChanges = entries.reduce((acc, entry) => acc + Object.keys(entry.changes).length, 0);
+  if (!confirm(`Are you sure you want to save ${totalChanges} price change(s) to the database?\n\nThis action cannot be undone.`)) {
     return;
   }
 
   try {
-    const response = await fetch(`/api/catalog/${currentEditingItem.itemId}`, {
-      method: "PUT",
+    // Send each item update sequentially
+    for (const { itemId, changes } of entries) {
+      const body = {};
+      Object.keys(changes).forEach(field => { body[field] = changes[field].newPrice; });
+      const res = await fetch(`/api/catalog/${itemId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || `Error updating item ${itemId}`);
+      }
+    }
+    // All saved successfully
+    window.pendingPriceChanges = {};
+    window.loadCatalogPrices();
+  } catch (error) {
+    alert("Error saving prices: " + error.message);
+  }
+};
+
+// Discard all pending changes
+window.cancelAllPrices = function () {
+  window.pendingPriceChanges = {};
+  window.renderPricesTable();
+};
+
+// --- 7. ADMIN DASHBOARD MANAGEMENT ---
+window.loadAdminTechnicians = async function () {
+  const list = document.getElementById("adminTechList");
+  if (!list) return;
+
+  try {
+    const res = await fetch("/api/admin/technicians");
+    if (!res.ok) throw new Error("Could not fetch technicians");
+    const technicians = await res.json();
+
+    // Admin user details
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+
+    list.innerHTML = technicians.map(t => {
+      const isSelf = t.id === currentUser.id;
+      // Cannot toggle own role or Admins overall except self-protection
+      const canToggle = !isSelf && t.privilege_level !== "Admin";
+
+      let actionBtn = "";
+      if (canToggle) {
+        const nextRole = t.privilege_level === "Mod" ? "Technician" : "Mod";
+        const btnColor = nextRole === "Mod" ? "#3b82f6" : "#f59e0b";
+        actionBtn = `<button onclick="window.adminToggleRole(${t.id}, '${nextRole}')" style="background:${btnColor}; color:white; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; font-size:12px; cursor:pointer;">Make ${nextRole}</button>`;
+      } else if (isSelf) {
+        actionBtn = `<span style="font-size:12px; color:#9ca3af; font-style:italic;">You</span>`;
+      } else if (t.privilege_level === "Admin") {
+        actionBtn = `<span style="font-size:12px; color:#9ca3af; font-style:italic;">Admin</span>`;
+      }
+
+      return `
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:12px 8px;"><b>${t.first_name} ${t.last_name}</b></td>
+          <td style="padding:12px 8px; color:#64748b;">${t.email}</td>
+          <td style="padding:12px 8px;"><span style="background:#e2e8f0; padding:4px 10px; border-radius:12px; font-size:12px; font-weight:bold; color:#334155;">${t.privilege_level}</span></td>
+          <td style="padding:12px 8px;">${actionBtn}</td>
+        </tr>
+      `;
+    }).join("");
+  } catch (err) {
+    list.innerHTML = `<tr><td colspan="4" style="color:red; padding:10px;">Error loading users</td></tr>`;
+  }
+};
+
+window.adminCreateTechnician = async function () {
+  const first = document.getElementById("newTechFirst").value.trim();
+  const last = document.getElementById("newTechLast").value.trim();
+  const email = document.getElementById("newTechEmail").value.trim();
+  const password = document.getElementById("newTechPassword").value;
+
+  if (!first || !last || !email || !password) {
+    alert("Please fill in all fields to create a technician.");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/admin/technicians", {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ [currentEditingItem.field]: newVal })
+      body: JSON.stringify({
+        first_name: first,
+        last_name: last,
+        email: email,
+        password: password,
+        privilege_level: "Technician"
+      })
     });
 
-    if (response.ok) {
-      window.closePriceModal();
-      window.loadCatalogPrices();
-    } else {
-      const error = await response.json();
-      alert("Error updating price: " + (error.detail || "Unknown error"));
-    }
-  } catch (error) {
-    console.error("Error saving price update:", error);
-    alert("Failed to connect to the server.");
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Error creating technician");
+
+    alert("Technician created successfully!");
+    document.getElementById("newTechFirst").value = "";
+    document.getElementById("newTechLast").value = "";
+    document.getElementById("newTechEmail").value = "";
+    document.getElementById("newTechPassword").value = "";
+    window.loadAdminTechnicians();
+  } catch (err) {
+    alert(err.message);
   }
-};
+};
+
+window.adminToggleRole = async function (id, newRole) {
+  if (!confirm(`Are you sure you want to change this user's role to ${newRole}?`)) return;
+
+  try {
+    const res = await fetch(`/api/admin/technicians/${id}/role?privilege_level=${newRole}`, {
+      method: "PATCH"
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.detail || "Could not change role");
+    }
+
+    window.loadAdminTechnicians();
+  } catch (err) {
+    alert(err.message);
+  }
+};
+
+// --- 8. INVOICING / BILLING MODULE ---
+
+window.loadBillingClients = async function () {
+  const techData = JSON.parse(localStorage.getItem("currentUser"));
+  if (!techData) return;
+  const select = document.getElementById("billingClientSelect");
+  if (!select) return;
+
+  try {
+    const res = await fetch(`/api/technician/billing-clients?tech_id=${techData.id}`);
+    const clients = await res.json();
+
+    let html = '<option value="">-- Select a client --</option>';
+    if (clients.length === 0) {
+      html = '<option value="">-- No clients with pending offers --</option>';
+    } else {
+      clients.forEach(c => {
+        html += `<option value="${c.id}">${c.first_name} ${c.last_name} (${c.email})</option>`;
+      });
+    }
+    select.innerHTML = html;
+  } catch (err) {
+    console.error("Error loading billing clients:", err);
+  }
+};
+
+window.loadBillingClientOffers = async function () {
+  const select = document.getElementById("billingClientSelect");
+  const container = document.getElementById("billingOffersContainer");
+  const list = document.getElementById("billingOffersList");
+
+  if (!select.value) {
+    container.style.display = "none";
+    return;
+  }
+
+  const techData = JSON.parse(localStorage.getItem("currentUser"));
+  container.style.display = "flex";
+  list.innerHTML = "<p>Loading offers...</p>";
+
+  try {
+    const res = await fetch(`/api/technician/billing-offers?tech_id=${techData.id}&client_id=${select.value}`);
+    const offers = await res.json();
+    window.currentBillingOffers = offers;
+
+    if (offers.length === 0) {
+      list.innerHTML = "<p>No active offers found.</p>";
+      window.calculateInvoiceTotal();
+      return;
+    }
+
+    list.innerHTML = offers.map(o => {
+      const isAccepted = o.status === "accepted";
+      const badgeColor = isAccepted ? "#27ae60" : (o.status === "quoted" ? "#f39c12" : "#17a2b8");
+
+      let sum = 0;
+      const validServices = o.services.filter(s => !s.is_deleted);
+      validServices.forEach(s => {
+        sum += (s.quoted_price || 0);
+      });
+
+      const servicesListHtml = validServices.map(s =>
+        `<div style="font-size:12px; color:#555; padding-left:25px; margin-top:4px;">
+           • ${s.service_name} — ${s.hours}h <strong style="color:#2563eb;">(${s.quoted_price ? s.quoted_price.toFixed(2) + ' €' : '0.00 €'})</strong>
+         </div>`
+      ).join("");
+
+      return `
+        <div style="border:1px solid ${isAccepted ? '#cbd5e1' : '#e2e8f0'}; border-radius:8px; padding:15px; display:flex; gap:15px; background:${isAccepted ? '#fff' : '#f8fafc'}; opacity:${isAccepted ? '1' : '0.6'}; transition:0.2s;">
+          <div style="padding-top:4px;">
+            <input type="checkbox" class="invoice-offer-checkbox" value="${o.id}" data-price="${sum}" ${isAccepted ? 'checked onchange="window.calculateInvoiceTotal()"' : 'disabled'} style="transform:scale(1.5);">
+          </div>
+          <div style="flex:1;">
+            <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
+              <span style="font-weight:bold; color:var(--color-csic); font-size:16px;">PO_${o.id}</span>
+              <span style="background:${badgeColor}; color:white; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:bold;">${o.status.toUpperCase()}</span>
+            </div>
+            ${servicesListHtml}
+            <div style="margin-top:10px; padding-top:10px; border-top:1px solid #e2e8f0; text-align:right;">
+               Total Sub-offer: <strong style="color:#0f172a; font-size:14px;">${sum.toFixed(2)} €</strong>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    window.calculateInvoiceTotal();
+  } catch (err) {
+    list.innerHTML = `<p style="color:red;">Error fetching offers</p>`;
+  }
+};
+
+window.calculateInvoiceTotal = function () {
+  const checkboxes = document.querySelectorAll(".invoice-offer-checkbox:checked");
+  let sum = 0;
+  checkboxes.forEach(cb => {
+    sum += parseFloat(cb.getAttribute("data-price") || "0");
+  });
+
+  const sumEl = document.getElementById("billingTotalSum");
+  if (sumEl) sumEl.textContent = sum.toFixed(2);
+
+  // Also hide the whole submission frame if nothing is valid to be invoiced
+  const submitFrame = document.getElementById("billingSubmitFrame");
+  if (submitFrame) {
+    if (checkboxes.length > 0) {
+      submitFrame.style.display = "block";
+    } else {
+      submitFrame.style.display = "none";
+    }
+  }
+};
+
+window.submitInvoice = async function () {
+  const techData = JSON.parse(localStorage.getItem("currentUser"));
+  const clientId = document.getElementById("billingClientSelect").value;
+  const comment = document.getElementById("billingComment").value;
+
+  const checkboxes = document.querySelectorAll(".invoice-offer-checkbox:checked");
+  const offerIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+  if (!clientId || offerIds.length === 0) {
+    alert("You must select at least one accepted offer to generate an invoice.");
+    return;
+  }
+
+  let totalSum = 0;
+  checkboxes.forEach(cb => totalSum += parseFloat(cb.getAttribute("data-price")));
+
+  if (!confirm(`Are you sure you want to invoice ${offerIds.length} offers for a total of ${totalSum.toFixed(2)} €?\n\nThis will mark these offers as 'invoiced' and send them to the client.`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/technician/invoices", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        client_id: parseInt(clientId),
+        technician_id: techData.id,
+        offer_ids: offerIds,
+        total_price: totalSum,
+        comment: comment
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "Could not generate invoice");
+    }
+
+    alert("Invoice generated successfully!");
+    document.getElementById("billingComment").value = "";
+    document.getElementById("billingClientSelect").value = "";
+    document.getElementById("billingOffersContainer").style.display = "none";
+
+    window.loadBillingClients();
+    window.loadAllOffers(); // refresh arrays
+    window.loadTechInvoices();
+  } catch (err) {
+    alert(err.message);
+  }
+};
+
+window.loadTechInvoices = async function () {
+  const container = document.getElementById("techInvoicesContainer");
+  if (!container) return;
+  const techData = JSON.parse(localStorage.getItem("currentUser"));
+
+  try {
+    const res = await fetch("/api/technician/invoices/all");
+    const invoices = await res.json();
+
+    if (invoices.length === 0) {
+      container.innerHTML = "<p>No invoices have been generated yet.</p>";
+      return;
+    }
+
+    container.innerHTML = invoices.map(inv => {
+      const isFinished = inv.status === 'finished';
+      const isOwner = inv.technician_id === techData.id;
+      return `
+         <div style="background: ${isFinished ? '#f1f5f9' : 'white'}; border: 1px solid ${isFinished ? '#cbd5e1' : '#ccc'}; border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: start;">
+           <div>
+             <h4 style="margin:0 0 5px 0; color:var(--color-csic);">Invoice #${inv.id}</h4>
+             <p style="margin:0; font-size:13px; color:#64748b;">
+               Date: ${new Date(inv.created_at).toLocaleDateString()} | Total: <strong>${inv.total_price.toFixed(2)} €</strong>
+             </p>
+             <p style="margin:5px 0 0 0; font-size:13px; color:#475569;">
+               Generated by: <strong>${inv.technician_first_name ? inv.technician_first_name + ' ' + inv.technician_last_name : 'Technician #' + inv.technician_id}</strong>
+             </p>
+           </div>
+           
+           <div style="text-align: right;">
+             <span style="display:inline-block; margin-bottom:8px; padding:4px 10px; background:${isFinished ? '#2c3e50' : '#9b59b6'}; color:white; font-size:11px; font-weight:bold; border-radius:12px;">
+               ${inv.status.toUpperCase()}
+             </span>
+             <br>
+             ${!isFinished && isOwner ? `
+               <button onclick="window.finishInvoice(${inv.id})" style="background:#2c3e50; color:white; border:none; padding:6px 12px; border-radius:4px; font-size:12px; cursor:pointer;" title="Mark this invoice and its offers as FINISHED">
+                 Finish Work
+               </button>
+             ` : ''}
+           </div>
+         </div>
+       `;
+    }).join('');
+
+  } catch (err) {
+    container.innerHTML = `<p style="color:red;">Error loading invoices history.</p>`;
+  }
+};
+
+window.finishInvoice = async function (invoiceId) {
+  if (!confirm("Are you sure you want to finish this invoice? This will mark all its offers as 'finished' and they will be locked.")) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/technician/invoices/${invoiceId}/finish`, {
+      method: "POST"
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "Error finishing invoice");
+    }
+
+    alert("Invoice and underlying offers successfully marked as FINISHED!");
+    window.loadTechInvoices();
+    window.loadAllOffers(); // Refresh the main dashboard cards completely
+  } catch (err) {
+    alert(err.message);
+  }
+};
+
+// Live auto-refresh: poll data every 15 seconds silently
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(() => {
+    if (window.loadTechInvoices) window.loadTechInvoices();
+  }, 1000);
+
+  setInterval(async () => {
+    try {
+      if (window.loadAllOffers) await window.loadAllOffers();
+      if (window.loadTechInvoices) await window.loadTechInvoices();
+      if (window.loadBillingClients) await window.loadBillingClients();
+    } catch (e) { /* silent fail */ }
+  }, 15000);
+});

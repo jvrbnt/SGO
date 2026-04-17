@@ -1,3 +1,6 @@
+// Clear any existing session to enforce logout when visiting signup page
+localStorage.removeItem("currentUser");
+
 const selectEntity = document.getElementById("entity");
 const extraFields = document.getElementById("extraFields");
 const extraInputs = extraFields.querySelectorAll("input, select");

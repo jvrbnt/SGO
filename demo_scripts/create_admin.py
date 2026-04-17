@@ -68,7 +68,8 @@ def seed_technician():
         first_name=validated_data.first_name,
         last_name=validated_data.last_name,
         email=validated_data.email,
-        hashed_password=hashed_pwd
+        hashed_password=hashed_pwd,
+        privilege_level="Admin"
     )
 
     try:

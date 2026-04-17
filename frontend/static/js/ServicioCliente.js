@@ -123,6 +123,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             requested: "#17a2b8",
             quoted: "#f39c12",
             accepted: "#28a745",
+            invoiced: "#9b59b6",
             finished: "#2c3e50",
           };
           const color = statusColors[offer.status] || "#666";
@@ -193,12 +194,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                   </tfoot>
                 </table>
               </div>
-            ` : (offer.status === 'accepted' || offer.status === 'finished') && offer.services.some(s => s.quoted_price != null) ? `
-              <!-- ACCEPTED / FINISHED: resumen compacto de precios -->
-              <div style="background:#f6fff8; border:1px solid #28a745; border-radius:6px; padding:12px; margin-bottom:12px;">
+            ` : (offer.status === 'accepted' || offer.status === 'finished' || offer.status === 'invoiced') && offer.services.some(s => s.quoted_price != null) ? `
+              <!-- ACCEPTED / INVOICED / FINISHED: resumen compacto de precios -->
+              <div style="background:${offer.status === 'invoiced' || offer.status === 'finished' ? '#fcf0fb' : '#f6fff8'}; border:1px solid ${offer.status === 'invoiced' || offer.status === 'finished' ? '#9b59b6' : '#28a745'}; border-radius:6px; padding:12px; margin-bottom:12px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                  <span style="font-size:13px; color:#1a6b33; font-weight:600;">Accepted quotation</span>
-                  <span style="font-size:16px; font-weight:bold; color:#1a6b33;">
+                  <span style="font-size:13px; color:${offer.status === 'invoiced' || offer.status === 'finished' ? '#9b59b6' : '#1a6b33'}; font-weight:600;">${offer.status === 'invoiced' ? 'Invoiced quotation' : offer.status === 'finished' ? 'Completed work' : 'Accepted quotation'}</span>
+                  <span style="font-size:16px; font-weight:bold; color:${offer.status === 'invoiced' || offer.status === 'finished' ? '#9b59b6' : '#1a6b33'};">
                     ${offer.services.filter(s => !s.is_deleted).reduce((acc, s) => acc + (s.quoted_price ?? 0), 0).toFixed(2)} € total
                   </span>
                 </div>
@@ -211,12 +212,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                     if (isEdited) {
                        hoursDisplay = `<span style="text-decoration:line-through; color:#94a3b8; font-size:11px; margin-right:4px;">${s.original_hours}h</span><span style="color:#f59e0b; font-weight:bold;">${s.hours}h</span>`;
                     }
+                    const priceColor = offer.status === 'invoiced' || offer.status === 'finished' ? '#9b59b6' : '#1a6b33';
                     return `
                       <li style="margin-bottom:3px;">
                         ${s.service_name} — ${hoursDisplay}
                         ${isAdded ? '<small style="color:#10b981; font-weight:bold; margin-left:4px;">(Added by technician)</small>' : ''}
                         ${isEdited ? '<small style="color:#f59e0b; font-weight:bold; margin-left:4px;">(Edited by technician)</small>' : ''}
-                        ${s.quoted_price != null ? `<span style="color:#1a6b33; font-weight:600; margin-left:4px;">(${s.quoted_price.toFixed(2)} €)</span>` : ''}
+                        ${s.quoted_price != null ? `<span style="color:${priceColor}; font-weight:600; margin-left:4px;">(${s.quoted_price.toFixed(2)} €)</span>` : ''}
                       </li>
                     `;
                   }).join('')}
@@ -307,8 +309,96 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   };
 
+  // 9. INVOICES / BILLING
+  window.loadClientInvoices = async function () {
+    const list = document.getElementById("invoiceList");
+    if (!list) return;
+    
+    try {
+      const response = await fetch(`/api/client/invoices?email=${encodeURIComponent(currentUser.email)}`);
+      const invoices = await response.json();
+      
+      if (invoices.length === 0) {
+        list.innerHTML = "<p style='text-align:center; color:#666;'>No invoices generated yet.</p>";
+        return;
+      }
+      
+      list.innerHTML = invoices.map(inv => {
+        let detailsHtml = '';
+        if (inv.offers && inv.offers.length > 0) {
+           detailsHtml = '<div style="margin-top:15px; display:flex; flex-direction:column; gap:10px;">';
+           inv.offers.forEach(o => {
+               let offerSum = 0;
+               let srvsHtml = '';
+               o.services.filter(s => !s.is_deleted).forEach(s => {
+                   offerSum += (s.quoted_price || 0);
+                   let unitPriceInfo = '';
+                   if (s.hours > 0 && s.quoted_price) {
+                       const unit = s.quoted_price / s.hours;
+                       unitPriceInfo = `<span style="color:#94a3b8; margin-left:5px;">(${unit.toFixed(2)} € / h)</span>`;
+                   }
+                   srvsHtml += `<div style="display:flex; justify-content:space-between; font-size:12px; color:#64748b; margin-top:3px; padding-left:10px;">
+                                  <span>• ${s.service_name} — ${s.hours}h ${unitPriceInfo}</span>
+                                  <span>${s.quoted_price ? s.quoted_price.toFixed(2) + ' €' : '0.00 €'}</span>
+                                </div>`;
+               });
+               
+               detailsHtml += `
+                 <div style="border:1px dashed #cbd5e1; border-radius:6px; padding:10px; background:#f8fafc;">
+                    <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:13px; color:#334155; margin-bottom:5px;">
+                       <span>PO_${o.id}</span>
+                       <span style="color:#0f172a;">${offerSum.toFixed(2)} €</span>
+                    </div>
+                    ${srvsHtml}
+                 </div>
+               `;
+           });
+           detailsHtml += '</div>';
+        }
+        
+        return `
+          <div style="border:1px solid ${inv.status === 'finished' ? '#cbd5e1' : '#ccc'}; border-radius:8px; padding:20px; background:${inv.status === 'finished' ? '#f8fafc' : '#fff'}; display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; justify-content:space-between; border-bottom:2px solid #eee; padding-bottom:10px;">
+              <h3 style="margin:0; color:var(--color-csic);">Invoice #${inv.id}</h3>
+              <span style="background:${inv.status === 'finished' ? '#2c3e50' : '#9b59b6'}; color:white; padding:4px 12px; border-radius:12px; font-weight:bold; font-size:12px;">${inv.status.toUpperCase()}</span>
+            </div>
+            
+            <div style="display:flex; justify-content:space-between; font-size:14px; color:#555;">
+              <span><strong>Date:</strong> ${new Date(inv.created_at).toLocaleDateString()}</span>
+            </div>
+            
+            ${detailsHtml}
+            
+            ${inv.comment ? `
+              <div style="background:#f8fafc; padding:10px; border-left:4px solid #3b82f6; font-size:14px; margin-top:5px; border-radius:4px;">
+                <strong>Technician's Note:</strong><br>${inv.comment}
+              </div>
+            ` : ''}
+            
+            <div style="text-align:right; border-top:1px solid #eee; padding-top:10px; margin-top:5px;">
+              <span style="font-size:18px; color:#0f172a;"><strong>Total: ${inv.total_price.toFixed(2)} €</strong></span>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+    } catch (e) {
+      list.innerHTML = "<p style='color:red;'>Error fetching invoices</p>";
+    }
+  };
+
+
   await loadCatalog();
   await window.loadMyRequests();
+  await window.loadClientInvoices();
+  
+  // Live auto-refresh: silently re-fetch data every 15 seconds
+  setInterval(async () => {
+    try {
+      await window.loadMyRequests();
+      await window.loadClientInvoices();
+    } catch(e) { /* silent fail */ }
+  }, 15000);
 });
 
 // Global function for tabs

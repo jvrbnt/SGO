@@ -16,6 +16,9 @@ body {
   font-family: "Montserrat", sans-serif;
   background-color: var(--bg-gray);
   color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 #profileContainer {
@@ -81,7 +84,7 @@ body {
   align-items: center !important;
   width: 100% !important;
   padding: 40px 60px !important;
-  margin-top: 40px !important;
+  margin-top: auto !important;
   box-sizing: border-box !important;
   gap: 20px !important;
 }
@@ -266,4 +269,27 @@ body {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* --- OVERRIDE GOOGLE TRANSLATE BANNER GLOBALLY --- */
+iframe.skiptranslate,
+.goog-te-banner-frame,
+.skiptranslate > iframe,
+#goog-gt-tt, 
+.goog-te-balloon-frame {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+body, html {
+    top: 0px !important;
+    position: static !important;
+    margin-top: 0px !important;
+}
+
+.goog-text-highlight {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
 }

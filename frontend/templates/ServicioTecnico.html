@@ -53,15 +53,12 @@
       <button class="tab-btn" onclick="openTab(event, 'tabFacturacion')">
         Billing
       </button>
-      <button class="tab-btn" onclick="openTab(event, 'tabPrecios')">
+      <button class="tab-btn" id="tabPreciosBtn" onclick="openTab(event, 'tabPrecios')">
         Prices
       </button>
     </div>
 
     <div id="tabGlobales" class="tab-content active" style="width: 100%;">
-      <h2 class="section-title" style="text-align: center">
-        Global Offers
-      </h2>
       <div class="status-filter-buttons" id="globalFilters">
         <button class="filter-btn global-btn active" data-status="all"
           onclick="setFilter('global', 'all', this)">All</button>
@@ -71,6 +68,8 @@
           onclick="setFilter('global', 'quoted', this)">Quoted</button>
         <button class="filter-btn global-btn" data-status="accepted"
           onclick="setFilter('global', 'accepted', this)">Accepted</button>
+        <button class="filter-btn global-btn" data-status="invoiced"
+          onclick="setFilter('global', 'invoiced', this)">Invoiced</button>
         <button class="filter-btn global-btn" data-status="finished"
           onclick="setFilter('global', 'finished', this)">Finished</button>
       </div>
@@ -82,9 +81,6 @@
     </div>
 
     <div id="tabMisOfertas" class="tab-content" style="width: 100%;">
-      <h2 class="section-title" style="text-align: center">
-        My Offers
-      </h2>
       <div class="status-filter-buttons" id="myFilters">
         <button class="filter-btn my-btn active" data-status="all" onclick="setFilter('my', 'all', this)">All</button>
         <button class="filter-btn my-btn" data-status="requested"
@@ -92,6 +88,7 @@
         <button class="filter-btn my-btn" data-status="quoted" onclick="setFilter('my', 'quoted', this)">Quoted</button>
         <button class="filter-btn my-btn" data-status="accepted"
           onclick="setFilter('my', 'accepted', this)">Accepted</button>
+        <button class="filter-btn my-btn" data-status="invoiced" onclick="setFilter('my', 'invoiced', this)">Invoiced</button>
         <button class="filter-btn my-btn" data-status="finished"
           onclick="setFilter('my', 'finished', this)">Finished</button>
       </div>
@@ -102,13 +99,69 @@
       </div>
     </div>
 
-    <div id="tabFacturacion" class="tab-content" style="width: 100%; padding: 20px">
-      <h2 class="section-title">Billing Module</h2>
-      <p>Under development.</p>
+    <div id="tabFacturacion" class="tab-content" style="width: 100%; padding: 0;">
+      <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #ccc; margin-bottom:20px;">
+        <label style="font-weight: bold; color: var(--color-csic);">Select Client:</label>
+        <select id="billingClientSelect" onchange="window.loadBillingClientOffers()" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-left: 10px; width: 300px;">
+          <option value="">-- No clients with pending offers --</option>
+        </select>
+      </div>
+      
+      <div id="billingOffersContainer" style="display:none; flex-direction:column; gap:15px;">
+        <div id="billingOffersList"></div>
+        
+        <div id="billingSubmitFrame" style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+          <h3 style="margin-top:0; color:#334155;">Invoice Summary</h3>
+          <p style="font-size: 18px; font-weight: bold;">Total Amount: <span id="billingTotalSum">0.00</span> €</p>
+          <label style="font-weight: bold; display:block; margin-top:10px;">Manager's Comment (Visible to client):</label>
+          <textarea id="billingComment" style="width: 100%; height: 80px; padding: 10px; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; box-sizing:border-box;"></textarea>
+          
+          <button id="btnSubmitInvoice" onclick="window.submitInvoice()" style="margin-top: 15px; padding: 10px 20px; background-color: #10b981; color: white; font-weight: bold; border: none; border-radius: 4px; cursor: pointer;">
+            GENERATE & SEND INVOICE
+          </button>
+        </div>
+      </div>
+      
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #eee;">
+         <h2 style="color: var(--color-csic);">Invoices History</h2>
+         <div id="techInvoicesContainer" style="display: flex; flex-direction: column; gap: 15px;">
+            <p>Loading invoices...</p>
+         </div>
+      </div>
     </div>
-
     <div id="tabPrecios" class="tab-content" style="width: 100%;">
-      <h2 class="section-title" style="text-align: center">Service Prices</h2>
+      
+      <!-- ADMIN PRIVILEGE PANEL -->
+      <div id="adminPanel" style="display: none; flex-direction: column; gap: 20px; margin-bottom: 30px;">
+        <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #ccc;">
+          <h3 style="margin-top: 0; color: var(--color-csic);">Register New Technician</h3>
+          <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+            <div><label style="font-size:12px; font-weight:bold; color:#777;">First Name</label><br><input type="text" id="newTechFirst" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;"></div>
+            <div><label style="font-size:12px; font-weight:bold; color:#777;">Last Name</label><br><input type="text" id="newTechLast" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;"></div>
+            <div><label style="font-size:12px; font-weight:bold; color:#777;">Email</label><br><input type="email" id="newTechEmail" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;"></div>
+            <div><label style="font-size:12px; font-weight:bold; color:#777;">Password</label><br><input type="password" id="newTechPassword" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;"></div>
+            <button onclick="window.adminCreateTechnician()" style="background:#10b981; color:white; font-weight:bold; padding:9px 18px; border-radius:4px; border:none; cursor:pointer;">CREATE TECHNICIAN</button>
+          </div>
+        </div>
+
+        <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #ccc;">
+          <h3 style="margin-top: 0; color: var(--color-csic);">Manage Roles</h3>
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="text-align: left; border-bottom: 2px solid #ccc; font-size:13px; color:#666;">
+                <th style="padding: 8px;">NAME</th>
+                <th style="padding: 8px;">EMAIL</th>
+                <th style="padding: 8px;">ROLE</th>
+                <th style="padding: 8px;">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody id="adminTechList">
+               <tr><td colspan="4" style="padding:10px;">Loading users...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div id="pricesTableContainer"
         style="overflow-x: auto; background: #fff; border-radius: 8px; border: 1px solid #ccc; padding: 20px;">
         <p style="text-align: center; color: #666;">Loading prices...</p>
@@ -165,7 +218,47 @@
     </div>
   </div>
 
-  <div class="side-bar" id="footer"></div>
+  <div class="side-bar" id="footer" style="display:flex; justify-content:center; align-items:center; gap:30px; font-size:14px; padding:0 20px;">
+    <div style="display:flex; gap:10px; font-weight:bold; align-items:center;">
+      <span style="cursor:pointer; color:#0f172a; padding:4px 8px;" onclick="changeLanguage('en')">English</span>
+      <span style="color:#64748b;">|</span>
+      <span style="cursor:pointer; color:#0f172a; padding:4px 8px;" onclick="changeLanguage('es')">Español</span>
+    </div>
+    <div style="width:2px; height:20px; background-color:#cbd5e1;"></div>
+    <div style="display:flex; gap:20px; font-weight:600; align-items:center;">
+      <a href="/Contacto.html" style="color:#0f172a; text-decoration:none;">Contact</a>
+      <a href="/AvisoLegal.html" style="color:#0f172a; text-decoration:none;">Legal Notice</a>
+      <a href="/Cookies.html" style="color:#0f172a; text-decoration:none;">Cookies Policy</a>
+      <a href="/Proteccion.html" style="color:#0f172a; text-decoration:none;">Data Protection Policy</a>
+      <span style="color:#cbd5e1;">|</span>
+      <a href="/login" style="color:#0f172a; text-decoration:none;">Log In</a>
+      <a href="/registro" style="color:#0f172a; text-decoration:none;">Sign Up</a>
+    </div>
+    <div id="google_translate_element" style="display:none;"></div>
+    <script type="text/javascript">
+      function googleTranslateElementInit() {
+        new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'en,es', autoDisplay: false}, 'google_translate_element');
+      }
+      function changeLanguage(langCode) {
+        if (langCode === 'en') {
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=" + location.hostname + "; path=/;";
+        } else {
+            document.cookie = "googtrans=/en/" + langCode + "; expires=Thu, 01 Jan 2030 00:00:00 UTC; path=/;";
+            document.cookie = "googtrans=/en/" + langCode + "; expires=Thu, 01 Jan 2030 00:00:00 UTC; domain=" + location.hostname + "; path=/;";
+        }
+        location.reload();
+      }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <style>
+      iframe.goog-te-banner-frame { display: none !important; }
+      body { position: static !important; top: 0px !important; }
+      html { position: static !important; top: 0px !important; }
+      #goog-gt-tt, .goog-te-balloon-frame { display: none !important; }
+      .goog-text-highlight { background-color: transparent !important; box-shadow: none !important; border: none !important; }
+    </style>
+  </div>
 
   <script src="/static/js/ServicioTecnico.js" defer></script>
 </body>
