@@ -712,16 +712,41 @@ def get_all_invoices(db: Session = Depends(get_db)):
     result = []
     for inv in invoices:
         tech = db.query(models.Technician).filter(models.Technician.id == inv.technician_id).first()
+        client = db.query(models.Client).filter(models.Client.id == inv.client_id).first()
+        offers_data = []
+        for o in inv.offers:
+            offers_data.append({
+                "id": o.id,
+                "status": o.status,
+                "technician_comment": o.technician_comment,
+                "created_at": o.created_at.isoformat() if o.created_at else None,
+                "services": [{
+                    "id": s.id,
+                    "service_name": s.service_name,
+                    "hours": s.hours,
+                    "quoted_price": s.quoted_price,
+                    "comment": s.comment,
+                    "technician": {
+                        "first_name": s.technician.first_name,
+                        "last_name": s.technician.last_name
+                    } if s.technician else None
+                } for s in o.services if not s.is_deleted]
+            })
         result.append({
             "id": inv.id,
             "client_id": inv.client_id,
+            "client_first_name": client.first_name if client else None,
+            "client_last_name": client.last_name if client else None,
+            "client_email": client.email if client else None,
+            "client_entity": client.entity if client else None,
             "technician_id": inv.technician_id,
             "technician_first_name": tech.first_name if tech else None,
             "technician_last_name": tech.last_name if tech else None,
             "total_price": inv.total_price,
             "comment": inv.comment,
             "status": inv.status,
-            "created_at": inv.created_at.isoformat()
+            "created_at": inv.created_at.isoformat(),
+            "offers": offers_data
         })
     return result
 
