@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, model_validator
 from typing import Optional, List
 from datetime import datetime
 
@@ -8,13 +8,33 @@ class ClientBase(BaseModel):
     last_name: str
     email: EmailStr
     entity: str
-    internal_account: Optional[str] = None
-    ip_address: Optional[str] = None
-    group_name: Optional[str] = None
-    project_id: Optional[str] = None
+    # Fields for Internal (MiNa) clients — IP, CI, CP, Grupo
+    investigador_principal: Optional[str] = None  # IP — supervising researcher
+    cuenta_interna: Optional[str] = None          # CI — internal billing account
+    codigo_proyecto: Optional[str] = None         # CP — project code
+    grupo: Optional[str] = None                   # Research group within MiNa
 
 class ClientCreateWeb(ClientBase):
-    password: str # Required for web registration
+    password: str
+
+    @model_validator(mode="after")
+    def validate_internal_fields(self):
+        """Enforce that Internal (MiNa) clients must provide IP, CI, CP, and Grupo."""
+        if self.entity == "Internal":
+            missing = []
+            if not self.investigador_principal:
+                missing.append("IP (Investigador Principal)")
+            if not self.cuenta_interna:
+                missing.append("CI (Cuenta Interna)")
+            if not self.codigo_proyecto:
+                missing.append("CP (Código de Proyecto)")
+            if not self.grupo:
+                missing.append("Grupo")
+            if missing:
+                raise ValueError(
+                    f"Internal clients must provide: {', '.join(missing)}"
+                )
+        return self
 
 class ClientResponse(ClientBase):
     id: int
@@ -42,18 +62,18 @@ class LoginRequest(BaseModel):
 class ServiceCatalogResponse(BaseModel):
     id: int
     name: str
-    price1: float
-    price2: Optional[float] = None
-    price3: Optional[float] = None
-    price4: Optional[float] = None
+    price_internal: float
+    price_csic: Optional[float] = None
+    price_public: Optional[float] = None
+    price_private: Optional[float] = None
     class Config:
         from_attributes = True
 
 class ServiceCatalogPriceUpdate(BaseModel):
-    price1: Optional[float] = None
-    price2: Optional[float] = None
-    price3: Optional[float] = None
-    price4: Optional[float] = None
+    price_internal: Optional[float] = None
+    price_csic: Optional[float] = None
+    price_public: Optional[float] = None
+    price_private: Optional[float] = None
 
 # --- SERVICE SCHEMAS ---
 class ServiceBase(BaseModel):
@@ -96,12 +116,11 @@ class InvoiceResponse(InvoiceBase):
     created_at: datetime
     technician_first_name: Optional[str] = None
     technician_last_name: Optional[str] = None
-    
+
     class Config:
         from_attributes = True
 
 # --- OFFER SCHEMAS ---
-
 class OfferCreate(BaseModel):
     client_email: EmailStr
     services: List[ServiceBase]
@@ -115,12 +134,12 @@ class OfferResponse(BaseModel):
     client_id: int
     manager_id: Optional[int] = None
     invoice_id: Optional[int] = None
-    
+
     # Nested data representations
-    client: ClientResponse 
+    client: ClientResponse
     services: List[ServiceResponse]
     manager: Optional[TechnicianResponse] = None
-    
+
     class Config:
         from_attributes = True
 
@@ -136,7 +155,7 @@ class OfferReviewUpdate(BaseModel):
     services: List[ServiceUpdate]
     technician_comment: Optional[str] = None
     status: str = "quoted"
-    
+
 class TechnicianCreate(BaseModel):
     first_name: str
     last_name: str

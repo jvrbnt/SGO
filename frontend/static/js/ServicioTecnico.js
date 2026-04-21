@@ -215,13 +215,13 @@ window.updateOfferStatus = async function (offerId, newStatus) {
 
 // Map entity → price field
 function getPriceField(entity) {
-  if (!entity) return 'price1';
+  if (!entity) return 'price_internal';
   const e = entity.toLowerCase();
-  if (e === 'internal') return 'price1';
-  if (e === 'csic' || e === 'uam') return 'price2';
-  if (e === 'opis' || e === 'university') return 'price3';
-  if (e === 'company') return 'price4';
-  return 'price1'; // fallback
+  if (e === 'internal') return 'price_internal';
+  if (e === 'csic' || e === 'uam') return 'price_csic';
+  if (e === 'opis' || e === 'university') return 'price_public';
+  if (e === 'company') return 'price_private';
+  return 'price_internal'; // fallback
 }
 
 window.openReviewPanel = async function (offerId, isMineTab, readOnly = false, previousEdits = null) {
@@ -307,14 +307,14 @@ window.openReviewPanel = async function (offerId, isMineTab, readOnly = false, p
             <p><strong>Name:</strong> ${client.first_name} ${client.last_name}</p>
             <p><strong>Email:</strong> ${client.email}</p>
             <p><strong>Entity:</strong> ${client.entity || 'N/A'}</p>
-            ${isInternal ? `<p><strong>Group:</strong> ${client.group_name || 'N/A'}</p>` : ''}
+            ${isInternal ? `<p><strong>Group:</strong> ${client.grupo || 'N/A'}</p>` : ''}
           </div>
           ${isInternal ? `
           <div>
             <h4 style="margin:0 0 10px 0; color:var(--color-csic);">INTERNAL DATA</h4>
-            <p><strong>IP Address:</strong> ${client.ip_address || 'N/A'}</p>
-            <p><strong>CI (Project ID):</strong> ${client.project_id || 'N/A'}</p>
-            <p><strong>CP (Account):</strong> ${client.internal_account || 'N/A'}</p>
+            <p><strong>IP:</strong> ${client.investigador_principal || 'N/A'}</p>
+            <p><strong>CI:</strong> ${client.cuenta_interna || 'N/A'}</p>
+            <p><strong>CP:</strong> ${client.codigo_proyecto || 'N/A'}</p>
             <hr style="border:0; border-top:1px solid #ddd; margin:10px 0;">
             <p><strong>Offer created:</strong> ${new Date(offer.created_at).toLocaleString()}</p>
           </div>
@@ -791,10 +791,10 @@ window.renderPricesTable = function () {
   const rows = [...window.catalogPrices].sort((a, b) => a.name.localeCompare(b.name)).map(item => `
     <tr style="border-bottom:1px solid #eee; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
       <td style="padding:12px 10px; font-weight:600; color:#1e293b;">${item.name}</td>
-      ${renderCell(item, 'price1', 'Internal', item.price1)}
-      ${renderCell(item, 'price2', 'CSIC/UAM', item.price2 || 0)}
-      ${renderCell(item, 'price3', 'University/OPIS', item.price3 || 0)}
-      ${renderCell(item, 'price4', 'Company', item.price4 || 0)}
+      ${renderCell(item, 'price_internal', 'Internal', item.price_internal)}
+      ${renderCell(item, 'price_csic', 'CSIC/UAM', item.price_csic || 0)}
+      ${renderCell(item, 'price_public', 'University/OPIS', item.price_public || 0)}
+      ${renderCell(item, 'price_private', 'Company', item.price_private || 0)}
     </tr>
   `).join('');
 

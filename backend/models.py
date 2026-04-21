@@ -10,14 +10,16 @@ class Client(Base):
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=True) # Allow null for manual technician registration
+    hashed_password = Column(String, nullable=False)
     entity = Column(String, nullable=False)
 
-    # Specific fields for MiNa internal users
-    internal_account = Column(String, nullable=True)
-    ip_address = Column(String, nullable=True)
-    group_name = Column(String, nullable=True)
-    project_id = Column(String, nullable=True)
+    # Fields specific to Internal (MiNa) clients — required when entity is "Internal"
+    # IP = Investigador Principal, CI = Cuenta Interna, CP = Codigo de Proyecto
+    investigador_principal = Column(String, nullable=True)  # IP — supervising researcher
+    cuenta_interna = Column(String, nullable=True)          # CI — internal billing account
+    codigo_proyecto = Column(String, nullable=True)         # CP — project code
+    grupo = Column(String, nullable=True)                   # Research group within MiNa
+
     profile_picture = Column(String, nullable=True)
 
     # Relationship between client and their multiple requests/offers
@@ -43,13 +45,13 @@ class ServiceCatalog(Base):
     __tablename__ = "service_catalog"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True, nullable=False) # Service name according to catalog
-    price1 = Column(Float, nullable=False)  # Former price_per_hour — base price (MiNa internal users)
-    price2 = Column(Float, nullable=False)   # Price for external CSIC users
-    price3 = Column(Float, nullable=False)   # Price for universities / OPIS
-    price4 = Column(Float, nullable=False)   # Price for companies
+    name = Column(String, unique=True, index=True, nullable=False)
+    price_internal = Column(Float, nullable=False)  # MiNa internal users
+    price_csic = Column(Float, nullable=False)      # External CSIC / UAM users
+    price_public = Column(Float, nullable=False)    # Universities / OPIS
+    price_private = Column(Float, nullable=False)   # Companies
 
-    # Reference to services requested based on this item
+    # Reference to services requested based on this catalog item
     services = relationship("Service", back_populates="catalog_item")
 
 class Invoice(Base):
@@ -72,19 +74,19 @@ class Offer(Base):
     __tablename__ = "offers"
 
     id = Column(Integer, primary_key=True, index=True)
-    # Estados: requested, quoted, accepted, invoiced, finished
-    status = Column(String, default="requested") 
-    
+    # Status flow: requested → quoted → accepted → invoiced → finished
+    status = Column(String, default="requested")
+
     created_at = Column(DateTime, default=datetime.datetime.now)
-    updated_at = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now) 
-    
-    technician_comment = Column(Text, nullable=True) # El comentario para el cliente  
+    updated_at = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+
+    technician_comment = Column(Text, nullable=True)
     # Foreign keys to identify client and technical manager
     client_id = Column(Integer, ForeignKey("clients.id"))
     manager_id = Column(Integer, ForeignKey("technicians.id"), nullable=True)
     invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=True)
 
-    # Relaciones
+    # Relationships
     client = relationship("Client", back_populates="offers")
     manager = relationship("Technician", back_populates="managed_offers")
     services = relationship("Service", back_populates="offer", cascade="all, delete-orphan")
@@ -94,21 +96,21 @@ class Service(Base):
     __tablename__ = "services"
 
     id = Column(Integer, primary_key=True, index=True)
-    service_name = Column(String, nullable=False) # Name of requested service (catalog copy)
+    service_name = Column(String, nullable=False)  # Name of requested service (catalog copy)
     hours = Column(Float, default=0.0)
     original_hours = Column(Float, default=0.0)
-    quoted_price = Column(Float, nullable=True)  # Final price set by technician (price/h × hours, editable)
+    quoted_price = Column(Float, nullable=True)  # Final price set by technician
     comment = Column(Text, nullable=True)
-    status = Column(String, default="pending") # Estados: pending, doing, done
-    is_deleted = Column(Boolean, default=False) # Logically deleted by technician
-    added_by_technician = Column(Boolean, default=False) # Added by technician during review
-    
+    status = Column(String, default="pending")  # Status flow: pending → doing → done
+    is_deleted = Column(Boolean, default=False)  # Logically deleted by technician
+    added_by_technician = Column(Boolean, default=False)  # Added by technician during review
+
     # Link with parent offer, assigned technician, and catalog origin
     offer_id = Column(Integer, ForeignKey("offers.id"))
     technician_id = Column(Integer, ForeignKey("technicians.id"), nullable=True)
     catalog_id = Column(Integer, ForeignKey("service_catalog.id"), nullable=True)
 
-    # Relaciones
+    # Relationships
     offer = relationship("Offer", back_populates="services")
     technician = relationship("Technician", back_populates="assigned_services")
     catalog_item = relationship("ServiceCatalog", back_populates="services")

@@ -2,7 +2,6 @@ import os
 import sys
 import random
 
-# Añadimos el directorio padre al path para encontrar la carpeta 'backend'
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dotenv import load_dotenv
@@ -29,50 +28,57 @@ ph = PasswordHasher(
 
 db = LocalSession()
 
-first_names = ["Juan", "Maria", "Pedro", "Lucia", "Carlos", "Ana", "Miguel", "Laura", "Jose", "Carmen", "David", "Sofia", "Alejandro", "Elena", "Daniel", "Marta", "Manuel", "Paula", "Javier", "Raquel"]
-last_names = ["Garcia", "Gonzalez", "Rodriguez", "Fernandez", "Lopez", "Martinez", "Sanchez", "Perez", "Gomez", "Martin", "Jimenez", "Ruiz", "Hernandez", "Diaz", "Moreno", "Muñoz", "Alvarez", "Romero", "Alonso", "Gutierrez"]
+first_names = ["Juan", "Maria", "Pedro", "Lucia", "Carlos", "Ana", "Miguel", "Laura", "Jose", "Carmen",
+               "David", "Sofia", "Alejandro", "Elena", "Daniel", "Marta", "Manuel", "Paula", "Javier", "Raquel"]
+last_names = ["Garcia", "Gonzalez", "Rodriguez", "Fernandez", "Lopez", "Martinez", "Sanchez", "Perez",
+              "Gomez", "Martin", "Jimenez", "Ruiz", "Hernandez", "Diaz", "Moreno", "Munoz", "Alvarez",
+              "Romero", "Alonso", "Gutierrez"]
 
-print("Starting to add 20 clients...")
+# Example IP (Investigador Principal) names for internal clients
+ip_names = ["Dr. Garcia Fernandez", "Dr. Lopez Martin", "Dr. Sanchez Ruiz",
+            "Dr. Hernandez Diaz", "Dr. Moreno Alvarez", "Dr. Romero Alonso"]
+
+print("Starting to add 20 demo clients...")
 
 for i in range(20):
     fn = random.choice(first_names)
     ln = random.choice(last_names)
-    email = f"client{i+1}.{fn.lower()}.{ln.lower()}@gmail.com"
-    
-    password_with_pepper = "123456" + SECRET_PEPPER
+    email = f"client{i+1}.{fn.lower()}.{ln.lower()}@demo.csic.es"
+
+    password_with_pepper = "demo1234" + SECRET_PEPPER
     hashed_pwd = ph.hash(password_with_pepper)
-    
-    # Aumentamos ligeramente la probabilidad de que salga 'Internal' añadiéndolo otra vez a la lista
+
+    # Higher probability of Internal clients for testing
     entity_choice = random.choice(['Internal', 'Internal', 'CSIC', 'UAM', 'University', 'OPIS', 'Company'])
-    
+
     if entity_choice == 'Internal':
-        internal_acct = f"ACC-{random.randint(1000, 9999)}"
-        ip_addr = f"192.168.1.{random.randint(2, 254)}"
-        proj_id = f"PRJ-{random.randint(100, 999)}"
-        grp_name = random.choice(['FINDER', 'BIONANOMECHANICS', 'ES4TERM', 'OMS', 'MBE', 'METALNANO'])
+        ip_name = random.choice(ip_names)
+        ci = f"ACC-{random.randint(1000, 9999)}"
+        cp = f"PRJ-{random.randint(100, 999)}"
+        grp = random.choice(['FINDER', 'BIONANOMECHANICS', 'ES4TERM', 'OMS', 'MBE', 'METALNANO'])
     else:
-        internal_acct = None
-        ip_addr = None
-        proj_id = None
-        grp_name = None
-        
+        ip_name = None
+        ci = None
+        cp = None
+        grp = None
+
     new_client = models.Client(
         first_name=fn,
         last_name=ln,
         email=email,
-        hashed_password=hashed_pwd, 
+        hashed_password=hashed_pwd,
         entity=entity_choice,
-        internal_account=internal_acct,
-        ip_address=ip_addr,
-        project_id=proj_id,
-        group_name=grp_name,
+        investigador_principal=ip_name,
+        cuenta_interna=ci,
+        codigo_proyecto=cp,
+        grupo=grp,
         profile_picture="https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png"
     )
     db.add(new_client)
 
 try:
     db.commit()
-    print("Successfully added 20 clients.")
+    print("Successfully added 20 demo clients.")
 except Exception as e:
     print(f"Error: {e}")
     db.rollback()
