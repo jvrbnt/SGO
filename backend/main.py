@@ -10,8 +10,9 @@ from pathlib import Path
 from typing import List
 from argon2 import PasswordHasher, Type
 from argon2.exceptions import VerifyMismatchError
+from datetime import timedelta
 
-from backend import models, schemas
+from backend import models, schemas, auth
 from backend.database import engine, LocalSession, DB_AVAILABLE
 
 # --- LOGGING CONFIGURATION ---
@@ -46,7 +47,6 @@ if DB_AVAILABLE:
 app = FastAPI()
 
 # --- CORS MIDDLEWARE ---
-# Restrict origins in production; allow VPN/local development for now
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -73,7 +73,7 @@ def get_db():
         db.close()
 
 # ==============================================================================
-# PAGE ROUTES — Serve HTML templates via FastAPI (no direct file access)
+# PAGE ROUTES
 # ==============================================================================
 
 @app.get("/")
@@ -126,11 +126,10 @@ async def read_contacto():
 
 @app.post("/api/client/signup")
 def create_client(client_data: schemas.ClientCreateWeb, db: Session = Depends(get_db)):
-    """Register a new client account. Internal clients must provide IP, CI, CP, and Grupo."""
+    """Register a new client account."""
     if db.query(models.Client).filter(models.Client.email == client_data.email).first():
         raise HTTPException(status_code=400, detail="Email is already registered")
 
-    # Argon2id Hashing with Pepper
     password_with_pepper = client_data.password + SECRET_PEPPER
     hashed_pwd = ph.hash(password_with_pepper)
 
@@ -152,7 +151,7 @@ def create_client(client_data: schemas.ClientCreateWeb, db: Session = Depends(ge
 
 @app.post("/api/login")
 def unified_login(login_data: schemas.LoginRequest, db: Session = Depends(get_db)):
-    """Unified login for both clients and technicians."""
+    """Unified login - returns JWT and User Data."""
     password_with_pepper = login_data.password + SECRET_PEPPER
 
     # 1. Client Verification
@@ -160,13 +159,18 @@ def unified_login(login_data: schemas.LoginRequest, db: Session = Depends(get_db
     if client:
         try:
             ph.verify(client.hashed_password, password_with_pepper)
+            access_token = auth.create_access_token(data={"id": client.id, "role": "client"})
             return {
-                "id": client.id,
-                "role": "client",
-                "email": client.email,
-                "first_name": client.first_name,
-                "last_name": client.last_name,
-                "profile_picture": client.profile_picture
+                "access_token": access_token,
+                "token_type": "bearer",
+                "user": {
+                    "id": client.id,
+                    "role": "client",
+                    "email": client.email,
+                    "first_name": client.first_name,
+                    "last_name": client.last_name,
+                    "profile_picture": client.profile_picture
+                }
             }
         except VerifyMismatchError:
             pass
@@ -176,31 +180,60 @@ def unified_login(login_data: schemas.LoginRequest, db: Session = Depends(get_db
     if tech:
         try:
             ph.verify(tech.hashed_password, password_with_pepper)
+            access_token = auth.create_access_token(data={"id": tech.id, "role": "technician"})
             return {
-                "id": tech.id,
-                "role": "technician",
-                "email": tech.email,
-                "first_name": tech.first_name,
-                "last_name": tech.last_name,
-                "profile_picture": tech.profile_picture,
-                "privilege_level": tech.privilege_level
+                "access_token": access_token,
+                "token_type": "bearer",
+                "user": {
+                    "id": tech.id,
+                    "role": "technician",
+                    "email": tech.email,
+                    "first_name": tech.first_name,
+                    "last_name": tech.last_name,
+                    "profile_picture": tech.profile_picture,
+                    "privilege_level": tech.privilege_level
+                }
             }
         except VerifyMismatchError:
             pass
 
     raise HTTPException(status_code=401, detail="Incorrect credentials")
 
+@app.get("/api/me")
+def read_users_me(current_user = Depends(auth.get_current_user)):
+    """Returns the user data associated with the JWT for session restoration."""
+    if current_user.app_role == "client":
+        return {
+            "id": current_user.id,
+            "role": "client",
+            "email": current_user.email,
+            "first_name": current_user.first_name,
+            "last_name": current_user.last_name,
+            "profile_picture": getattr(current_user, "profile_picture", None),
+            "entity": current_user.entity
+        }
+    else:
+        return {
+            "id": current_user.id,
+            "role": "technician",
+            "email": current_user.email,
+            "first_name": current_user.first_name,
+            "last_name": current_user.last_name,
+            "profile_picture": getattr(current_user, "profile_picture", None),
+            "privilege_level": getattr(current_user, "privilege_level", "Technician")
+        }
+
 # ==============================================================================
 # ADMIN MANAGEMENT ROUTES
 # ==============================================================================
 
 @app.get("/api/admin/technicians", response_model=List[schemas.TechnicianResponse])
-def admin_get_technicians(db: Session = Depends(get_db)):
+def admin_get_technicians(current_user = Depends(auth.require_admin), db: Session = Depends(get_db)):
     """List all technicians (admin only)."""
     return db.query(models.Technician).all()
 
 @app.post("/api/admin/technicians")
-def admin_create_technician(tech_in: schemas.TechnicianCreate, db: Session = Depends(get_db)):
+def admin_create_technician(tech_in: schemas.TechnicianCreate, current_user = Depends(auth.require_admin), db: Session = Depends(get_db)):
     """Create a new technician account (admin only)."""
     if db.query(models.Technician).filter(models.Technician.email == tech_in.email).first():
         raise HTTPException(status_code=400, detail="Email is already registered")
@@ -220,7 +253,7 @@ def admin_create_technician(tech_in: schemas.TechnicianCreate, db: Session = Dep
     return {"message": "Technician created successfully"}
 
 @app.patch("/api/admin/technicians/{tech_id}/role")
-def admin_update_technician_role(tech_id: int, privilege_level: str, db: Session = Depends(get_db)):
+def admin_update_technician_role(tech_id: int, privilege_level: str, current_user = Depends(auth.require_admin), db: Session = Depends(get_db)):
     """Update a technician's role (cannot alter Admin accounts)."""
     if privilege_level not in ["Mod", "Technician"]:
         raise HTTPException(status_code=400, detail="Invalid role assignment")
@@ -241,13 +274,13 @@ def admin_update_technician_role(tech_id: int, privilege_level: str, db: Session
 # ==============================================================================
 
 @app.get("/api/catalog", response_model=List[schemas.ServiceCatalogResponse])
-def get_catalog(db: Session = Depends(get_db)):
+def get_catalog(current_user = Depends(auth.get_current_user), db: Session = Depends(get_db)):
     """Return the full service catalog with pricing tiers."""
     return db.query(models.ServiceCatalog).all()
 
 @app.put("/api/catalog/{item_id}", response_model=schemas.ServiceCatalogResponse)
-def update_catalog_price(item_id: int, price_update: schemas.ServiceCatalogPriceUpdate, db: Session = Depends(get_db)):
-    """Update pricing tiers for a catalog item."""
+def update_catalog_price(item_id: int, price_update: schemas.ServiceCatalogPriceUpdate, current_user = Depends(auth.require_technician_or_higher), db: Session = Depends(get_db)):
+    """Update pricing tiers for a catalog item. Requires Technician role."""
     catalog_item = db.query(models.ServiceCatalog).filter(models.ServiceCatalog.id == item_id).first()
     if not catalog_item:
         raise HTTPException(status_code=404, detail="Catalog item not found")
@@ -270,13 +303,16 @@ def update_catalog_price(item_id: int, price_update: schemas.ServiceCatalogPrice
 # ==============================================================================
 
 @app.post("/api/client/offers")
-def create_offer(offer_in: schemas.OfferCreate, db: Session = Depends(get_db)):
+def create_offer(offer_in: schemas.OfferCreate, current_user = Depends(auth.get_current_user), db: Session = Depends(get_db)):
     """Create a new offer request from a client."""
+    # Ensure current client doesn't spawn offers for other emails
+    if current_user.app_role == "client" and current_user.email != offer_in.client_email:
+        raise HTTPException(status_code=403, detail="Unauthorized client email")
+        
     client = db.query(models.Client).filter(models.Client.email == offer_in.client_email).first()
     if not client:
         raise HTTPException(status_code=404, detail="Client not found in database")
 
-    # Auto-assign the same manager if this client already has active managed offers
     active_offer = db.query(models.Offer).filter(
         models.Offer.client_id == client.id,
         models.Offer.manager_id.isnot(None),
@@ -309,8 +345,11 @@ def create_offer(offer_in: schemas.OfferCreate, db: Session = Depends(get_db)):
     return {"message": "Offer requested successfully", "offer_id": new_offer.id}
 
 @app.get("/api/client/my-offers", response_model=List[schemas.OfferResponse])
-def get_client_offers(email: str, db: Session = Depends(get_db)):
+def get_client_offers(email: str, current_user = Depends(auth.get_current_user), db: Session = Depends(get_db)):
     """Get all offers for a specific client by email."""
+    if current_user.app_role == "client" and current_user.email != email:
+        raise HTTPException(status_code=403, detail="Unauthorized request")
+        
     client = db.query(models.Client).filter(models.Client.email == email).first()
     if not client:
         return []
@@ -321,12 +360,12 @@ def get_client_offers(email: str, db: Session = Depends(get_db)):
 # ==============================================================================
 
 @app.get("/api/technician/offers", response_model=List[schemas.OfferResponse])
-def get_all_offers(db: Session = Depends(get_db)):
+def get_all_offers(current_user = Depends(auth.require_technician_or_higher), db: Session = Depends(get_db)):
     """Return all offers in the system."""
     return db.query(models.Offer).all()
 
 @app.get("/api/technician/offers/{offer_id}", response_model=schemas.OfferResponse)
-def get_single_offer(offer_id: int, db: Session = Depends(get_db)):
+def get_single_offer(offer_id: int, current_user = Depends(auth.require_technician_or_higher), db: Session = Depends(get_db)):
     """Return a single offer by ID."""
     offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
     if not offer:
@@ -334,7 +373,7 @@ def get_single_offer(offer_id: int, db: Session = Depends(get_db)):
     return offer
 
 @app.put("/api/technician/offers/{offer_id}/review")
-def finalize_review_and_send(offer_id: int, review_data: schemas.OfferReviewUpdate, db: Session = Depends(get_db)):
+def finalize_review_and_send(offer_id: int, review_data: schemas.OfferReviewUpdate, current_user = Depends(auth.require_technician_or_higher), db: Session = Depends(get_db)):
     """Finalize a technician review and send the quotation to the client."""
     offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
     if not offer:
@@ -355,7 +394,7 @@ def finalize_review_and_send(offer_id: int, review_data: schemas.OfferReviewUpda
     return {"message": "Offer sent to client as QUOTED"}
 
 @app.patch("/api/technician/offers/{offer_id}")
-def update_status_simple(offer_id: int, new_status: str, db: Session = Depends(get_db)):
+def update_status_simple(offer_id: int, new_status: str, current_user = Depends(auth.require_technician_or_higher), db: Session = Depends(get_db)):
     """Update an offer's status directly."""
     offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
     if not offer:
@@ -365,8 +404,8 @@ def update_status_simple(offer_id: int, new_status: str, db: Session = Depends(g
     return {"message": "Status updated"}
 
 @app.patch("/api/technician/offers/{offer_id}/assign")
-def assign_offer(offer_id: int, tech_id: int, db: Session = Depends(get_db)):
-    """Assign a technician as manager of an offer and all pending offers from the same client."""
+def assign_offer(offer_id: int, tech_id: int, current_user = Depends(auth.require_technician_or_higher), db: Session = Depends(get_db)):
+    """Assign a technician as manager of an offer and all pending offers."""
     offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
@@ -374,7 +413,6 @@ def assign_offer(offer_id: int, tech_id: int, db: Session = Depends(get_db)):
     client_id = offer.client_id
     offer.manager_id = tech_id
 
-    # Auto-assign this tech to ALL other 'requested' offers from the same client
     requested_offers = db.query(models.Offer).filter(
         models.Offer.client_id == client_id,
         models.Offer.status == "requested",
@@ -388,7 +426,7 @@ def assign_offer(offer_id: int, tech_id: int, db: Session = Depends(get_db)):
     return {"message": "Offer(s) assigned successfully"}
 
 @app.patch("/api/technician/services/{service_id}/assign")
-def assign_service(service_id: int, tech_id: int, db: Session = Depends(get_db)):
+def assign_service(service_id: int, tech_id: int, current_user = Depends(auth.require_technician_or_higher), db: Session = Depends(get_db)):
     """Assign a technician to a specific service within an offer."""
     service = db.query(models.Service).filter(models.Service.id == service_id).first()
     if not service:
@@ -398,13 +436,13 @@ def assign_service(service_id: int, tech_id: int, db: Session = Depends(get_db))
     return {"message": "Service assigned successfully"}
 
 @app.patch("/api/technician/services/{service_id}/unassign")
-def unassign_service(service_id: int, tech_id: int, db: Session = Depends(get_db)):
-    """Unassign a technician from a service (only if offer is still 'requested')."""
+def unassign_service(service_id: int, tech_id: int, current_user = Depends(auth.require_technician_or_higher), db: Session = Depends(get_db)):
+    """Unassign a technician from a service."""
     service = db.query(models.Service).filter(models.Service.id == service_id).first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
     if service.offer.status != "requested":
-        raise HTTPException(status_code=400, detail="Cannot unassign from an offer that is already quoted, accepted, or finished.")
+        raise HTTPException(status_code=400, detail="Cannot unassign from an offer that is already quoted/accepted")
     if service.technician_id != tech_id:
         raise HTTPException(status_code=403, detail="Only the assigned technician can unassign themselves")
     service.technician_id = None
@@ -412,17 +450,16 @@ def unassign_service(service_id: int, tech_id: int, db: Session = Depends(get_db
     return {"message": "Service unassigned successfully"}
 
 @app.patch("/api/technician/offers/{offer_id}/unassign")
-def unassign_offer(offer_id: int, tech_id: int, db: Session = Depends(get_db)):
-    """Unassign a manager from an offer (only if no active quoted/accepted offers exist for this client)."""
+def unassign_offer(offer_id: int, tech_id: int, current_user = Depends(auth.require_technician_or_higher), db: Session = Depends(get_db)):
+    """Unassign a manager from an offer."""
     offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
     if offer.status != "requested":
-        raise HTTPException(status_code=400, detail="Cannot unassign from an offer that is already quoted, accepted, or finished.")
+        raise HTTPException(status_code=400, detail="Cannot unassign from quoted/accepted offers")
     if offer.manager_id != tech_id:
         raise HTTPException(status_code=403, detail="Only the current manager can unassign themselves")
 
-    # Prevent unassignment if the technician manages active offers for this client
     active_in_progress = db.query(models.Offer).filter(
         models.Offer.client_id == offer.client_id,
         models.Offer.manager_id == tech_id,
@@ -430,9 +467,8 @@ def unassign_offer(offer_id: int, tech_id: int, db: Session = Depends(get_db)):
     ).first()
 
     if active_in_progress:
-        raise HTTPException(status_code=400, detail="Cannot unassign: you are managing active (quoted/accepted) offers for this client.")
+        raise HTTPException(status_code=400, detail="Cannot unassign: managing active offers for this client.")
 
-    # Unassign from ALL 'requested' offers for this client
     all_requested = db.query(models.Offer).filter(
         models.Offer.client_id == offer.client_id,
         models.Offer.manager_id == tech_id,
@@ -446,28 +482,28 @@ def unassign_offer(offer_id: int, tech_id: int, db: Session = Depends(get_db)):
     return {"message": "Unassigned from all requested offers for client"}
 
 @app.delete("/api/technician/services/{service_id}")
-def delete_service(service_id: int, db: Session = Depends(get_db)):
-    """Logically delete a service (mark as deleted, not physically removed)."""
+def delete_service(service_id: int, current_user = Depends(auth.require_technician_or_higher), db: Session = Depends(get_db)):
+    """Logically delete a service."""
     service = db.query(models.Service).filter(models.Service.id == service_id).first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
 
     if service.offer.status not in ["requested", "quoted"]:
-        raise HTTPException(status_code=400, detail=f"Cannot delete services from an offer in '{service.offer.status}' status")
+        raise HTTPException(status_code=400, detail=f"Cannot delete services from '{service.offer.status}' offer")
 
     service.is_deleted = True
     db.commit()
     return {"message": "Service logically deleted"}
 
 @app.post("/api/technician/offers/{offer_id}/services")
-def add_service_to_offer(offer_id: int, service_in: schemas.ServiceCreateInline, db: Session = Depends(get_db)):
-    """Add a new service to an existing offer (technician adds during review)."""
+def add_service_to_offer(offer_id: int, service_in: schemas.ServiceCreateInline, current_user = Depends(auth.require_technician_or_higher), db: Session = Depends(get_db)):
+    """Add a new service to an existing offer."""
     offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
 
     if offer.status not in ["requested", "quoted"]:
-        raise HTTPException(status_code=400, detail=f"Cannot add services to an offer in '{offer.status}' status")
+        raise HTTPException(status_code=400, detail="Cannot add services to this offer")
 
     catalog_item = db.query(models.ServiceCatalog).filter(
         models.ServiceCatalog.name == service_in.service_name
@@ -492,8 +528,8 @@ def add_service_to_offer(offer_id: int, service_in: schemas.ServiceCreateInline,
 # ==============================================================================
 
 @app.get("/api/technician/billing-clients", response_model=List[schemas.ClientResponse])
-def get_billing_clients(tech_id: int, db: Session = Depends(get_db)):
-    """Return clients who have at least one active offer managed by this technician."""
+def get_billing_clients(tech_id: int, current_user = Depends(auth.require_technician_or_higher), db: Session = Depends(get_db)):
+    """Return clients who have active offers managed by this tech."""
     clients = db.query(models.Client).join(models.Offer).filter(
         models.Offer.manager_id == tech_id,
         models.Offer.status.notin_(["invoiced", "finished"])
@@ -501,8 +537,8 @@ def get_billing_clients(tech_id: int, db: Session = Depends(get_db)):
     return clients
 
 @app.get("/api/technician/billing-offers", response_model=List[schemas.OfferResponse])
-def get_billing_offers(tech_id: int, client_id: int, db: Session = Depends(get_db)):
-    """Return billable offers for a specific client managed by this technician."""
+def get_billing_offers(tech_id: int, client_id: int, current_user = Depends(auth.require_technician_or_higher), db: Session = Depends(get_db)):
+    """Return billable offers for a specific client."""
     offers = db.query(models.Offer).filter(
         models.Offer.client_id == client_id,
         models.Offer.manager_id == tech_id,
@@ -511,8 +547,8 @@ def get_billing_offers(tech_id: int, client_id: int, db: Session = Depends(get_d
     return offers
 
 @app.post("/api/technician/invoices")
-def create_invoice(invoice_data: schemas.InvoiceCreate, db: Session = Depends(get_db)):
-    """Create an invoice grouping one or more offers."""
+def create_invoice(invoice_data: schemas.InvoiceCreate, current_user = Depends(auth.require_technician_or_higher), db: Session = Depends(get_db)):
+    """Create an invoice grouping offers."""
     try:
         new_invoice = models.Invoice(
             client_id=invoice_data.client_id,
@@ -525,7 +561,6 @@ def create_invoice(invoice_data: schemas.InvoiceCreate, db: Session = Depends(ge
         db.commit()
         db.refresh(new_invoice)
 
-        # Attach and update targeted Offers
         for o_id in invoice_data.offer_ids:
             offer = db.query(models.Offer).filter(models.Offer.id == o_id).first()
             if offer:
@@ -550,11 +585,13 @@ def create_invoice(invoice_data: schemas.InvoiceCreate, db: Session = Depends(ge
     except Exception as e:
         logger.error(f"Invoice creation failed: {e}")
         db.rollback()
-        raise HTTPException(status_code=400, detail="Failed to create invoice. Please check the data and try again.")
+        raise HTTPException(status_code=400, detail="Failed to create invoice")
 
 @app.get("/api/client/invoices")
-def get_client_invoices(email: str, db: Session = Depends(get_db)):
-    """Get all invoices for a client by email."""
+def get_client_invoices(email: str, current_user = Depends(auth.get_current_user), db: Session = Depends(get_db)):
+    """Get all invoices for a client."""
+    if current_user.app_role == "client" and current_user.email != email:
+        raise HTTPException(status_code=403, detail="Unauthorized request")
     client = db.query(models.Client).filter(models.Client.email == email).first()
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
@@ -565,9 +602,7 @@ def get_client_invoices(email: str, db: Session = Depends(get_db)):
         offers_data = []
         for o in inv.offers:
             offers_data.append({
-                "id": o.id,
-                "status": o.status,
-                "technician_comment": o.technician_comment,
+                "id": o.id, "status": o.status, "technician_comment": o.technician_comment,
                 "services": [{
                     "id": s.id, "service_name": s.service_name, "hours": s.hours,
                     "quoted_price": s.quoted_price, "is_deleted": s.is_deleted,
@@ -576,22 +611,18 @@ def get_client_invoices(email: str, db: Session = Depends(get_db)):
                 } for s in o.services if not s.is_deleted]
             })
         result.append({
-            "id": inv.id,
-            "client_id": inv.client_id,
-            "technician_id": inv.technician_id,
+            "id": inv.id, "client_id": inv.client_id, "technician_id": inv.technician_id,
             "technician_first_name": tech.first_name if tech else None,
             "technician_last_name": tech.last_name if tech else None,
-            "total_price": inv.total_price,
-            "comment": inv.comment,
-            "status": inv.status,
-            "created_at": inv.created_at.isoformat(),
+            "total_price": inv.total_price, "comment": inv.comment,
+            "status": inv.status, "created_at": inv.created_at.isoformat(),
             "offers": offers_data
         })
     return result
 
 @app.get("/api/technician/invoices/all")
-def get_all_invoices(db: Session = Depends(get_db)):
-    """Get the full invoice history for the admin/billing panel."""
+def get_all_invoices(current_user = Depends(auth.require_admin), db: Session = Depends(get_db)):
+    """Get the full invoice history (admin only)."""
     invoices = db.query(models.Invoice).order_by(models.Invoice.created_at.desc()).all()
     result = []
     for inv in invoices:
@@ -600,51 +631,33 @@ def get_all_invoices(db: Session = Depends(get_db)):
         offers_data = []
         for o in inv.offers:
             offers_data.append({
-                "id": o.id,
-                "status": o.status,
-                "technician_comment": o.technician_comment,
+                "id": o.id, "status": o.status, "technician_comment": o.technician_comment,
                 "created_at": o.created_at.isoformat() if o.created_at else None,
                 "services": [{
-                    "id": s.id,
-                    "service_name": s.service_name,
-                    "hours": s.hours,
-                    "quoted_price": s.quoted_price,
-                    "comment": s.comment,
-                    "technician": {
-                        "first_name": s.technician.first_name,
-                        "last_name": s.technician.last_name
-                    } if s.technician else None
+                    "id": s.id, "service_name": s.service_name, "hours": s.hours,
+                    "quoted_price": s.quoted_price, "comment": s.comment,
+                    "technician": { "first_name": s.technician.first_name, "last_name": s.technician.last_name } if s.technician else None
                 } for s in o.services if not s.is_deleted]
             })
         result.append({
-            "id": inv.id,
-            "client_id": inv.client_id,
-            "client_first_name": client.first_name if client else None,
-            "client_last_name": client.last_name if client else None,
-            "client_email": client.email if client else None,
-            "client_entity": client.entity if client else None,
-            "technician_id": inv.technician_id,
-            "technician_first_name": tech.first_name if tech else None,
-            "technician_last_name": tech.last_name if tech else None,
-            "total_price": inv.total_price,
-            "comment": inv.comment,
-            "status": inv.status,
-            "created_at": inv.created_at.isoformat(),
+            "id": inv.id, "client_id": inv.client_id, 
+            "client_first_name": client.first_name if client else None, "client_last_name": client.last_name if client else None,
+            "client_email": client.email if client else None, "client_entity": client.entity if client else None,
+            "technician_id": inv.technician_id, "technician_first_name": tech.first_name if tech else None,
+            "technician_last_name": tech.last_name if tech else None, "total_price": inv.total_price,
+            "comment": inv.comment, "status": inv.status, "created_at": inv.created_at.isoformat(),
             "offers": offers_data
         })
     return result
 
 @app.post("/api/technician/invoices/{invoice_id}/finish")
-def finish_invoice(invoice_id: int, db: Session = Depends(get_db)):
+def finish_invoice(invoice_id: int, current_user = Depends(auth.require_technician_or_higher), db: Session = Depends(get_db)):
     """Mark an invoice and all linked offers as finished."""
     invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
-
     invoice.status = "finished"
-
     for offer in invoice.offers:
         offer.status = "finished"
-
     db.commit()
     return {"message": "Invoice and linked offers finished successfully"}
