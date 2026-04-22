@@ -13,7 +13,7 @@ Ya **no** usamos `pip` ni `requirements.txt`. Hemos migrado a `uv` (mucho más r
     `uv run python script.py`
 
 ## 2. Base de Datos y Migraciones (Alembic)
-Hemos integrado Alembic. **NUNCA** debes modificar una columna en `models.py` sin crear una migración, o romperás los datos de producción.
+Hemos integrado Alembic, que funciona muy parecido a Git, pero para la base de datos. **NUNCA** debes modificar una columna en `models.py` sin crear una migración, o romperás los datos de producción. El flujo seria:
 
 *   **Generar una migración (tras cambiar models.py):**
     `uv run alembic revision --autogenerate -m "nombre_descriptivo"`
@@ -25,9 +25,8 @@ Hemos integrado Alembic. **NUNCA** debes modificar una columna en `models.py` si
 ## 3. Ejecución del Servidor Local (FastAPI)
 *   **Ejecución de desarrollo (con autorecarga):**
     `uv run uvicorn backend.main:app --reload`
-*   **Aviso de Seguridad:** Tu archivo `.env` debe contener `JWT_SECRET_KEY` y `SECRET_PEPPER`. Si estás conectando a la BD del servidor (`161.111.247.139`), **tienes que estar conectado a la VPN de FortiClient**.
-
-## 4. Servidor de Producción (Docker) - Próximamente
+*   **Aviso de Seguridad:** Tu archivo `.env` debe contener `JWT_SECRET_KEY` y `SECRET_PEPPER`.
+## 4. Servidor de Producción (Docker)
 Preparación de comandos para cuando automaticemos el despliegue en `/srv/www/sgo/`:
 
 *   **Levantar toda la infraestructura (BD + FastAPI):**
