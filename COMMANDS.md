@@ -1,58 +1,50 @@
 # SGO Project - Cheat Sheet de Comandos
 
-## 1. Configuración del Entorno (Python)
-* **Permitir ejecución de scripts en Windows (Oficina):**
-  `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
-* **Crear entorno virtual:**
-  `python -m venv venv`
-* **Activar entorno (Windows):**
-  `.\venv\Scripts\activate`
-* **Activar entorno (Linux/Mac):**
-  `source venv/bin/activate`
-* **Instalar dependencias:**
-  `pip install -r requirements.txt`
-* **Congelar dependencias actuales:**
-  `pip freeze > requirements.txt`
+Esta guía contiene todos los comandos actualizados tras la refactorización de seguridad, la adopción del gestor moderno `uv`, migraciones con `Alembic`, y JWT.
 
-## 2. Ejecución del Servidor (FastAPI)
-* **Ejecución Local:**
-  `uvicorn backend.main:app --reload`
-* **Ejecución en Red:**
-  `uvicorn backend.main:app --host 0.0.0.0 --port 8000`
-  *(Acceso desde otros PCs: http://TU_IP_LOCAL:8000)*
+## 1. Configuración del Entorno (Nuevo Flujo con `uv`)
+Ya **no** usamos `pip` ni `requirements.txt`. Hemos migrado a `uv` (mucho más rápido y seguro).
 
-## 3. Flujo de Git y Ramas
-* **Crear nueva rama de trabajo:**
-  `git checkout -b feature/nombre-de-la-tarea`
-* **Cambiar de rama:**
-  `git checkout nombre-de-la-rama`
-* **Traer cambios del servidor sin mezclar:**
-  `git fetch origin`
-* **Actualizar rama actual con lo que hay en el servidor:**
-  `git pull origin main`
-* **Fusionar una rama en la actual:**
-  `git merge nombre-de-la-rama`
-* **Subir rama nueva al servidor (Pull Request):**
-  `git push -u origin nombre-de-la-rama`
+*   **Instalar dependencias del proyecto (sustituye a pip install -r):**
+    `uv sync`
+*   **Añadir una nueva librería al proyecto (sustituye a pip install X):**
+    `uv add <nombre_paquete>`
+*   **Ejecutar un script usando el entorno de uv:**
+    `uv run python script.py`
 
-## 4. Emergencias, Limpieza y Rollbacks
-* **Hard Reset (borrar todo lo local y calcar el servidor):**
-  `git reset --hard origin/main`
-* **Limpiar archivos y carpetas no rastreados (ficheros basura):**
-  `git clean -fd`
-* **Ver historial de commits (para buscar hashes):**
-  `git log --oneline`
-* **Revertir un commit específico (crea un commit inverso):**
-  `git revert <hash_del_commit>`
-* **Deshacer el último commit manteniendo los cambios en los archivos:**
-  `git reset --soft HEAD~1`
+## 2. Base de Datos y Migraciones (Alembic)
+Hemos integrado Alembic. **NUNCA** debes modificar una columna en `models.py` sin crear una migración, o romperás los datos de producción.
 
-## 5. Resolución de Conflictos
-1. **Identificar archivos en conflicto:** `git status`
-2. **Abrir archivos y buscar:** `<<<< HEAD`
-3. **Tras limpiar el código:** `git add <archivo>`
-4. **Finalizar merge:** `git commit -m "Fix conflicts"`
+*   **Generar una migración (tras cambiar models.py):**
+    `uv run alembic revision --autogenerate -m "nombre_descriptivo"`
+*   **Revisar el archivo generado:**
+    Abre la carpeta `alembic/versions/` y asegúrate de que el script hace lo que quieres (ej. usa `alter_column` en lugar de `drop_column` si estás renombrando).
+*   **Aplicar la migración a la Base de Datos:**
+    `uv run alembic upgrade head`
 
-## 6. Seguridad
+## 3. Ejecución del Servidor Local (FastAPI)
+*   **Ejecución de desarrollo (con autorecarga):**
+    `uv run uvicorn backend.main:app --reload`
+*   **Aviso de Seguridad:** Tu archivo `.env` debe contener `JWT_SECRET_KEY` y `SECRET_PEPPER`. Si estás conectando a la BD del servidor (`161.111.247.139`), **tienes que estar conectado a la VPN de FortiClient**.
 
-1. **Instalar librería de argon:** `pip install argon2-cffi`
+## 4. Servidor de Producción (Docker) - Próximamente
+Preparación de comandos para cuando automaticemos el despliegue en `/srv/www/sgo/`:
+
+*   **Levantar toda la infraestructura (BD + FastAPI):**
+    `docker compose up -d --build`
+*   **Ver logs en tiempo real:**
+    `docker compose logs -f web`
+*   **Bajar la infraestructura:**
+    `docker compose down`
+
+## 5. Flujo de Git y Ramas
+*   **Crear nueva rama:** `git checkout -b feature/nombre-de-tarea`
+*   **Cambiar de rama:** `git checkout nombre-de-la-rama`
+*   **Actualizar rama actual con servidor:** `git pull origin main`
+*   **Subir rama:** `git push -u origin nombre-de-la-rama`
+
+## 6. Emergencias y Rollbacks
+*   **Hard Reset (calcar el servidor borrando lo tuyo):**
+    `git reset --hard origin/main`
+*   **Deshacer el último commit (manteniendo cambios en local):**
+    `git reset --soft HEAD~1`
