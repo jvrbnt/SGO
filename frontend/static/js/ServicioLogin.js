@@ -42,10 +42,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const data = await response.json();
 
         if (response.ok) {
-          localStorage.setItem("currentUser", JSON.stringify(data));
+          // data contains { access_token: "...", token_type: "bearer", user: {...} }
+          localStorage.setItem("authToken", data.access_token);
+          localStorage.setItem("currentUser", JSON.stringify(data.user));
 
           // Backend identifies client or technician
-          if (data.role === "technician") {
+          if (data.user.role === "technician") {
             window.location.href = "/tecnico";
           } else {
             window.location.href = "/cliente";

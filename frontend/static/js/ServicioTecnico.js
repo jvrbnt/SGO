@@ -12,6 +12,28 @@ window.openTab = function (evt, tabName) {
   evt.currentTarget.classList.add("active");
 };
 
+// --- AUTHENTICATION INTERCEPTOR ---
+const originalFetch = window.fetch;
+window.fetch = async function() {
+    let [resource, config] = arguments;
+    if(typeof resource === 'string' && resource.startsWith('/api') && resource !== '/api/login') {
+        const token = localStorage.getItem('authToken');
+        if(token) {
+            config = config || {};
+            config.headers = config.headers || {};
+            config.headers['Authorization'] = `Bearer ${token}`;
+        }
+    }
+    const response = await originalFetch(resource, config);
+    if (response.status === 401) {
+        alert("Session expired. Please log in again.");
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser');
+        window.location.href = '/login';
+    }
+    return response;
+};
+
 // --- 2. INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", () => {
   const techData = JSON.parse(localStorage.getItem("currentUser"));
