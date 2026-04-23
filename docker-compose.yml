@@ -8,8 +8,8 @@ services:
     env_file:
       - .env
     volumes:
-      # Preparamos el volumen para cuando se implementen los PDFs o archivos generados
-      - sgo_data:/app/data
+      # Preparamos la carpeta local ./data para almacenar los futuros PDFs generados
+      - ./data:/app/data
     # No exponemos el puerto 8000 hacia afuera, solo hacia nginx dentro de la red interna
     expose:
       - "8000"
@@ -24,6 +24,3 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - web
-
-volumes:
-  sgo_data:
