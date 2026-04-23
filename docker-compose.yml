@@ -1,6 +1,22 @@
 version: '3.8'
 
 services:
+  # --- Base de Datos PostgreSQL ---
+  db:
+    image: postgres:16
+    container_name: sgo-postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: sgo_user
+      POSTGRES_PASSWORD: JZEJ-M3CM-FdS2-4TXC-2HGB-9QAS
+      POSTGRES_DB: mina_sgo
+    volumes:
+      # Este volumen mantendrá los datos intactos
+      - pgdata:/var/lib/postgresql/data
+
+  # --- Backend FastAPI + Gunicorn ---
   web:
     build: .
     container_name: sgo_web
@@ -13,7 +29,10 @@ services:
     # No exponemos el puerto 8000 hacia afuera, solo hacia nginx dentro de la red interna
     expose:
       - "8000"
+    depends_on:
+      - db
 
+  # --- Proxy Inverso Nginx ---
   nginx:
     image: nginx:alpine
     container_name: sgo_nginx
@@ -24,3 +43,7 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - web
+
+volumes:
+  # Volumen físico real de la base de datos que ya existe en tu servidor
+  pgdata:
