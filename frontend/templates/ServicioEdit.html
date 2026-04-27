@@ -6,6 +6,7 @@
     <title>Edit Profile - IMN</title>
     <link rel="stylesheet" href="/static/css/Servicio.css">
     <link rel="stylesheet" href="/static/css/ServicioEdit.css">
+  <link rel="stylesheet" href="/static/css/Footer.css">
 </head>
 <body>
     <div class="side-bar" id="topBar">
@@ -126,33 +127,16 @@
         <span style="color:#cbd5e1;">|</span>
         <a href="/login" style="color:#0f172a; text-decoration:none;">Log In</a>
         <a href="/registro" style="color:#0f172a; text-decoration:none;">Sign Up</a>
+        <span style="color:#cbd5e1;">|</span>
+        <a href="/developers" style="color:#0f172a; text-decoration:none;">Developers</a>
       </div>
       <div id="google_translate_element" style="display:none;"></div>
-      <script type="text/javascript">
-        function googleTranslateElementInit() {
-          new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'en,es', autoDisplay: false}, 'google_translate_element');
-        }
-        function changeLanguage(langCode) {
-          if (langCode === 'en') {
-              document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-              document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=" + location.hostname + "; path=/;";
-          } else {
-              document.cookie = "googtrans=/en/" + langCode + "; expires=Thu, 01 Jan 2030 00:00:00 UTC; path=/;";
-              document.cookie = "googtrans=/en/" + langCode + "; expires=Thu, 01 Jan 2030 00:00:00 UTC; domain=" + location.hostname + "; path=/;";
-          }
-          location.reload();
-        }
-      </script>
+      
       <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-      <style>
-        iframe.goog-te-banner-frame { display: none !important; }
-        body { position: static !important; top: 0px !important; }
-        html { position: static !important; top: 0px !important; }
-        #goog-gt-tt, .goog-te-balloon-frame { display: none !important; }
-        .goog-text-highlight { background-color: transparent !important; box-shadow: none !important; border: none !important; }
-      </style>
+      
     </div>
 
     <script src="/static/js/ServicioEdit.js" defer></script>
+  <script src="/static/js/Footer.js"></script>
 </body>
 </html>

@@ -120,6 +120,10 @@ async def read_avisolegal():
 async def read_contacto():
     return FileResponse("frontend/templates/Contacto.html")
 
+@app.get("/developers")
+async def read_developers():
+    return FileResponse("frontend/templates/Developers.html")
+
 # ==============================================================================
 # AUTHENTICATION ROUTES
 # ==============================================================================
