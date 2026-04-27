@@ -1,6 +1,22 @@
 version: '3.8'
 
 services:
+  # --- Base de Datos PostgreSQL ---
+  db:
+    image: postgres:16
+    container_name: sgo-postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: sgo_user
+      POSTGRES_PASSWORD: JZEJ-M3CM-FdS2-4TXC-2HGB-9QAS
+      POSTGRES_DB: mina_sgo
+    volumes:
+      # Este volumen mantendrá los datos intactos
+      - pgdata:/var/lib/postgresql/data
+
+  # --- Backend FastAPI + Gunicorn ---
   web:
     build: .
     container_name: sgo_web
@@ -8,12 +24,15 @@ services:
     env_file:
       - .env
     volumes:
-      # Preparamos el volumen para cuando se implementen los PDFs o archivos generados
-      - sgo_data:/app/data
+      # Preparamos la carpeta local ./data para almacenar los futuros PDFs generados
+      - ./data:/app/data
     # No exponemos el puerto 8000 hacia afuera, solo hacia nginx dentro de la red interna
     expose:
       - "8000"
+    depends_on:
+      - db
 
+  # --- Proxy Inverso Nginx ---
   nginx:
     image: nginx:alpine
     container_name: sgo_nginx
@@ -26,4 +45,5 @@ services:
       - web
 
 volumes:
-  sgo_data:
+  # Volumen físico real de la base de datos que ya existe en tu servidor
+  pgdata:
