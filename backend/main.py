@@ -302,6 +302,9 @@ def update_catalog_price(item_id: int, price_update: schemas.ServiceCatalogPrice
 # OFFER MANAGEMENT ROUTES (CLIENT)
 # ==============================================================================
 
+from sqlalchemy import extract
+from datetime import datetime
+
 @app.post("/api/client/offers")
 def create_offer(offer_in: schemas.OfferCreate, current_user = Depends(auth.get_current_user), db: Session = Depends(get_db)):
     """Create a new offer request from a client."""
@@ -313,15 +316,17 @@ def create_offer(offer_in: schemas.OfferCreate, current_user = Depends(auth.get_
     if not client:
         raise HTTPException(status_code=404, detail="Client not found in database")
 
-    active_offer = db.query(models.Offer).filter(
-        models.Offer.client_id == client.id,
-        models.Offer.manager_id.isnot(None),
-        models.Offer.status.notin_(["invoiced", "finished"])
-    ).first()
+    current_year = datetime.now().year
+    last_offer = db.query(models.Offer).filter(extract('year', models.Offer.created_at) == current_year).order_by(models.Offer.id.desc()).first()
+    next_seq = 1
+    if last_offer and last_offer.reference:
+        try:
+            next_seq = int(last_offer.reference.split('_')[0]) + 1
+        except:
+            pass
+    reference_code = f"{next_seq:03d}_{current_year}"
 
-    manager_id = active_offer.manager_id if active_offer else None
-
-    new_offer = models.Offer(client_id=client.id, status="requested", manager_id=manager_id)
+    new_offer = models.Offer(client_id=client.id, status="requested", reference=reference_code)
     db.add(new_offer)
     db.commit()
     db.refresh(new_offer)
@@ -354,6 +359,26 @@ def get_client_offers(email: str, current_user = Depends(auth.get_current_user),
     if not client:
         return []
     return db.query(models.Offer).filter(models.Offer.client_id == client.id).all()
+
+@app.patch("/api/client/offers/{offer_id}/accept")
+def client_accept_offer(offer_id: int, current_user = Depends(auth.get_current_user), db: Session = Depends(get_db)):
+    """Allow a client to accept a quoted offer."""
+    if current_user.app_role != "client":
+        raise HTTPException(status_code=403, detail="Only clients can accept offers")
+
+    offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer not found")
+
+    if offer.client_id != current_user.id:
+        raise HTTPException(status_code=403, detail="This offer does not belong to you")
+
+    if offer.status != "quoted":
+        raise HTTPException(status_code=400, detail=f"Cannot accept an offer with status '{offer.status}'")
+
+    offer.status = "accepted"
+    db.commit()
+    return {"message": "Offer accepted successfully"}
 
 # ==============================================================================
 # OFFER MANAGEMENT ROUTES (TECHNICIAN)
@@ -410,20 +435,9 @@ def assign_offer(offer_id: int, tech_id: int, current_user = Depends(auth.requir
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
 
-    client_id = offer.client_id
     offer.manager_id = tech_id
-
-    requested_offers = db.query(models.Offer).filter(
-        models.Offer.client_id == client_id,
-        models.Offer.status == "requested",
-        models.Offer.manager_id.is_(None)
-    ).all()
-
-    for req_offer in requested_offers:
-        req_offer.manager_id = tech_id
-
     db.commit()
-    return {"message": "Offer(s) assigned successfully"}
+    return {"message": "Offer assigned successfully"}
 
 @app.patch("/api/technician/services/{service_id}/assign")
 def assign_service(service_id: int, tech_id: int, current_user = Depends(auth.require_technician_or_higher), db: Session = Depends(get_db)):
@@ -460,26 +474,46 @@ def unassign_offer(offer_id: int, tech_id: int, current_user = Depends(auth.requ
     if offer.manager_id != tech_id:
         raise HTTPException(status_code=403, detail="Only the current manager can unassign themselves")
 
-    active_in_progress = db.query(models.Offer).filter(
-        models.Offer.client_id == offer.client_id,
-        models.Offer.manager_id == tech_id,
-        models.Offer.status.in_(["quoted", "accepted"])
-    ).first()
+    offer.manager_id = None
+    db.commit()
+    return {"message": "Unassigned from offer successfully"}
 
-    if active_in_progress:
-        raise HTTPException(status_code=400, detail="Cannot unassign: managing active offers for this client.")
+@app.patch("/api/technician/services/{service_id}/status")
+def update_service_status(service_id: int, new_status: str, current_user = Depends(auth.require_technician_or_higher), db: Session = Depends(get_db)):
+    """Toggle a service status between 'pending' and 'done'. Auto-completes the offer when all services are done."""
+    if new_status not in ["pending", "done"]:
+        raise HTTPException(status_code=400, detail="Status must be 'pending' or 'done'")
 
-    all_requested = db.query(models.Offer).filter(
-        models.Offer.client_id == offer.client_id,
-        models.Offer.manager_id == tech_id,
-        models.Offer.status == "requested"
-    ).all()
+    service = db.query(models.Service).filter(models.Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
 
-    for req_offer in all_requested:
-        req_offer.manager_id = None
+    offer = service.offer
+    if offer.status not in ["accepted", "finished"]:
+        raise HTTPException(status_code=400, detail=f"Cannot update service status on a '{offer.status}' offer")
+
+    if service.technician_id != current_user.id and current_user.privilege_level != "Admin":
+        raise HTTPException(status_code=403, detail="Only the assigned technician can change the service status")
+
+    service.status = new_status
+    db.commit()
+
+    # Check if all active services are done → auto-complete offer
+    active_services = [s for s in offer.services if not s.is_deleted]
+    all_done = len(active_services) > 0 and all(s.status == "done" for s in active_services)
+
+    if all_done and offer.status == "accepted":
+        offer.status = "finished"
+        db.commit()
+        return {"message": "Service marked as done. All services completed — offer finished!", "offer_finished": True}
+    elif not all_done and offer.status == "finished":
+        # Revert offer if a service goes back to pending
+        offer.status = "accepted"
+        db.commit()
+        return {"message": "Service reverted to pending. Offer status reverted to accepted.", "offer_finished": False}
 
     db.commit()
-    return {"message": "Unassigned from all requested offers for client"}
+    return {"message": f"Service status updated to '{new_status}'", "offer_finished": False}
 
 @app.delete("/api/technician/services/{service_id}")
 def delete_service(service_id: int, current_user = Depends(auth.require_technician_or_higher), db: Session = Depends(get_db)):

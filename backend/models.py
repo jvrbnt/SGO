@@ -74,6 +74,7 @@ class Offer(Base):
     __tablename__ = "offers"
 
     id = Column(Integer, primary_key=True, index=True)
+    reference = Column(String, index=True, nullable=True) # e.g., '001_2026'
     # Status flow: requested → quoted → accepted → invoiced → finished
     status = Column(String, default="requested")
 

@@ -152,7 +152,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
           div.innerHTML = `
             <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;">
-              <strong style="color:#004a8f;">OFFER #${offer.id}</strong>
+              <strong style="color:#004a8f;">OFFER ${offer.reference || '#' + offer.id}</strong>
               <span style="background:${color}; color:white; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:bold;">${offer.status.toUpperCase()}</span>
             </div>
             <div style="font-size:13px; color:#555; margin-bottom:10px;">Date: ${new Date(offer.created_at).toLocaleDateString()}</div>
@@ -217,7 +217,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 </table>
               </div>
             ` : (offer.status === 'accepted' || offer.status === 'finished' || offer.status === 'invoiced') && offer.services.some(s => s.quoted_price != null) ? `
-              <!-- ACCEPTED / INVOICED / FINISHED: resumen compacto de precios -->
+              <!-- ACCEPTED / INVOICED / FINISHED: compact summary -->
               <div style="background:${offer.status === 'invoiced' || offer.status === 'finished' ? '#fcf0fb' : '#f6fff8'}; border:1px solid ${offer.status === 'invoiced' || offer.status === 'finished' ? '#9b59b6' : '#28a745'}; border-radius:6px; padding:12px; margin-bottom:12px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                   <span style="font-size:13px; color:${offer.status === 'invoiced' || offer.status === 'finished' ? '#9b59b6' : '#1a6b33'}; font-weight:600;">${offer.status === 'invoiced' ? 'Invoiced quotation' : offer.status === 'finished' ? 'Completed work' : 'Accepted quotation'}</span>
@@ -227,7 +227,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 </div>
                 <ul style="margin:0; padding-left:16px; font-size:13px; color:#555;">
                   ${offer.services.map(s => {
-                    if (s.is_deleted) return ''; // Don't show deleted in compact summary
+                    if (s.is_deleted) return '';
                     const isAdded = s.added_by_technician;
                     const isEdited = !isAdded && s.original_hours !== null && parseFloat(s.hours) !== parseFloat(s.original_hours);
                     let hoursDisplay = `${s.hours}h`;
@@ -318,7 +318,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
 
     const res = await fetch(
-      `/api/technician/offers/${offerId}?new_status=accepted`,
+      `/api/client/offers/${offerId}/accept`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -328,6 +328,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (res.ok) {
       alert("Offer accepted. The technician has been notified.");
       window.loadMyRequests();
+    } else {
+      const err = await res.json().catch(() => ({}));
+      alert(err.detail || "Failed to accept the offer. Please try again.");
     }
   };
 

@@ -93,6 +93,7 @@ class ServiceResponse(ServiceBase):
     technician_id: Optional[int] = None
     quoted_price: Optional[float] = None
     original_hours: Optional[float] = None
+    status: str = "pending"
     is_deleted: bool = False
     added_by_technician: bool = False
     technician: Optional[TechnicianResponse] = None
@@ -127,6 +128,7 @@ class OfferCreate(BaseModel):
 
 class OfferResponse(BaseModel):
     id: int
+    reference: Optional[str] = None
     status: str
     created_at: datetime
     updated_at: Optional[datetime] = None

@@ -233,6 +233,26 @@ window.updateOfferStatus = async function (offerId, newStatus) {
   }
 };
 
+window.markServiceStatus = async function (serviceId, newStatus) {
+  try {
+    const response = await fetch(`/api/technician/services/${serviceId}/status?new_status=${newStatus}`, {
+      method: "PATCH"
+    });
+    if (response.ok) {
+      const data = await response.json();
+      if (data.offer_finished) {
+        alert("All services completed — offer has been marked as FINISHED!");
+      }
+      window.loadAllOffers();
+    } else {
+      const error = await response.json();
+      alert("Error: " + (error.detail || "Could not update service status"));
+    }
+  } catch (err) {
+    console.error("Network error:", err);
+  }
+};
+
 // --- 4. REVIEW MODE (TECHNICIAN WORKFLOW) ---
 
 // Map entity → price field
@@ -666,7 +686,7 @@ function renderOfferList(offers, container, isGlobal, techId) {
 
       card.innerHTML = `
         <div style="display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-            <span style="font-weight:bold; color:var(--color-csic); font-size: 1.2em;">PO_${offer.id}</span>
+            <span style="font-weight:bold; color:var(--color-csic); font-size: 1.2em;">OFFER ${offer.reference || offer.id}</span>
             <span style="background-color:${statusColor}; color: white; padding:5px 15px; border-radius:12px; font-size:12px; font-weight:bold;">
                 ${offer.status}
             </span>
@@ -688,15 +708,28 @@ function renderOfferList(offers, container, isGlobal, techId) {
                         <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
                             <span><strong>${s.service_name}</strong> (${s.hours}h)</span>
                             ${s.technician_id ? `<span style="font-size:12px; color:#555;"><strong>Assigned Technician:</strong> ${s.technician ? s.technician.first_name + ' ' + s.technician.last_name : 'Technician #' + s.technician_id}</span>` : ''}
+                            ${(offer.status === 'accepted' || offer.status === 'finished') ? `
+                              <span style="font-size:11px; font-weight:bold; padding:4px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px; ${s.status === 'done' ? 'background:#d1fae5; color:#065f46;' : 'background:#fef3c7; color:#92400e;'}">
+                                ${s.status === 'done' 
+                                  ? `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> DONE` 
+                                  : `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> PENDING`}
+                              </span>
+                            ` : ''}
                         </div>
                         ${s.comment ? `<div style="margin-top:4px; font-size:12px; color:#777; display:flex; align-items:center; gap:5px;"><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='12' height='12' fill='#aaa'><path d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z'/></svg><em>${s.comment}</em></div>` : ''}
                     </div>
                     <div style="display:flex; align-items:stretch;">
-                        ${!s.technician_id
+                        ${(offer.status === 'accepted' || offer.status === 'finished')
+                          ? (s.technician_id === techId || (techData && techData.privilege_level === 'Admin')
+                              ? (s.status !== 'done'
+                                ? `<button onclick="window.markServiceStatus(${s.id}, 'done')" style="background:#059669; color:white; border:none; padding:8px 14px; cursor:pointer; font-size:12px; font-weight:bold; white-space:nowrap;">✓ Service Done</button>`
+                                : `<button onclick="window.markServiceStatus(${s.id}, 'pending')" style="background:#d97706; color:white; border:none; padding:8px 14px; cursor:pointer; font-size:12px; font-weight:bold; white-space:nowrap;">↩ Back to Pending</button>`)
+                              : '')
+                          : (!s.technician_id
               ? `<button onclick="window.assignService(${s.id})" class="btn-assign-service">Assign to me</button>`
               : s.technician_id === techId && offer.status === 'requested'
                 ? `<button onclick="window.unassignService(${s.id})" class="btn-unassign-service">Unassign</button>`
-                : ''
+                : '')
             }
                     </div>
                 </div>
