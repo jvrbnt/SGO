@@ -9,9 +9,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: sgo_user
-      POSTGRES_PASSWORD: JZEJ-M3CM-FdS2-4TXC-2HGB-9QAS
-      POSTGRES_DB: mina_sgo
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       # Este volumen mantendrá los datos intactos
       - pgdata:/var/lib/postgresql/data
