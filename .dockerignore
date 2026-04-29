@@ -20,8 +20,6 @@ __pycache__
 
 # Documentación
 *.md
-docs_oficiales/
 
 # Otros
-alembic.ini
 demo_scripts/
