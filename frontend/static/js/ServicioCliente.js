@@ -351,7 +351,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       list.innerHTML = invoices.map(inv => {
         let detailsHtml = '';
         if (inv.offers && inv.offers.length > 0) {
-           detailsHtml = '<div style="margin-top:15px; display:flex; flex-direction:column; gap:10px;">';
+           detailsHtml = `<div id="details-${inv.id}" style="display:none; margin-top:15px; flex-direction:column; gap:10px;">`;
            inv.offers.forEach(o => {
                let offerSum = 0;
                let srvsHtml = '';
@@ -388,8 +388,9 @@ document.addEventListener("DOMContentLoaded", async () => {
               <span style="background:${inv.status === 'finished' ? '#2c3e50' : '#9b59b6'}; color:white; padding:4px 12px; border-radius:12px; font-weight:bold; font-size:12px;">${inv.status.toUpperCase()}</span>
             </div>
             
-            <div style="display:flex; justify-content:space-between; font-size:14px; color:#555;">
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:14px; color:#555;">
               <span><strong>Date:</strong> ${new Date(inv.created_at).toLocaleDateString()}</span>
+              <button onclick="const d = document.getElementById('details-${inv.id}'); d.style.display = d.style.display === 'none' ? 'flex' : 'none';" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer; font-weight:bold; color:#334155;">Review Offers</button>
             </div>
             
             ${detailsHtml}

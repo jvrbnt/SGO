@@ -7,7 +7,7 @@ from backend import models
 from backend.database import engine, DB_AVAILABLE
 
 # Import Routers
-from backend.routers import pages, auth, admin, catalog, client, technician, invoice
+from backend.routers import pages, auth, admin, catalog, client, technician, invoice, documents
 
 # --- LOGGING CONFIGURATION ---
 logger = logging.getLogger("sgo")
@@ -47,3 +47,4 @@ app.include_router(catalog.router)
 app.include_router(client.router)
 app.include_router(technician.router)
 app.include_router(invoice.router)
+app.include_router(documents.router)

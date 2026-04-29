@@ -746,6 +746,7 @@ function renderOfferList(offers, container, isGlobal, techId) {
                   : '')
             }
             <button onclick="window.openReviewPanel(${offer.id}, ${!isGlobal}, ${offer.status !== 'requested'})" class="btn-card btn-review">Review</button>
+            ${offer.status !== 'requested' ? `<button onclick="window.downloadOfferDocument(${offer.id})" class="btn-card" style="background:#2c3e50; color:white;" title="Download offer as Word document">📄 Document</button>` : ''}
           </div>
           <div style="text-align: right;">
             ${offer.manager_id
@@ -1475,6 +1476,33 @@ window.finishInvoice = async function (invoiceId) {
 function isReviewPanelOpen() {
   return !!document.querySelector(".btn-back");
 }
+
+// --- DOWNLOAD OFFER DOCUMENT ---
+window.downloadOfferDocument = async function (offerId) {
+  try {
+    const response = await fetch(`/api/technician/offers/${offerId}/document`);
+    if (!response.ok) {
+      const err = await response.json();
+      alert("Error: " + (err.detail || "Could not generate document"));
+      return;
+    }
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    // Extract filename from Content-Disposition header or use default
+    const disposition = response.headers.get("Content-Disposition");
+    const match = disposition && disposition.match(/filename="?(.+?)"?$/);
+    a.download = match ? match[1] : `Oferta_${offerId}.docx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("Download error:", err);
+    alert("Network error downloading document.");
+  }
+};
 
 document.addEventListener("DOMContentLoaded", () => {
   setTimeout(() => {
