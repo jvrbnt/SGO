@@ -1165,8 +1165,8 @@ window.loadBillingClientOffers = async function () {
     }
 
     list.innerHTML = offers.map(o => {
-      const isAccepted = o.status === "accepted";
-      const badgeColor = isAccepted ? "#27ae60" : (o.status === "quoted" ? "#f39c12" : "#17a2b8");
+      const isBillable = o.status === "accepted" || o.status === "ready_to_invoice";
+      const badgeColor = o.status === "accepted" ? "#27ae60" : (o.status === "quoted" ? "#f39c12" : (o.status === "ready_to_invoice" ? "#17a2b8" : "#94a3b8"));
 
       let sum = 0;
       const validServices = o.services.filter(s => !s.is_deleted);
@@ -1181,9 +1181,9 @@ window.loadBillingClientOffers = async function () {
       ).join("");
 
       return `
-        <div style="border:1px solid ${isAccepted ? '#cbd5e1' : '#e2e8f0'}; border-radius:8px; padding:15px; display:flex; gap:15px; background:${isAccepted ? '#fff' : '#f8fafc'}; opacity:${isAccepted ? '1' : '0.6'}; transition:0.2s;">
+        <div style="border:1px solid ${isBillable ? '#cbd5e1' : '#e2e8f0'}; border-radius:8px; padding:15px; display:flex; gap:15px; background:${isBillable ? '#fff' : '#f8fafc'}; opacity:${isBillable ? '1' : '0.6'}; transition:0.2s;">
           <div style="padding-top:4px;">
-            <input type="checkbox" class="invoice-offer-checkbox" value="${o.id}" data-price="${sum}" ${isAccepted ? 'checked onchange="window.calculateInvoiceTotal()"' : 'disabled'} style="transform:scale(1.5);">
+            <input type="checkbox" class="invoice-offer-checkbox" value="${o.id}" data-price="${sum}" ${isBillable ? 'checked onchange="window.calculateInvoiceTotal()"' : 'disabled'} style="transform:scale(1.5);">
           </div>
           <div style="flex:1;">
             <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">

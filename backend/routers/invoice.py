@@ -14,7 +14,7 @@ def get_billing_clients(tech_id: int, current_user = Depends(auth_service.requir
     """Return clients who have active offers managed by this tech."""
     clients = db.query(models.Client).join(models.Offer).filter(
         models.Offer.manager_id == tech_id,
-        models.Offer.status.in_(["accepted", "finished"])
+        models.Offer.status.in_(["accepted", "ready_to_invoice"])
     ).distinct().all()
     return clients
 
@@ -24,7 +24,7 @@ def get_billing_offers(tech_id: int, client_id: int, current_user = Depends(auth
     offers = db.query(models.Offer).filter(
         models.Offer.client_id == client_id,
         models.Offer.manager_id == tech_id,
-        models.Offer.status.in_(["accepted", "finished"])
+        models.Offer.status.in_(["accepted", "ready_to_invoice"])
     ).all()
     return offers
 
