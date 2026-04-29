@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import extract
+from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from typing import List
 
@@ -19,8 +20,6 @@ def create_offer(offer_in: schemas.OfferCreate, current_user = Depends(auth_serv
     client = db.query(models.Client).filter(models.Client.email == offer_in.client_email).first()
     if not client:
         raise HTTPException(status_code=404, detail="Client not found in database")
-
-from sqlalchemy.exc import IntegrityError
 
     current_year = datetime.now().year
     
