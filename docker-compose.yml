@@ -1,4 +1,4 @@
-version: '3.8'
+
 
 services:
   # --- Base de Datos PostgreSQL ---
@@ -24,8 +24,8 @@ services:
     env_file:
       - .env
     volumes:
-      # Preparamos la carpeta local ./data para almacenar los futuros PDFs generados
       - ./data:/app/data
+      - ./docs_oficiales:/app/docs_oficiales:ro
     # No exponemos el puerto 8000 hacia afuera, solo hacia nginx dentro de la red interna
     expose:
       - "8000"
