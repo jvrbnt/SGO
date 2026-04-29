@@ -20,12 +20,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 12  # Token lasts 12 hours
 # OAuth2 scheme for Swagger UI/FastAPI dependency injection (though we use fetch in JS)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/login")
 
-def get_db():
-    db = LocalSession()
-    try:
-        yield db
-    finally:
-        db.close()
+from backend.dependencies import get_db
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Generates a signed JWT with user data and expiration time."""

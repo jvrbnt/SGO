@@ -20,20 +20,30 @@ def create_offer(offer_in: schemas.OfferCreate, current_user = Depends(auth_serv
     if not client:
         raise HTTPException(status_code=404, detail="Client not found in database")
 
-    current_year = datetime.now().year
-    last_offer = db.query(models.Offer).filter(extract('year', models.Offer.created_at) == current_year).order_by(models.Offer.id.desc()).first()
-    next_seq = 1
-    if last_offer and last_offer.reference:
-        try:
-            next_seq = int(last_offer.reference.split('_')[0]) + 1
-        except:
-            pass
-    reference_code = f"{next_seq:03d}_{current_year}"
+from sqlalchemy.exc import IntegrityError
 
-    new_offer = models.Offer(client_id=client.id, status="requested", reference=reference_code)
-    db.add(new_offer)
-    db.commit()
-    db.refresh(new_offer)
+    current_year = datetime.now().year
+    
+    for attempt in range(3):
+        last_offer = db.query(models.Offer).filter(extract('year', models.Offer.created_at) == current_year).order_by(models.Offer.id.desc()).first()
+        next_seq = 1
+        if last_offer and last_offer.reference:
+            try:
+                next_seq = int(last_offer.reference.split('_')[0]) + 1
+            except:
+                pass
+        reference_code = f"{next_seq:03d}_{current_year}"
+
+        new_offer = models.Offer(client_id=client.id, status="requested", reference=reference_code)
+        db.add(new_offer)
+        try:
+            db.commit()
+            db.refresh(new_offer)
+            break # Success, break out of retry loop
+        except IntegrityError:
+            db.rollback()
+            if attempt == 2:
+                raise HTTPException(status_code=500, detail="High concurrency detected. Please try submitting again.")
 
     for s in offer_in.services:
         catalog_item = db.query(models.ServiceCatalog).filter(
