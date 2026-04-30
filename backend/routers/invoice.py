@@ -14,7 +14,7 @@ def get_billing_clients(tech_id: int, current_user = Depends(auth_service.requir
     """Return clients who have active offers managed by this tech."""
     clients = db.query(models.Client).join(models.Offer).filter(
         models.Offer.manager_id == tech_id,
-        models.Offer.status.in_(["accepted", "ready_to_invoice"])
+        models.Offer.status.in_(["accepted", "completed"])
     ).distinct().all()
     return clients
 
@@ -24,7 +24,7 @@ def get_billing_offers(tech_id: int, client_id: int, current_user = Depends(auth
     offers = db.query(models.Offer).filter(
         models.Offer.client_id == client_id,
         models.Offer.manager_id == tech_id,
-        models.Offer.status.in_(["accepted", "ready_to_invoice"])
+        models.Offer.status.in_(["accepted", "completed"])
     ).all()
     return offers
 
@@ -99,14 +99,14 @@ def get_all_invoices(current_user = Depends(auth_service.require_admin), db: Ses
         })
     return result
 
-@router.post("/technician/invoices/{invoice_id}/finish")
-def finish_invoice(invoice_id: int, current_user = Depends(auth_service.require_technician_or_higher), db: Session = Depends(get_db)):
-    """Mark an invoice and all linked offers as finished."""
+@router.post("/technician/invoices/{invoice_id}/pay")
+def pay_invoice(invoice_id: int, current_user = Depends(auth_service.require_technician_or_higher), db: Session = Depends(get_db)):
+    """Mark an invoice and all linked offers as paid."""
     invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
-    invoice.status = "finished"
+    invoice.status = "paid"
     for offer in invoice.offers:
-        offer.status = "finished"
+        offer.status = "paid"
     db.commit()
-    return {"message": "Invoice and linked offers finished successfully"}
+    return {"message": "Invoice and linked offers marked as paid successfully"}

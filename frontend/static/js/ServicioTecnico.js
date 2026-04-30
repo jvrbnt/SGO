@@ -680,8 +680,9 @@ function renderOfferList(offers, container, isGlobal, techId) {
           requested: "#17a2b8",
           quoted: "#f39c12",
           accepted: "#27ae60",
+          completed: "#2563eb",
           invoiced: "#9b59b6",
-          finished: "#2c3e50",
+          paid: "#2c3e50",
         }[offer.status] || "#6c757d";
 
       card.innerHTML = `
@@ -1165,8 +1166,8 @@ window.loadBillingClientOffers = async function () {
     }
 
     list.innerHTML = offers.map(o => {
-      const isBillable = o.status === "accepted" || o.status === "ready_to_invoice";
-      const badgeColor = o.status === "accepted" ? "#27ae60" : (o.status === "quoted" ? "#f39c12" : (o.status === "ready_to_invoice" ? "#17a2b8" : "#94a3b8"));
+      const isBillable = o.status === "accepted" || o.status === "completed";
+      const badgeColor = o.status === "accepted" ? "#27ae60" : (o.status === "quoted" ? "#f39c12" : (o.status === "completed" ? "#2563eb" : "#94a3b8"));
 
       let sum = 0;
       const validServices = o.services.filter(s => !s.is_deleted);
@@ -1297,11 +1298,11 @@ window.loadTechInvoices = async function () {
     }
 
     container.innerHTML = invoices.map(inv => {
-      const isFinished = inv.status === 'finished';
+      const isPaid = inv.status === 'paid';
       const isOwner = inv.technician_id === techData.id;
       const clientName = inv.client_first_name ? `${inv.client_first_name} ${inv.client_last_name}` : `Client #${inv.client_id}`;
       return `
-         <div style="background: ${isFinished ? '#f1f5f9' : 'white'}; border: 1px solid ${isFinished ? '#cbd5e1' : '#ccc'}; border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: start;">
+         <div style="background: ${isPaid ? '#f1f5f9' : 'white'}; border: 1px solid ${isPaid ? '#cbd5e1' : '#ccc'}; border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: start;">
            <div>
              <h4 style="margin:0 0 5px 0; color:var(--color-csic);">Invoice #${inv.id}</h4>
              <p style="margin:0; font-size:13px; color:#64748b;">
@@ -1313,16 +1314,16 @@ window.loadTechInvoices = async function () {
            </div>
            
            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
-             <span style="display:inline-block; padding:4px 10px; background:${isFinished ? '#2c3e50' : '#9b59b6'}; color:white; font-size:11px; font-weight:bold; border-radius:12px;">
+             <span style="display:inline-block; padding:4px 10px; background:${isPaid ? '#2c3e50' : '#9b59b6'}; color:white; font-size:11px; font-weight:bold; border-radius:12px;">
                ${inv.status.toUpperCase()}
              </span>
              <div style="display:flex; gap:6px;">
                <button onclick="window.openInvoiceReview(${inv.id})" style="background:#3498db; color:white; border:none; padding:6px 12px; border-radius:4px; font-size:12px; cursor:pointer; font-weight:600;" title="View invoice details">
                  Review
                </button>
-               ${!isFinished && isOwner ? `
-                 <button onclick="window.finishInvoice(${inv.id})" style="background:#2c3e50; color:white; border:none; padding:6px 12px; border-radius:4px; font-size:12px; cursor:pointer;" title="Mark this invoice and its offers as FINISHED">
-                   Finish Work
+               ${!isPaid && isOwner ? `
+                 <button onclick="window.payInvoice(${inv.id})" style="background:#2c3e50; color:white; border:none; padding:6px 12px; border-radius:4px; font-size:12px; cursor:pointer;" title="Mark this invoice and its offers as PAID">
+                   Mark as Paid
                  </button>
                ` : ''}
              </div>
@@ -1343,10 +1344,10 @@ window.openInvoiceReview = function (invoiceId) {
   const existing = document.getElementById("invoiceReviewModal");
   if (existing) existing.remove();
 
-  const isFinished = inv.status === 'finished';
+  const isPaid = inv.status === 'paid';
   const clientName = inv.client_first_name ? `${inv.client_first_name} ${inv.client_last_name}` : `Client #${inv.client_id}`;
   const techName = inv.technician_first_name ? `${inv.technician_first_name} ${inv.technician_last_name}` : `Technician #${inv.technician_id}`;
-  const statusColor = isFinished ? '#2c3e50' : '#9b59b6';
+  const statusColor = isPaid ? '#2c3e50' : '#9b59b6';
 
   const offersHtml = (inv.offers || []).map(offer => {
     const offerTotal = (offer.services || []).reduce((sum, s) => sum + (s.quoted_price || 0), 0);
@@ -1448,22 +1449,22 @@ window.openInvoiceReview = function (invoiceId) {
   document.body.appendChild(modal);
 };
 
-window.finishInvoice = async function (invoiceId) {
-  if (!confirm("Are you sure you want to finish this invoice? This will mark all its offers as 'finished' and they will be locked.")) {
+window.payInvoice = async function (invoiceId) {
+  if (!confirm("Are you sure you want to mark this invoice as PAID? This will mark all its offers as 'paid' and they will be locked.")) {
     return;
   }
 
   try {
-    const res = await fetch(`/api/technician/invoices/${invoiceId}/finish`, {
+    const res = await fetch(`/api/technician/invoices/${invoiceId}/pay`, {
       method: "POST"
     });
 
     if (!res.ok) {
       const err = await res.json();
-      throw new Error(err.detail || "Error finishing invoice");
+      throw new Error(err.detail || "Error marking invoice as paid");
     }
 
-    alert("Invoice and underlying offers successfully marked as FINISHED!");
+    alert("Invoice and underlying offers successfully marked as PAID!");
     window.loadTechInvoices();
     window.loadAllOffers(); // Refresh the main dashboard cards completely
   } catch (err) {

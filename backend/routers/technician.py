@@ -126,10 +126,10 @@ def update_service_status(service_id: int, new_status: str, current_user = Depen
     all_done = len(active_services) > 0 and all(s.status == "done" for s in active_services)
 
     if all_done and offer.status == "accepted":
-        offer.status = "ready_to_invoice"
+        offer.status = "completed"
         db.commit()
         return {"message": "Service marked as done. All services completed — offer ready to be invoiced!", "offer_finished": True}
-    elif not all_done and offer.status == "ready_to_invoice":
+    elif not all_done and offer.status == "completed":
         # Revert offer if a service goes back to pending
         offer.status = "accepted"
         db.commit()

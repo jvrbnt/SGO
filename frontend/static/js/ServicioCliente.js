@@ -145,9 +145,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             requested: "#17a2b8",
             quoted: "#f39c12",
             accepted: "#28a745",
-            ready_to_invoice: "#2563eb",
+            completed: "#2563eb",
             invoiced: "#9b59b6",
-            finished: "#2c3e50",
+            paid: "#2c3e50",
           };
           const color = statusColors[offer.status] || "#666";
 
