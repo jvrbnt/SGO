@@ -241,7 +241,7 @@ window.markServiceStatus = async function (serviceId, newStatus) {
     if (response.ok) {
       const data = await response.json();
       if (data.offer_finished) {
-        alert("All services completed — offer has been marked as FINISHED!");
+        alert("All services completed — offer has been marked as COMPLETED and is ready for billing!");
       }
       window.loadAllOffers();
     } else {
