@@ -1235,8 +1235,12 @@ window.submitInvoice = async function () {
   const checkboxes = document.querySelectorAll(".invoice-offer-checkbox:checked");
   const offerIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
 
-  if (!clientId || offerIds.length === 0) {
-    alert("You must select at least one accepted offer to generate an invoice.");
+  if (!clientId) {
+    alert("Please select a client from the dropdown first.");
+    return;
+  }
+  if (offerIds.length === 0) {
+    alert("You must select at least one completed offer to generate an invoice.");
     return;
   }
 
@@ -1299,7 +1303,7 @@ window.loadTechInvoices = async function () {
 
     container.innerHTML = invoices.map(inv => {
       const isPaid = inv.status === 'paid';
-      const isOwner = inv.technician_id === techData.id;
+      const isOwner = parseInt(inv.technician_id) === parseInt(techData.id);
       const clientName = inv.client_first_name ? `${inv.client_first_name} ${inv.client_last_name}` : `Client #${inv.client_id}`;
       return `
          <div style="background: ${isPaid ? '#f1f5f9' : 'white'}; border: 1px solid ${isPaid ? '#cbd5e1' : '#ccc'}; border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: start;">

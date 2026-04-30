@@ -158,11 +158,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             </div>
             <div style="font-size:13px; color:#555; margin-bottom:10px;">Date: ${new Date(offer.created_at).toLocaleDateString()}</div>
 
-            ${offer.status === 'quoted' ? `
-              <!-- QUOTED: tabla de precios destacada -->
+            ${offer.status === 'quoted' || offer.status === 'invoiced' || offer.status === 'paid' ? `
+              <!-- QUOTED/INVOICED/PAID: tabla de precios destacada -->
               <div style="background:#f0f7ff; border:2px solid #3498db; border-radius:8px; padding:15px; margin-bottom:15px;">
                 <h4 style="margin:0 0 12px 0; color:#2563eb; font-size:14px; display:flex; align-items:center; gap:8px;">
-                  QUOTATION
+                  ${offer.status === 'quoted' ? 'QUOTATION' : (offer.status === 'invoiced' ? 'INVOICE DETAILS - PENDING PAYMENT' : 'PAID INVOICE')}
                 </h4>
                 <table style="width:100%; border-collapse:collapse; font-size:13px;">
                   <thead>
@@ -217,12 +217,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                   </tfoot>
                 </table>
               </div>
-            ` : (offer.status === 'accepted' || offer.status === 'finished' || offer.status === 'invoiced') && offer.services.some(s => s.quoted_price != null) ? `
-              <!-- ACCEPTED / INVOICED / FINISHED: compact summary -->
-              <div style="background:${offer.status === 'invoiced' || offer.status === 'finished' ? '#fcf0fb' : '#f6fff8'}; border:1px solid ${offer.status === 'invoiced' || offer.status === 'finished' ? '#9b59b6' : '#28a745'}; border-radius:6px; padding:12px; margin-bottom:12px;">
+            ` : (offer.status === 'accepted' || offer.status === 'completed') && offer.services.some(s => s.quoted_price != null) ? `
+              <!-- ACCEPTED / COMPLETED: compact summary -->
+              <div style="background:#f6fff8; border:1px solid #28a745; border-radius:6px; padding:12px; margin-bottom:12px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                  <span style="font-size:13px; color:${offer.status === 'invoiced' || offer.status === 'finished' ? '#9b59b6' : '#1a6b33'}; font-weight:600;">${offer.status === 'invoiced' ? 'Invoiced quotation' : offer.status === 'finished' ? 'Completed work' : 'Accepted quotation'}</span>
-                  <span style="font-size:16px; font-weight:bold; color:${offer.status === 'invoiced' || offer.status === 'finished' ? '#9b59b6' : '#1a6b33'};">
+                  <span style="font-size:13px; color:#1a6b33; font-weight:600;">${offer.status === 'completed' ? 'Completed work' : 'Accepted quotation'}</span>
+                  <span style="font-size:16px; font-weight:bold; color:#1a6b33;">
                     ${offer.services.filter(s => !s.is_deleted).reduce((acc, s) => acc + (s.quoted_price ?? 0), 0).toFixed(2)} € total
                   </span>
                 </div>
@@ -234,8 +234,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                     let hoursDisplay = `${s.hours}h`;
                     if (isEdited) {
                        hoursDisplay = `<span style="text-decoration:line-through; color:#94a3b8; font-size:11px; margin-right:4px;">${s.original_hours}h</span><span style="color:#f59e0b; font-weight:bold;">${s.hours}h</span>`;
-                    }
-                    const priceColor = offer.status === 'invoiced' || offer.status === 'finished' ? '#9b59b6' : '#1a6b33';
+                     }
+                    const priceColor = '#1a6b33';
                     return `
                       <li style="margin-bottom:3px;">
                         ${s.service_name} — ${hoursDisplay}
