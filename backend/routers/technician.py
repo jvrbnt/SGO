@@ -27,6 +27,9 @@ def finalize_review_and_send(offer_id: int, review_data: schemas.OfferReviewUpda
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
 
+    if offer.manager_id != current_user.id and current_user.privilege_level != "Admin":
+        raise HTTPException(status_code=403, detail="Only the assigned manager or an Admin can review this offer")
+
     offer.status = "quoted"
     offer.technician_comment = review_data.technician_comment
 
@@ -47,6 +50,10 @@ def update_status_simple(offer_id: int, new_status: str, current_user = Depends(
     offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
+        
+    if offer.manager_id != current_user.id and current_user.privilege_level != "Admin":
+        raise HTTPException(status_code=403, detail="Only the assigned manager or an Admin can update this offer's status")
+        
     offer.status = new_status
     db.commit()
     return {"message": "Status updated"}
@@ -57,6 +64,9 @@ def assign_offer(offer_id: int, tech_id: int, current_user = Depends(auth_servic
     offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
+
+    if offer.manager_id is not None and offer.manager_id != current_user.id and current_user.privilege_level != "Admin":
+        raise HTTPException(status_code=403, detail="Offer is already assigned. Only the current manager or an Admin can reassign it.")
 
     offer.manager_id = tech_id
     db.commit()
@@ -145,6 +155,9 @@ def delete_service(service_id: int, current_user = Depends(auth_service.require_
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
 
+    if service.offer.manager_id != current_user.id and current_user.privilege_level != "Admin":
+        raise HTTPException(status_code=403, detail="Only the assigned manager or an Admin can delete services from this offer")
+
     if service.offer.status not in ["requested", "quoted"]:
         raise HTTPException(status_code=400, detail=f"Cannot delete services from '{service.offer.status}' offer")
 
@@ -158,6 +171,9 @@ def add_service_to_offer(offer_id: int, service_in: schemas.ServiceCreateInline,
     offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
+
+    if offer.manager_id != current_user.id and current_user.privilege_level != "Admin":
+        raise HTTPException(status_code=403, detail="Only the assigned manager or an Admin can add services to this offer")
 
     if offer.status not in ["requested", "quoted"]:
         raise HTTPException(status_code=400, detail="Cannot add services to this offer")

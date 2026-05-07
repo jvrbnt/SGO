@@ -92,7 +92,7 @@ registrationForm.addEventListener("submit", async function (event) {
     const data = await response.json();
 
     if (response.ok) {
-      alert(data.message || "Account created successfully");
+      showToast(data.message || "Account created successfully", "success");
       // Redirect to login on success
       window.location.href = "/login";
     } else {
@@ -101,15 +101,16 @@ registrationForm.addEventListener("submit", async function (event) {
         const errorMsg = data.detail
           .map((err) => `${err.loc[1]}: ${err.msg}`)
           .join("\n");
-        alert("Validation Error:\n" + errorMsg);
+        showToast("Validation Error:\n" + errorMsg, "error");
       } else {
-        alert("Error: " + (data.detail || "Registration failed"));
+        showToast("Error: " + (data.detail || "Registration failed"), "error");
       }
     }
   } catch (error) {
     console.error("Connection error:", error);
-    alert(
+    showToast(
       "Could not connect to the server. Please ensure the backend is running.",
+      "error"
     );
   }
 });

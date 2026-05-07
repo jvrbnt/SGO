@@ -26,7 +26,7 @@ window.fetch = async function() {
     }
     const response = await originalFetch(resource, config);
     if (response.status === 401) {
-        alert("Session expired. Please log in again.");
+        showToast("Session expired. Please log in again.", "warning");
         localStorage.removeItem('authToken');
         localStorage.removeItem('currentUser');
         window.location.href = '/login';
@@ -127,7 +127,7 @@ window.loadAllOffers = async function () {
 window.assignOffer = async function (offerId) {
   const techData = JSON.parse(localStorage.getItem("currentUser"));
   if (!techData || !techData.id) {
-    alert("Error: Technician ID not found. Return to login.");
+    showToast("Error: Technician ID not found. Return to login.", "error");
     return;
   }
 
@@ -139,7 +139,7 @@ window.assignOffer = async function (offerId) {
       window.loadAllOffers();
     } else {
       const error = await response.json();
-      alert("Error: " + (error.detail || "Error assigning offer"));
+      showToast("Error: " + (error.detail || "Error assigning offer"), "error");
     }
   } catch (err) {
     console.error("Network error:", err);
@@ -149,7 +149,7 @@ window.assignOffer = async function (offerId) {
 window.unassignOffer = async function (offerId) {
   const techData = JSON.parse(localStorage.getItem("currentUser"));
   if (!techData || !techData.id) {
-    alert("Error: Technician ID not found. Return to login.");
+    showToast("Error: Technician ID not found. Return to login.", "error");
     return;
   }
 
@@ -161,7 +161,7 @@ window.unassignOffer = async function (offerId) {
       window.loadAllOffers();
     } else {
       const error = await response.json();
-      alert("Error: " + (error.detail || "Error unassigning offer"));
+      showToast("Error: " + (error.detail || "Error unassigning offer"), "error");
     }
   } catch (err) {
     console.error("Network error:", err);
@@ -171,7 +171,7 @@ window.unassignOffer = async function (offerId) {
 window.assignService = async function (serviceId) {
   const techData = JSON.parse(localStorage.getItem("currentUser"));
   if (!techData || !techData.id) {
-    alert("Error: Technician ID not found. Return to login.");
+    showToast("Error: Technician ID not found. Return to login.", "error");
     return;
   }
 
@@ -183,7 +183,7 @@ window.assignService = async function (serviceId) {
       window.loadAllOffers();
     } else {
       const error = await response.json();
-      alert("Error: " + (error.detail || "Error assigning service"));
+      showToast("Error: " + (error.detail || "Error assigning service"), "error");
     }
   } catch (err) {
     console.error("Network error:", err);
@@ -193,7 +193,7 @@ window.assignService = async function (serviceId) {
 window.unassignService = async function (serviceId) {
   const techData = JSON.parse(localStorage.getItem("currentUser"));
   if (!techData || !techData.id) {
-    alert("Error: Technician ID not found. Return to login.");
+    showToast("Error: Technician ID not found. Return to login.", "error");
     return;
   }
 
@@ -205,7 +205,7 @@ window.unassignService = async function (serviceId) {
       window.loadAllOffers();
     } else {
       const error = await response.json();
-      alert("Error: " + (error.detail || "Error unassigning service"));
+      showToast("Error: " + (error.detail || "Error unassigning service"), "error");
     }
   } catch (err) {
     console.error("Network error:", err);
@@ -226,7 +226,7 @@ window.updateOfferStatus = async function (offerId, newStatus) {
       window.loadAllOffers();
     } else {
       const error = await response.json();
-      alert("Error: " + (error.detail || "Unknown error"));
+      showToast("Error: " + (error.detail || "Unknown error"), "error");
     }
   } catch (err) {
     console.error("Network error:", err);
@@ -241,12 +241,12 @@ window.markServiceStatus = async function (serviceId, newStatus) {
     if (response.ok) {
       const data = await response.json();
       if (data.offer_finished) {
-        alert("All services completed — offer has been marked as COMPLETED and is ready for billing!");
+        showToast("All services completed — offer has been marked as COMPLETED and is ready for billing!", "success");
       }
       window.loadAllOffers();
     } else {
       const error = await response.json();
-      alert("Error: " + (error.detail || "Could not update service status"));
+      showToast("Error: " + (error.detail || "Could not update service status"), "error");
     }
   } catch (err) {
     console.error("Network error:", err);
@@ -522,13 +522,13 @@ window.sendQuotedOffer = async function (offerId) {
     });
 
     if (response.ok) {
-      alert("Review finalized. Offer sent to the client.");
+      showToast("Review finalized. Offer sent to the client.", "success");
       if (window.offerDrafts && window.offerDrafts[offerId]) {
         delete window.offerDrafts[offerId];
       }
       window.loadAllOffers();
     } else {
-      alert("Error sending the offer.");
+      showToast("Error sending the offer.", "error");
     }
   } catch (err) {
     console.error("Error saving review:", err);
@@ -579,7 +579,7 @@ window.deleteServiceFromOffer = async function (serviceId, offerId, isMineTab, s
       window.openReviewPanel(offerId, isMineTab, false, previousEdits);
     } else {
       const err = await response.json();
-      alert(`Error: ${err.detail || "Could not delete service"}`);
+      showToast(`Error: ${err.detail || "Could not delete service"}`, "error");
     }
   } catch (err) {
     console.error("Error deleting service:", err);
@@ -591,7 +591,7 @@ window.addServiceToOffer = async function (offerId, isMineTab) {
   const hoursInput = document.getElementById("newServiceHours");
 
   if (!select.value || !hoursInput.value) {
-    alert("Please select a service from the catalog and indicate the number of hours.");
+    showToast("Please select a service from the catalog and indicate the number of hours.", "warning");
     return;
   }
 
@@ -610,7 +610,7 @@ window.addServiceToOffer = async function (offerId, isMineTab) {
       window.openReviewPanel(offerId, isMineTab, false, previousEdits);
     } else {
       const err = await response.json();
-      alert(`Error: ${err.detail || "Could not add service"}`);
+      showToast(`Error: ${err.detail || "Could not add service"}`, "error");
     }
   } catch (err) {
     console.error("Error adding service:", err);
@@ -942,7 +942,7 @@ window.savePriceUpdate = function () {
 
   const newVal = parseFloat(document.getElementById("newPriceInput").value);
   if (isNaN(newVal) || newVal < 0) {
-    alert("Please enter a valid price.");
+    showToast("Please enter a valid price.", "warning");
     return;
   }
 
@@ -1004,7 +1004,7 @@ window.saveAllPrices = async function () {
     window.pendingPriceChanges = {};
     window.loadCatalogPrices();
   } catch (error) {
-    alert("Error saving prices: " + error.message);
+    showToast("Error saving prices: " + error.message, "error");
   }
 };
 
@@ -1064,7 +1064,7 @@ window.adminCreateTechnician = async function () {
   const password = document.getElementById("newTechPassword").value;
 
   if (!first || !last || !email || !password) {
-    alert("Please fill in all fields to create a technician.");
+    showToast("Please fill in all fields to create a technician.", "warning");
     return;
   }
 
@@ -1084,14 +1084,14 @@ window.adminCreateTechnician = async function () {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || "Error creating technician");
 
-    alert("Technician created successfully!");
+    showToast("Technician created successfully!", "success");
     document.getElementById("newTechFirst").value = "";
     document.getElementById("newTechLast").value = "";
     document.getElementById("newTechEmail").value = "";
     document.getElementById("newTechPassword").value = "";
     window.loadAdminTechnicians();
   } catch (err) {
-    alert(err.message);
+    showToast(err.message, "error");
   }
 };
 
@@ -1110,7 +1110,7 @@ window.adminToggleRole = async function (id, newRole) {
 
     window.loadAdminTechnicians();
   } catch (err) {
-    alert(err.message);
+    showToast(err.message, "error");
   }
 };
 
@@ -1123,7 +1123,7 @@ window.loadBillingClients = async function () {
   if (!select) return;
 
   try {
-    const res = await fetch(`/api/technician/billing-clients?tech_id=${techData.id}`);
+    const res = await fetch(`/api/technician/billing-clients`);
     const clients = await res.json();
 
     let html = '<option value="">-- Select a client --</option>';
@@ -1155,7 +1155,7 @@ window.loadBillingClientOffers = async function () {
   list.innerHTML = "<p>Loading offers...</p>";
 
   try {
-    const res = await fetch(`/api/technician/billing-offers?tech_id=${techData.id}&client_id=${select.value}`);
+    const res = await fetch(`/api/technician/billing-offers?client_id=${select.value}`);
     const offers = await res.json();
     window.currentBillingOffers = offers;
 
@@ -1236,11 +1236,11 @@ window.submitInvoice = async function () {
   const offerIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
 
   if (!clientId) {
-    alert("Please select a client from the dropdown first.");
+    showToast("Please select a client from the dropdown first.", "warning");
     return;
   }
   if (offerIds.length === 0) {
-    alert("You must select at least one completed offer to generate an invoice.");
+    showToast("You must select at least one completed offer to generate an invoice.", "warning");
     return;
   }
 
@@ -1269,7 +1269,7 @@ window.submitInvoice = async function () {
       throw new Error(err.detail || "Could not generate invoice");
     }
 
-    alert("Invoice generated successfully!");
+    showToast("Invoice generated successfully!", "success");
     document.getElementById("billingComment").value = "";
     document.getElementById("billingClientSelect").value = "";
     document.getElementById("billingOffersContainer").style.display = "none";
@@ -1278,7 +1278,7 @@ window.submitInvoice = async function () {
     window.loadAllOffers(); // refresh arrays
     window.loadTechInvoices();
   } catch (err) {
-    alert(err.message);
+    showToast(err.message, "error");
   }
 };
 
@@ -1468,11 +1468,11 @@ window.payInvoice = async function (invoiceId) {
       throw new Error(err.detail || "Error marking invoice as paid");
     }
 
-    alert("Invoice and underlying offers successfully marked as PAID!");
+    showToast("Invoice and underlying offers successfully marked as PAID!", "success");
     window.loadTechInvoices();
     window.loadAllOffers(); // Refresh the main dashboard cards completely
   } catch (err) {
-    alert(err.message);
+    showToast(err.message, "error");
   }
 };
 
@@ -1488,7 +1488,7 @@ window.downloadOfferDocument = async function (offerId) {
     const response = await fetch(`/api/technician/offers/${offerId}/document`);
     if (!response.ok) {
       const err = await response.json();
-      alert("Error: " + (err.detail || "Could not generate document"));
+      showToast("Error: " + (err.detail || "Could not generate document"), "error");
       return;
     }
     const blob = await response.blob();
@@ -1505,7 +1505,7 @@ window.downloadOfferDocument = async function (offerId) {
     window.URL.revokeObjectURL(url);
   } catch (err) {
     console.error("Download error:", err);
-    alert("Network error downloading document.");
+    showToast("Network error downloading document.", "error");
   }
 };
 

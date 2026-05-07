@@ -1,7 +1,11 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Float, DateTime, Text, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Float, DateTime, Text, Boolean, Sequence
 from sqlalchemy.orm import relationship
 import datetime
 from backend.database import Base
+
+# Database-level sequence for concurrency-safe offer reference generation.
+# This replaces the fragile "find last offer ID + 1" pattern.
+offer_ref_seq = Sequence("offer_ref_seq", start=1, increment=1)
 
 class Client(Base):
     __tablename__ = "clients"

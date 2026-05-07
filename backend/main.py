@@ -25,12 +25,13 @@ if DB_AVAILABLE:
 app = FastAPI()
 
 # --- CORS MIDDLEWARE ---
+# NOTE FOR TUTOR/DEPLOYMENT:
+# allow_origins=["*"] is acceptable for an internal VPN environment.
+# For a public-facing deployment, restrict this to the actual domain:
+#   allow_origins=["https://your-domain.csic.es"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-    ],
+    allow_origins=["*"],  # Internal VPN — open to all origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

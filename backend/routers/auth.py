@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from argon2.exceptions import VerifyMismatchError
+from datetime import timedelta
 
 from backend import models, schemas, auth as auth_service
 from backend.dependencies import get_db
@@ -43,7 +44,10 @@ def unified_login(login_data: schemas.LoginRequest, db: Session = Depends(get_db
     if client:
         try:
             ph.verify(client.hashed_password, password_with_pepper)
-            access_token = auth_service.create_access_token(data={"id": client.id, "role": "client"})
+            access_token = auth_service.create_access_token(
+                data={"id": client.id, "role": "client"},
+                expires_delta=timedelta(minutes=auth_service.ACCESS_TOKEN_EXPIRE_MINUTES)
+            )
             return {
                 "access_token": access_token,
                 "token_type": "bearer",
@@ -64,7 +68,10 @@ def unified_login(login_data: schemas.LoginRequest, db: Session = Depends(get_db
     if tech:
         try:
             ph.verify(tech.hashed_password, password_with_pepper)
-            access_token = auth_service.create_access_token(data={"id": tech.id, "role": "technician"})
+            access_token = auth_service.create_access_token(
+                data={"id": tech.id, "role": "technician"},
+                expires_delta=timedelta(minutes=auth_service.ACCESS_TOKEN_EXPIRE_MINUTES)
+            )
             return {
                 "access_token": access_token,
                 "token_type": "bearer",

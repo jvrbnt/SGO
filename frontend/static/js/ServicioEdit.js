@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
             localStorage.setItem("users", JSON.stringify(users));
         }
 
-        alert("Profile updated successfully!");
+        showToast("Profile updated successfully!", "success");
         updateUI(currentUser); // Reflect changes immediately on the top bar
     });
 });

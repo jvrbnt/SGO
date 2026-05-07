@@ -10,27 +10,54 @@ logger = logging.getLogger("sgo")
 router = APIRouter(prefix="/api", tags=["invoice"])
 
 @router.get("/technician/billing-clients", response_model=List[schemas.ClientResponse])
-def get_billing_clients(tech_id: int, current_user = Depends(auth_service.require_technician_or_higher), db: Session = Depends(get_db)):
-    """Return clients who have active offers managed by this tech."""
+def get_billing_clients(current_user = Depends(auth_service.require_technician_or_higher), db: Session = Depends(get_db)):
+    """Return clients who have active offers managed by the current technician.
+    
+    Security: Uses current_user.id from JWT instead of a query parameter
+    to prevent IDOR (a technician querying another technician's clients).
+    """
     clients = db.query(models.Client).join(models.Offer).filter(
-        models.Offer.manager_id == tech_id,
+        models.Offer.manager_id == current_user.id,
         models.Offer.status.in_(["accepted", "completed"])
     ).distinct().all()
     return clients
 
 @router.get("/technician/billing-offers", response_model=List[schemas.OfferResponse])
-def get_billing_offers(tech_id: int, client_id: int, current_user = Depends(auth_service.require_technician_or_higher), db: Session = Depends(get_db)):
-    """Return billable offers for a specific client."""
+def get_billing_offers(client_id: int, current_user = Depends(auth_service.require_technician_or_higher), db: Session = Depends(get_db)):
+    """Return billable offers for a specific client managed by the current technician.
+    
+    Security: Uses current_user.id from JWT instead of a query parameter
+    to prevent IDOR (a technician viewing another technician's billable offers).
+    """
     offers = db.query(models.Offer).filter(
         models.Offer.client_id == client_id,
-        models.Offer.manager_id == tech_id,
+        models.Offer.manager_id == current_user.id,
         models.Offer.status.in_(["accepted", "completed"])
     ).all()
     return offers
 
 @router.post("/technician/invoices")
 def create_invoice(invoice_data: schemas.InvoiceCreate, current_user = Depends(auth_service.require_technician_or_higher), db: Session = Depends(get_db)):
-    """Create an invoice grouping offers."""
+    """Create an invoice grouping offers.
+    
+    Security: Verifies that the technician creating the invoice is the one
+    specified in the data (or is an Admin). Also validates that all offers
+    belong to this technician.
+    """
+    # IDOR Protection: only the technician themselves (or Admin) can create their invoice
+    if invoice_data.technician_id != current_user.id and current_user.privilege_level != "Admin":
+        raise HTTPException(status_code=403, detail="You can only create invoices for yourself")
+
+    # Validate that all offers belong to the invoicing technician
+    for o_id in invoice_data.offer_ids:
+        offer = db.query(models.Offer).filter(models.Offer.id == o_id).first()
+        if not offer:
+            raise HTTPException(status_code=404, detail=f"Offer {o_id} not found")
+        if offer.manager_id != invoice_data.technician_id and current_user.privilege_level != "Admin":
+            raise HTTPException(status_code=403, detail=f"Offer {o_id} is not managed by you")
+        if offer.status not in ["accepted", "completed"]:
+            raise HTTPException(status_code=400, detail=f"Offer {o_id} is not in a billable status (current: '{offer.status}')")
+
     try:
         new_invoice = models.Invoice(
             client_id=invoice_data.client_id,
@@ -101,10 +128,18 @@ def get_all_invoices(current_user = Depends(auth_service.require_admin), db: Ses
 
 @router.post("/technician/invoices/{invoice_id}/pay")
 def pay_invoice(invoice_id: int, current_user = Depends(auth_service.require_technician_or_higher), db: Session = Depends(get_db)):
-    """Mark an invoice and all linked offers as paid."""
+    """Mark an invoice and all linked offers as paid.
+    
+    Security: Only the technician who owns the invoice or an Admin can mark it as paid.
+    """
     invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
+
+    # IDOR Protection: only the invoice owner or Admin can mark as paid
+    if invoice.technician_id != current_user.id and current_user.privilege_level != "Admin":
+        raise HTTPException(status_code=403, detail="Only the invoice owner or an Admin can mark this invoice as paid")
+
     invoice.status = "paid"
     for offer in invoice.offers:
         offer.status = "paid"

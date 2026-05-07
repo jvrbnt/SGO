@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import extract
-from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from typing import List
 
@@ -12,7 +11,11 @@ router = APIRouter(prefix="/api/client", tags=["client"])
 
 @router.post("/offers")
 def create_offer(offer_in: schemas.OfferCreate, current_user = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
-    """Create a new offer request from a client."""
+    """Create a new offer request from a client.
+    
+    Uses a PostgreSQL Sequence (offer_ref_seq) for concurrency-safe reference
+    code generation instead of the fragile 'find last + 1' pattern.
+    """
     # Ensure current client doesn't spawn offers for other emails
     if current_user.app_role == "client" and current_user.email != offer_in.client_email:
         raise HTTPException(status_code=403, detail="Unauthorized client email")
@@ -22,27 +25,15 @@ def create_offer(offer_in: schemas.OfferCreate, current_user = Depends(auth_serv
         raise HTTPException(status_code=404, detail="Client not found in database")
 
     current_year = datetime.now().year
-    
-    for attempt in range(3):
-        last_offer = db.query(models.Offer).filter(extract('year', models.Offer.created_at) == current_year).order_by(models.Offer.id.desc()).first()
-        next_seq = 1
-        if last_offer and last_offer.reference:
-            try:
-                next_seq = int(last_offer.reference.split('_')[0]) + 1
-            except:
-                pass
-        reference_code = f"{next_seq:03d}_{current_year}"
 
-        new_offer = models.Offer(client_id=client.id, status="requested", reference=reference_code)
-        db.add(new_offer)
-        try:
-            db.commit()
-            db.refresh(new_offer)
-            break # Success, break out of retry loop
-        except IntegrityError:
-            db.rollback()
-            if attempt == 2:
-                raise HTTPException(status_code=500, detail="High concurrency detected. Please try submitting again.")
+    # Atomically get the next value from the database sequence (concurrency-safe)
+    next_seq = db.execute(models.offer_ref_seq)
+    reference_code = f"{next_seq:03d}_{current_year}"
+
+    new_offer = models.Offer(client_id=client.id, status="requested", reference=reference_code)
+    db.add(new_offer)
+    db.commit()
+    db.refresh(new_offer)
 
     for s in offer_in.services:
         catalog_item = db.query(models.ServiceCatalog).filter(

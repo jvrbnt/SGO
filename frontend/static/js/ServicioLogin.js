@@ -56,11 +56,11 @@ document.addEventListener("DOMContentLoaded", () => {
           let errorMsg = data.detail;
           if (Array.isArray(errorMsg))
             errorMsg = "Incorrect data format.";
-          alert("Error: " + errorMsg);
+          showToast("Error: " + errorMsg, "error");
         }
       } catch (err) {
         console.error("Connection error:", err);
-        alert("Could not connect to the backend server.");
+        showToast("Could not connect to the backend server.", "error");
       }
     });
   }

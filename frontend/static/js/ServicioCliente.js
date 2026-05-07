@@ -12,7 +12,7 @@ window.fetch = async function() {
     }
     const response = await originalFetch(resource, config);
     if (response.status === 401) {
-        alert("Session expired. Please log in again.");
+        showToast("Session expired. Please log in again.", "warning");
         localStorage.removeItem('authToken');
         localStorage.removeItem('currentUser');
         window.location.href = '/login';
@@ -294,7 +294,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
 
       if (requestedServices.length === 0)
-        return alert("Select at least one service with hours.");
+        return showToast("Select at least one service with hours.", "warning");
 
       const res = await fetch("/api/client/offers", {
         method: "POST",
@@ -306,7 +306,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
 
       if (res.ok) {
-        alert("Request sent successfully.");
+        showToast("Request sent successfully.", "success");
         location.reload();
       }
     });
@@ -327,11 +327,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
 
     if (res.ok) {
-      alert("Offer accepted. The technician has been notified.");
+      showToast("Offer accepted. The technician has been notified.", "success");
       window.loadMyRequests();
     } else {
       const err = await res.json().catch(() => ({}));
-      alert(err.detail || "Failed to accept the offer. Please try again.");
+      showToast(err.detail || "Failed to accept the offer. Please try again.", "error");
     }
   };
 
