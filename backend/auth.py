@@ -15,7 +15,7 @@ if not SECRET_KEY:
     raise RuntimeError("ERROR: JWT_SECRET_KEY variable not found in .env file!")
 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 30  # 30 days — safe for internal VPN use
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "480"))
 
 # OAuth2 scheme for Swagger UI/FastAPI dependency injection (though we use fetch in JS)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/login")

@@ -1,4 +1,6 @@
 // --- 1. NAVIGATION AND TABS ---
+const sanitizeDisplayData = window.sanitizeApiData || ((value) => value);
+
 window.openTab = function (evt, tabName) {
   const tabContents = document.getElementsByClassName("tab-content");
   for (let i = 0; i < tabContents.length; i++) {
@@ -37,6 +39,7 @@ window.fetch = async function() {
 // --- 2. INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", () => {
   const techData = JSON.parse(localStorage.getItem("currentUser"));
+  const profilePicture = techData ? (techData.profilePicture || techData.profile_picture) : null;
 
   if (!techData || techData.role !== "technician") {
     window.location.href = "/login";
@@ -49,9 +52,9 @@ document.addEventListener("DOMContentLoaded", () => {
     userNameBar.textContent = techData.nickname || `${techData.first_name} ${techData.last_name}`;
   }
 
-  if (techData.profilePicture) {
+  if (profilePicture) {
     const userIcon = document.getElementById("userIcon");
-    if (userIcon) userIcon.src = techData.profilePicture;
+    if (userIcon) userIcon.src = profilePicture;
   }
 
   // Dropdown Menu Logic
@@ -82,6 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (logOutBtn) {
     logOutBtn.addEventListener("click", () => {
       localStorage.removeItem("currentUser");
+      localStorage.removeItem("authToken");
       window.location.href = "/login";
     });
   }
@@ -112,7 +116,7 @@ window.loadAllOffers = async function () {
     const response = await fetch("/api/technician/offers");
     if (!response.ok) throw new Error("Failed to fetch offers");
 
-    const offers = await response.json();
+    const offers = sanitizeDisplayData(await response.json());
     window.allOffers = offers;
     renderAll();
   } catch (error) {
@@ -270,12 +274,12 @@ window.openReviewPanel = async function (offerId, isMineTab, readOnly = false, p
   try {
     const response = await fetch(`/api/technician/offers/${offerId}`);
     if (!response.ok) throw new Error("Could not retrieve offer details");
-    const offer = await response.json();
+    const offer = sanitizeDisplayData(await response.json());
 
     // Filter catalog for "Add Service" dropdown: exclude services already in offer
     const currentServiceNames = offer.services.map(s => s.service_name);
     const catalogRes = await fetch("/api/catalog");
-    let catalogItems = catalogRes.ok ? await catalogRes.json() : [];
+    let catalogItems = catalogRes.ok ? sanitizeDisplayData(await catalogRes.json()) : [];
     catalogItems = catalogItems.filter(item => !currentServiceNames.includes(item.name));
 
     const client = offer.client || {};
@@ -709,7 +713,7 @@ function renderOfferList(offers, container, isGlobal, techId) {
                         <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
                             <span><strong>${s.service_name}</strong> (${s.hours}h)</span>
                             ${s.technician_id ? `<span style="font-size:12px; color:#555;"><strong>Assigned Technician:</strong> ${s.technician ? s.technician.first_name + ' ' + s.technician.last_name : 'Technician #' + s.technician_id}</span>` : ''}
-                            ${(offer.status === 'accepted' || offer.status === 'finished') ? `
+                            ${(offer.status === 'accepted' || offer.status === 'completed') ? `
                               <span style="font-size:11px; font-weight:bold; padding:4px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px; ${s.status === 'done' ? 'background:#d1fae5; color:#065f46;' : 'background:#fef3c7; color:#92400e;'}">
                                 ${s.status === 'done' 
                                   ? `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> DONE` 
@@ -720,7 +724,7 @@ function renderOfferList(offers, container, isGlobal, techId) {
                         ${s.comment ? `<div style="margin-top:4px; font-size:12px; color:#777; display:flex; align-items:center; gap:5px;"><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='12' height='12' fill='#aaa'><path d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z'/></svg><em>${s.comment}</em></div>` : ''}
                     </div>
                     <div style="display:flex; align-items:stretch;">
-                        ${(offer.status === 'accepted' || offer.status === 'finished')
+                        ${(offer.status === 'accepted' || offer.status === 'completed')
                           ? (s.technician_id === techId || (techData && techData.privilege_level === 'Admin')
                               ? (s.status !== 'done'
                                 ? `<button onclick="window.markServiceStatus(${s.id}, 'done')" style="background:#059669; color:white; border:none; padding:8px 14px; cursor:pointer; font-size:12px; font-weight:bold; white-space:nowrap;">✓ Service Done</button>`
@@ -747,7 +751,9 @@ function renderOfferList(offers, container, isGlobal, techId) {
                   : '')
             }
             <button onclick="window.openReviewPanel(${offer.id}, ${!isGlobal}, ${offer.status !== 'requested'})" class="btn-card btn-review">Review</button>
-            ${offer.status !== 'requested' ? `<button onclick="window.downloadOfferDocument(${offer.id})" class="btn-card" style="background:#2c3e50; color:white;" title="Download offer as Word document">📄 Document</button>` : ''}
+            ${offer.status !== 'requested' ? `<button onclick="window.downloadOfferPdf(${offer.id})" class="btn-card" style="background:#1f4e79; color:white;" title="Download stored offer PDF">Offer PDF</button>` : ''}
+            ${offer.status !== 'requested' ? `<button onclick="window.downloadOfferDocument(${offer.id})" class="btn-card" style="background:#2c3e50; color:white;" title="Download offer as Word document">DOCX</button>` : ''}
+            ${offer.status !== 'requested' ? `<button onclick="window.downloadTraceabilityCsv(${offer.id})" class="btn-card" style="background:#475569; color:white;" title="Download traceability CSV">Traceability</button>` : ''}
           </div>
           <div style="text-align: right;">
             ${offer.manager_id
@@ -803,7 +809,7 @@ window.loadCatalogPrices = async function () {
   try {
     const response = await fetch("/api/catalog");
     if (!response.ok) throw new Error("Failed to fetch catalog");
-    const catalog = await response.json();
+    const catalog = sanitizeDisplayData(await response.json());
     window.catalogPrices = catalog;
     window.renderPricesTable();
   } catch (error) {
@@ -1022,7 +1028,7 @@ window.loadAdminTechnicians = async function () {
   try {
     const res = await fetch("/api/admin/technicians");
     if (!res.ok) throw new Error("Could not fetch technicians");
-    const technicians = await res.json();
+    const technicians = sanitizeDisplayData(await res.json());
 
     // Admin user details
     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
@@ -1124,7 +1130,7 @@ window.loadBillingClients = async function () {
 
   try {
     const res = await fetch(`/api/technician/billing-clients`);
-    const clients = await res.json();
+    const clients = sanitizeDisplayData(await res.json());
 
     let html = '<option value="">-- Select a client --</option>';
     if (clients.length === 0) {
@@ -1156,7 +1162,7 @@ window.loadBillingClientOffers = async function () {
 
   try {
     const res = await fetch(`/api/technician/billing-offers?client_id=${select.value}`);
-    const offers = await res.json();
+    const offers = sanitizeDisplayData(await res.json());
     window.currentBillingOffers = offers;
 
     if (offers.length === 0) {
@@ -1293,7 +1299,7 @@ window.loadTechInvoices = async function () {
 
   try {
     const res = await fetch("/api/technician/invoices/all");
-    const invoices = await res.json();
+    const invoices = sanitizeDisplayData(await res.json());
     window._invoicesCache = invoices;
 
     if (invoices.length === 0) {
@@ -1322,6 +1328,9 @@ window.loadTechInvoices = async function () {
                ${inv.status.toUpperCase()}
              </span>
              <div style="display:flex; gap:6px;">
+               <button onclick="window.downloadInvoicePdf(${inv.id})" style="background:#1f4e79; color:white; border:none; padding:6px 12px; border-radius:4px; font-size:12px; cursor:pointer; font-weight:600;" title="Download stored invoice PDF">
+                 PDF
+               </button>
                <button onclick="window.openInvoiceReview(${inv.id})" style="background:#3498db; color:white; border:none; padding:6px 12px; border-radius:4px; font-size:12px; cursor:pointer; font-weight:600;" title="View invoice details">
                  Review
                </button>
@@ -1482,6 +1491,50 @@ function isReviewPanelOpen() {
   return !!document.querySelector(".btn-back");
 }
 
+async function downloadBlobResponse(response, fallbackFilename) {
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const disposition = response.headers.get("Content-Disposition");
+  const match = disposition && disposition.match(/filename="?(.+?)"?$/);
+  a.download = match ? match[1] : fallbackFilename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+window.downloadOfferPdf = async function (offerId) {
+  try {
+    const response = await fetch(`/api/technician/offers/${offerId}/document.pdf`);
+    if (!response.ok) {
+      const err = await response.json();
+      showToast("Error: " + (err.detail || "Could not generate offer PDF"), "error");
+      return;
+    }
+    await downloadBlobResponse(response, `Oferta_${offerId}.pdf`);
+  } catch (err) {
+    console.error("Download error:", err);
+    showToast("Network error downloading offer PDF.", "error");
+  }
+};
+
+window.downloadInvoicePdf = async function (invoiceId) {
+  try {
+    const response = await fetch(`/api/technician/invoices/${invoiceId}/document.pdf`);
+    if (!response.ok) {
+      const err = await response.json();
+      showToast("Error: " + (err.detail || "Could not generate invoice PDF"), "error");
+      return;
+    }
+    await downloadBlobResponse(response, `Factura_${invoiceId}.pdf`);
+  } catch (err) {
+    console.error("Download error:", err);
+    showToast("Network error downloading invoice PDF.", "error");
+  }
+};
+
 // --- DOWNLOAD OFFER DOCUMENT ---
 window.downloadOfferDocument = async function (offerId) {
   try {
@@ -1491,21 +1544,25 @@ window.downloadOfferDocument = async function (offerId) {
       showToast("Error: " + (err.detail || "Could not generate document"), "error");
       return;
     }
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    // Extract filename from Content-Disposition header or use default
-    const disposition = response.headers.get("Content-Disposition");
-    const match = disposition && disposition.match(/filename="?(.+?)"?$/);
-    a.download = match ? match[1] : `Oferta_${offerId}.docx`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
+    await downloadBlobResponse(response, `Oferta_${offerId}.docx`);
   } catch (err) {
     console.error("Download error:", err);
     showToast("Network error downloading document.", "error");
+  }
+};
+
+window.downloadTraceabilityCsv = async function (offerId) {
+  try {
+    const response = await fetch(`/api/technician/offers/${offerId}/traceability.csv`);
+    if (!response.ok) {
+      const err = await response.json();
+      showToast("Error: " + (err.detail || "Could not export traceability"), "error");
+      return;
+    }
+    await downloadBlobResponse(response, `trazabilidad_${offerId}.csv`);
+  } catch (err) {
+    console.error("Traceability export error:", err);
+    showToast("Network error exporting traceability.", "error");
   }
 };
 

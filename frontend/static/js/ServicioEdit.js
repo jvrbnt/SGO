@@ -1,6 +1,16 @@
 document.addEventListener("DOMContentLoaded", () => {
     const DEFAULT_PHOTO = "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png";
     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    const authFetch = (resource, config = {}) => {
+        const token = localStorage.getItem("authToken");
+        return fetch(resource, {
+            ...config,
+            headers: {
+                ...(config.headers || {}),
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+        });
+    };
 
     // Security: Redirect if no user is found
     if (!currentUser) {
@@ -18,20 +28,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Function to update visual profile elements
     const updateUI = (user) => {
-        const displayName = user.nickname || `${user.first_name || ""} ${user.last_name || ""}`.trim() || "User";
+        const displayName = user.nickname || user.display_name || `${user.first_name || ""} ${user.last_name || ""}`.trim() || "User";
         userNameBar.textContent = displayName;
-        const photo = user.profilePicture || DEFAULT_PHOTO;
+        const photo = user.profilePicture || user.profile_picture || DEFAULT_PHOTO;
         userIconBar.src = photo;
         photoPreview.src = photo;
     };
 
     // --- INITIAL DATA LOAD ---
     updateUI(currentUser);
-    editNickname.value = currentUser.nickname || "";
+    editNickname.value = currentUser.nickname || currentUser.display_name || "";
     editEntity.value = currentUser.entity || "CSIC";
 
     const toggleInternal = (val) => {
-        if (val === "interno(MiNa)") {
+        if (val === "Internal") {
             internalFields.classList.remove("hidden-form");
         } else {
             internalFields.classList.add("hidden-form");
@@ -39,16 +49,16 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     toggleInternal(currentUser.entity);
 
-    if (currentUser.entity === "interno(MiNa)") {
-        document.getElementById("editGroup").value = currentUser.group || "";
-        document.getElementById("editIP").value = currentUser.ip || "";
-        document.getElementById("editInternalAccount").value = currentUser.account || "";
-        document.getElementById("editProject").value = currentUser.project || "";
+    if (currentUser.entity === "Internal") {
+        document.getElementById("editGroup").value = currentUser.grupo || currentUser.group || "";
+        document.getElementById("editIP").value = currentUser.investigador_principal || currentUser.ip || "";
+        document.getElementById("editInternalAccount").value = currentUser.cuenta_interna || currentUser.account || "";
+        document.getElementById("editProject").value = currentUser.codigo_proyecto || currentUser.project || "";
     }
 
     // --- PHOTO MANAGEMENT ---
     const inputPhotoFile = document.getElementById("inputPhotoFile");
-    let currentPhotoBase64 = currentUser.profilePicture || DEFAULT_PHOTO;
+    let currentPhotoBase64 = currentUser.profilePicture || currentUser.profile_picture || DEFAULT_PHOTO;
 
     document.getElementById("btnChangePhoto").addEventListener("click", () => inputPhotoFile.click());
     
@@ -92,44 +102,49 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("logOut").addEventListener("click", () => {
         localStorage.removeItem("currentUser");
+        localStorage.removeItem("authToken");
         window.location.href = "/login";
     });
 
     // --- SAVE CHANGES ---
-    document.getElementById("btnSaveChanges").addEventListener("click", () => {
+    document.getElementById("btnSaveChanges").addEventListener("click", async () => {
         const entity = editEntity.value;
         const nickname = editNickname.value.trim();
+        const payload = {
+            display_name: nickname || null,
+            profile_picture: currentPhotoBase64,
+            entity,
+            investigador_principal: null,
+            cuenta_interna: null,
+            codigo_proyecto: null,
+            grupo: null,
+        };
 
-        // Update currentUser object
-        currentUser.nickname = nickname;
-        currentUser.entity = entity;
-        currentUser.profilePicture = currentPhotoBase64;
-
-        if (entity === "interno(MiNa)") {
-            currentUser.group = document.getElementById("editGroup").value;
-            currentUser.ip = document.getElementById("editIP").value;
-            currentUser.account = document.getElementById("editInternalAccount").value;
-            currentUser.project = document.getElementById("editProject").value;
-        } else {
-            // Clear internal data if entity changes
-            delete currentUser.group;
-            delete currentUser.ip;
-            delete currentUser.account;
-            delete currentUser.project;
+        if (entity === "Internal") {
+            payload.grupo = document.getElementById("editGroup").value;
+            payload.investigador_principal = document.getElementById("editIP").value;
+            payload.cuenta_interna = document.getElementById("editInternalAccount").value;
+            payload.codigo_proyecto = document.getElementById("editProject").value;
         }
 
-        // Save to localStorage
-        localStorage.setItem("currentUser", JSON.stringify(currentUser));
-        
-        // Sync with global user list
-        let users = JSON.parse(localStorage.getItem("users")) || [];
-        const idx = users.findIndex(u => u.email === currentUser.email);
-        if (idx !== -1) {
-            users[idx] = currentUser;
-            localStorage.setItem("users", JSON.stringify(users));
-        }
+        try {
+            const response = await authFetch("/api/me", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(Array.isArray(data.detail) ? "Invalid profile data." : (data.detail || "Could not update profile"));
+            }
 
-        showToast("Profile updated successfully!", "success");
-        updateUI(currentUser); // Reflect changes immediately on the top bar
+            data.profilePicture = data.profile_picture;
+            data.nickname = data.display_name;
+            localStorage.setItem("currentUser", JSON.stringify(data));
+            showToast("Profile updated successfully!", "success");
+            updateUI(data);
+        } catch (err) {
+            showToast(err.message || "Could not update profile.", "error");
+        }
     });
 });

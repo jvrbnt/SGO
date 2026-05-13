@@ -5,6 +5,7 @@ import logging
 
 from backend import models, schemas, auth as auth_service
 from backend.dependencies import get_db
+from backend import workflow
 
 logger = logging.getLogger("sgo")
 router = APIRouter(prefix="/api", tags=["invoice"])
@@ -18,7 +19,7 @@ def get_billing_clients(current_user = Depends(auth_service.require_technician_o
     """
     clients = db.query(models.Client).join(models.Offer).filter(
         models.Offer.manager_id == current_user.id,
-        models.Offer.status.in_(["accepted", "completed"])
+        models.Offer.status.in_(workflow.BILLABLE_OFFER_STATUSES)
     ).distinct().all()
     return clients
 
@@ -32,7 +33,7 @@ def get_billing_offers(client_id: int, current_user = Depends(auth_service.requi
     offers = db.query(models.Offer).filter(
         models.Offer.client_id == client_id,
         models.Offer.manager_id == current_user.id,
-        models.Offer.status.in_(["accepted", "completed"])
+        models.Offer.status.in_(workflow.BILLABLE_OFFER_STATUSES)
     ).all()
     return offers
 
@@ -45,47 +46,71 @@ def create_invoice(invoice_data: schemas.InvoiceCreate, current_user = Depends(a
     belong to this technician.
     """
     # IDOR Protection: only the technician themselves (or Admin) can create their invoice
-    if invoice_data.technician_id != current_user.id and current_user.privilege_level != "Admin":
+    if invoice_data.technician_id != current_user.id and not workflow.is_admin(current_user):
         raise HTTPException(status_code=403, detail="You can only create invoices for yourself")
 
-    # Validate that all offers belong to the invoicing technician
+    client = db.query(models.Client).filter(models.Client.id == invoice_data.client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    technician = db.query(models.Technician).filter(models.Technician.id == invoice_data.technician_id).first()
+    if not technician:
+        raise HTTPException(status_code=404, detail="Technician not found")
+
+    validated_offers = []
+    # SECURITY FIX: Never trust the total_price sent by the frontend.
+    # A malicious user could send a total of 0.0 for 10 offers.
+    # We always recalculate the total price on the server side before creating the invoice.
+    recalculated_total = 0.0
+
+    # Validate that all offers belong to the invoicing technician and client.
     for o_id in invoice_data.offer_ids:
         offer = db.query(models.Offer).filter(models.Offer.id == o_id).first()
         if not offer:
             raise HTTPException(status_code=404, detail=f"Offer {o_id} not found")
-        if offer.manager_id != invoice_data.technician_id and current_user.privilege_level != "Admin":
-            raise HTTPException(status_code=403, detail=f"Offer {o_id} is not managed by you")
-        if offer.status not in ["accepted", "completed"]:
+        if offer.manager_id != invoice_data.technician_id:
+            raise HTTPException(status_code=403, detail=f"Offer {o_id} is not managed by the selected technician")
+        if offer.client_id != invoice_data.client_id:
+            raise HTTPException(status_code=400, detail=f"Offer {o_id} does not belong to the selected client")
+        if offer.invoice_id is not None:
+            raise HTTPException(status_code=400, detail=f"Offer {o_id} is already linked to an invoice")
+        if offer.status not in workflow.BILLABLE_OFFER_STATUSES:
             raise HTTPException(status_code=400, detail=f"Offer {o_id} is not in a billable status (current: '{offer.status}')")
+        active_services = workflow.active_services(offer)
+        if not active_services:
+            raise HTTPException(status_code=400, detail=f"Offer {o_id} has no active services")
+        if any(service.quoted_price is None for service in active_services):
+            raise HTTPException(status_code=400, detail=f"Offer {o_id} has unpriced services")
+        validated_offers.append(offer)
+        recalculated_total += workflow.sum_offer_total(offer)
+
+    recalculated_total = round(recalculated_total, 2)
 
     try:
         new_invoice = models.Invoice(
             client_id=invoice_data.client_id,
             technician_id=invoice_data.technician_id,
-            total_price=invoice_data.total_price,
+            total_price=recalculated_total,
             comment=invoice_data.comment,
-            status="invoiced"
+            status=workflow.INVOICED
         )
         db.add(new_invoice)
+        db.flush()
+        db.refresh(new_invoice)
+
+        for offer in validated_offers:
+            offer.status = workflow.INVOICED
+            offer.invoice_id = new_invoice.id
+
         db.commit()
         db.refresh(new_invoice)
 
-        for o_id in invoice_data.offer_ids:
-            offer = db.query(models.Offer).filter(models.Offer.id == o_id).first()
-            if offer:
-                offer.status = "invoiced"
-                offer.invoice_id = new_invoice.id
-
-        db.commit()
-        db.refresh(new_invoice)
-
-        tech = db.query(models.Technician).filter(models.Technician.id == new_invoice.technician_id).first()
         return {
             "id": new_invoice.id,
             "client_id": new_invoice.client_id,
             "technician_id": new_invoice.technician_id,
-            "technician_first_name": tech.first_name if tech else None,
-            "technician_last_name": tech.last_name if tech else None,
+            "technician_first_name": technician.first_name,
+            "technician_last_name": technician.last_name,
             "total_price": new_invoice.total_price,
             "comment": new_invoice.comment,
             "status": new_invoice.status,
@@ -137,11 +162,16 @@ def pay_invoice(invoice_id: int, current_user = Depends(auth_service.require_tec
         raise HTTPException(status_code=404, detail="Invoice not found")
 
     # IDOR Protection: only the invoice owner or Admin can mark as paid
-    if invoice.technician_id != current_user.id and current_user.privilege_level != "Admin":
+    if invoice.technician_id != current_user.id and not workflow.is_admin(current_user):
         raise HTTPException(status_code=403, detail="Only the invoice owner or an Admin can mark this invoice as paid")
 
-    invoice.status = "paid"
+    if invoice.status == workflow.PAID:
+        return {"message": "Invoice was already paid"}
+    if invoice.status != workflow.INVOICED:
+        raise HTTPException(status_code=400, detail=f"Cannot mark invoice with status '{invoice.status}' as paid")
+
+    invoice.status = workflow.PAID
     for offer in invoice.offers:
-        offer.status = "paid"
+        offer.status = workflow.PAID
     db.commit()
     return {"message": "Invoice and linked offers marked as paid successfully"}

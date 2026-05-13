@@ -1,4 +1,5 @@
 // --- AUTHENTICATION INTERCEPTOR ---
+const sanitizeDisplayData = window.sanitizeApiData || ((value) => value);
 const originalFetch = window.fetch;
 window.fetch = async function() {
     let [resource, config] = arguments;
@@ -36,8 +37,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     "Researcher";
   document.getElementById("userNameBar").textContent = displayName;
 
-  if (currentUser.profilePicture) {
-    document.getElementById("userIcon").src = currentUser.profilePicture;
+  const profilePicture = currentUser.profilePicture || currentUser.profile_picture;
+  if (profilePicture) {
+    document.getElementById("userIcon").src = profilePicture;
   }
 
   // 3. DROPDOWN MENU
@@ -57,6 +59,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 4. NAVIGATION BUTTONS
   document.getElementById("logOut")?.addEventListener("click", () => {
     localStorage.removeItem("currentUser");
+    localStorage.removeItem("authToken");
     window.location.href = "/login";
   });
 
@@ -69,7 +72,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const grid = document.getElementById("servicesGrid");
     try {
       const response = await fetch("/api/catalog");
-      const catalog = await response.json();
+      const catalog = sanitizeDisplayData(await response.json());
 
       grid.style.display = "flex";
       grid.style.flexDirection = "column";
@@ -118,7 +121,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const response = await fetch(
         `/api/client/my-offers?email=${encodeURIComponent(currentUser.email)}`,
       );
-      const offers = await response.json();
+      const offers = sanitizeDisplayData(await response.json());
 
       list.innerHTML = "";
       list.style.display = "grid";
@@ -260,6 +263,12 @@ document.addEventListener("DOMContentLoaded", async () => {
               </div>
             ` : ''}
 
+            ${offer.status !== 'requested' ? `
+              <button onclick="window.downloadClientOfferPdf(${offer.id})" style="width:100%; margin-top:12px; background:#1f4e79; color:white; border:none; padding:10px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:13px;">
+                DOWNLOAD OFFER PDF
+              </button>
+            ` : ''}
+
             ${offer.status === 'quoted' ? `
               <button onclick="window.acceptQuotedOffer(${offer.id})" style="width:100%; margin-top:15px; background:#28a745; color:white; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:14px;">
                 ACCEPT QUOTATION AND CONFIRM WORK
@@ -335,6 +344,50 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   };
 
+  async function downloadBlobResponse(response, fallbackFilename) {
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const disposition = response.headers.get("Content-Disposition");
+    const match = disposition && disposition.match(/filename="?(.+?)"?$/);
+    a.download = match ? match[1] : fallbackFilename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  }
+
+  window.downloadClientOfferPdf = async function (offerId) {
+    try {
+      const response = await fetch(`/api/client/offers/${offerId}/document.pdf`);
+      if (!response.ok) {
+        const err = await response.json();
+        showToast("Error: " + (err.detail || "Could not generate offer PDF"), "error");
+        return;
+      }
+      await downloadBlobResponse(response, `Oferta_${offerId}.pdf`);
+    } catch (err) {
+      console.error("Download error:", err);
+      showToast("Network error downloading offer PDF.", "error");
+    }
+  };
+
+  window.downloadClientInvoicePdf = async function (invoiceId) {
+    try {
+      const response = await fetch(`/api/client/invoices/${invoiceId}/document.pdf`);
+      if (!response.ok) {
+        const err = await response.json();
+        showToast("Error: " + (err.detail || "Could not generate invoice PDF"), "error");
+        return;
+      }
+      await downloadBlobResponse(response, `Factura_${invoiceId}.pdf`);
+    } catch (err) {
+      console.error("Download error:", err);
+      showToast("Network error downloading invoice PDF.", "error");
+    }
+  };
+
   // 9. INVOICES / BILLING
   window.loadClientInvoices = async function () {
     const list = document.getElementById("invoiceList");
@@ -342,7 +395,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     try {
       const response = await fetch(`/api/client/invoices?email=${encodeURIComponent(currentUser.email)}`);
-      const invoices = await response.json();
+      const invoices = sanitizeDisplayData(await response.json());
       
       if (invoices.length === 0) {
         list.innerHTML = "<p style='text-align:center; color:#666;'>No invoices generated yet.</p>";
@@ -383,15 +436,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
         
         return `
-          <div style="border:1px solid ${inv.status === 'finished' ? '#cbd5e1' : '#ccc'}; border-radius:8px; padding:20px; background:${inv.status === 'finished' ? '#f8fafc' : '#fff'}; display:flex; flex-direction:column; gap:10px;">
+          <div style="border:1px solid ${inv.status === 'paid' ? '#cbd5e1' : '#ccc'}; border-radius:8px; padding:20px; background:${inv.status === 'paid' ? '#f8fafc' : '#fff'}; display:flex; flex-direction:column; gap:10px;">
             <div style="display:flex; justify-content:space-between; border-bottom:2px solid #eee; padding-bottom:10px;">
               <h3 style="margin:0; color:var(--color-csic);">Invoice #${inv.id}</h3>
-              <span style="background:${inv.status === 'finished' ? '#2c3e50' : '#9b59b6'}; color:white; padding:4px 12px; border-radius:12px; font-weight:bold; font-size:12px;">${inv.status.toUpperCase()}</span>
+              <span style="background:${inv.status === 'paid' ? '#2c3e50' : '#9b59b6'}; color:white; padding:4px 12px; border-radius:12px; font-weight:bold; font-size:12px;">${inv.status.toUpperCase()}</span>
             </div>
             
             <div style="display:flex; justify-content:space-between; align-items:center; font-size:14px; color:#555;">
               <span><strong>Date:</strong> ${new Date(inv.created_at).toLocaleDateString()}</span>
-              <button onclick="const d = document.getElementById('details-${inv.id}'); d.style.display = d.style.display === 'none' ? 'flex' : 'none';" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer; font-weight:bold; color:#334155;">Review Offers</button>
+              <span style="display:flex; gap:6px;">
+                <button onclick="window.downloadClientInvoicePdf(${inv.id})" style="background:#1f4e79; color:white; border:1px solid #1f4e79; padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer; font-weight:bold;">PDF</button>
+                <button onclick="const d = document.getElementById('details-${inv.id}'); d.style.display = d.style.display === 'none' ? 'flex' : 'none';" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer; font-weight:bold; color:#334155;">Review Offers</button>
+              </span>
             </div>
             
             ${detailsHtml}

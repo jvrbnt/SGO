@@ -12,7 +12,10 @@ router = APIRouter(prefix="/api", tags=["auth"])
 @router.post("/client/signup")
 def create_client(client_data: schemas.ClientCreateWeb, db: Session = Depends(get_db)):
     """Register a new client account."""
-    if db.query(models.Client).filter(models.Client.email == client_data.email).first():
+    if (
+        db.query(models.Client).filter(models.Client.email == client_data.email).first()
+        or db.query(models.Technician).filter(models.Technician.email == client_data.email).first()
+    ):
         raise HTTPException(status_code=400, detail="Email is already registered")
 
     password_with_pepper = client_data.password + SECRET_PEPPER
@@ -57,7 +60,14 @@ def unified_login(login_data: schemas.LoginRequest, db: Session = Depends(get_db
                     "email": client.email,
                     "first_name": client.first_name,
                     "last_name": client.last_name,
-                    "profile_picture": client.profile_picture
+                    "display_name": client.display_name,
+                    "nickname": client.display_name,
+                    "profile_picture": client.profile_picture,
+                    "entity": client.entity,
+                    "investigador_principal": client.investigador_principal,
+                    "cuenta_interna": client.cuenta_interna,
+                    "codigo_proyecto": client.codigo_proyecto,
+                    "grupo": client.grupo,
                 }
             }
         except VerifyMismatchError:
@@ -81,6 +91,8 @@ def unified_login(login_data: schemas.LoginRequest, db: Session = Depends(get_db
                     "email": tech.email,
                     "first_name": tech.first_name,
                     "last_name": tech.last_name,
+                    "display_name": tech.display_name,
+                    "nickname": tech.display_name,
                     "profile_picture": tech.profile_picture,
                     "privilege_level": tech.privilege_level
                 }
@@ -100,8 +112,14 @@ def read_users_me(current_user = Depends(auth_service.get_current_user)):
             "email": current_user.email,
             "first_name": current_user.first_name,
             "last_name": current_user.last_name,
+            "display_name": getattr(current_user, "display_name", None),
+            "nickname": getattr(current_user, "display_name", None),
             "profile_picture": getattr(current_user, "profile_picture", None),
-            "entity": current_user.entity
+            "entity": current_user.entity,
+            "investigador_principal": current_user.investigador_principal,
+            "cuenta_interna": current_user.cuenta_interna,
+            "codigo_proyecto": current_user.codigo_proyecto,
+            "grupo": current_user.grupo,
         }
     else:
         return {
@@ -110,6 +128,38 @@ def read_users_me(current_user = Depends(auth_service.get_current_user)):
             "email": current_user.email,
             "first_name": current_user.first_name,
             "last_name": current_user.last_name,
+            "display_name": getattr(current_user, "display_name", None),
+            "nickname": getattr(current_user, "display_name", None),
             "profile_picture": getattr(current_user, "profile_picture", None),
             "privilege_level": getattr(current_user, "privilege_level", "Technician")
         }
+
+
+@router.patch("/me")
+def update_users_me(
+    profile_data: schemas.ProfileUpdate,
+    current_user=Depends(auth_service.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Persist editable profile fields for the logged-in user.
+    This centralized endpoint replaces the insecure approach of only updating
+    profile data in the frontend's localStorage. It ensures that the database
+    is the source of truth for user profiles, including critical billing fields
+    for internal clients.
+    """
+    current_user.display_name = profile_data.display_name
+    if profile_data.profile_picture is not None:
+        current_user.profile_picture = profile_data.profile_picture
+
+    if current_user.app_role == "client":
+        if profile_data.entity is not None:
+            current_user.entity = profile_data.entity
+        current_user.investigador_principal = profile_data.investigador_principal
+        current_user.cuenta_interna = profile_data.cuenta_interna
+        current_user.codigo_proyecto = profile_data.codigo_proyecto
+        current_user.grupo = profile_data.grupo
+
+    db.commit()
+    db.refresh(current_user)
+    return read_users_me(current_user)

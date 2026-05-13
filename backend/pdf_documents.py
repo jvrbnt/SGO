@@ -1,0 +1,228 @@
+import hashlib
+import os
+import re
+from datetime import datetime
+from pathlib import Path
+from xml.sax.saxutils import escape
+
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import mm
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+from backend import models, workflow
+
+"""
+PDF Document Generation Module
+This module uses the 'reportlab' library to natively generate immutable PDF 
+documents for Offers and Invoices. Generating PDFs directly via code is highly 
+efficient for the server and avoids the need for heavy external dependencies 
+like LibreOffice or Microsoft Word.
+"""
+
+# Directory where all generated PDFs will be stored persistently.
+DOCUMENT_ROOT = Path(os.getenv("GENERATED_DOCUMENTS_DIR", "data/generated_documents"))
+
+
+def _safe_part(value) -> str:
+    text = str(value or "").strip()
+    text = re.sub(r"[^A-Za-z0-9_.-]+", "_", text)
+    return text.strip("._") or "document"
+
+
+def _money(value) -> str:
+    return f"{float(value or 0):.2f} EUR"
+
+
+def _date(value) -> str:
+    if not value:
+        return "-"
+    if isinstance(value, datetime):
+        return value.strftime("%d/%m/%Y")
+    return str(value)
+
+
+def _text(value) -> str:
+    return escape(str(value if value is not None else "-"))
+
+
+def _paragraph(value, style):
+    return Paragraph(_text(value), style)
+
+
+def _checksum(path: Path) -> str:
+    # Calculates a SHA-256 hash of the generated PDF file.
+    # This is used for auditing and to prove the document has not been tampered with.
+    digest = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _register_document(db, *, document_type, file_format, path, offer_id=None, invoice_id=None, technician_id=None):
+    sha256 = _checksum(path)
+    record = models.GeneratedDocument(
+        document_type=document_type,
+        file_format=file_format,
+        file_path=str(path),
+        sha256=sha256,
+        offer_id=offer_id,
+        invoice_id=invoice_id,
+        created_by_technician_id=technician_id,
+    )
+    db.add(record)
+    db.commit()
+    return record
+
+
+def _build_pdf(path: Path, title: str, metadata_rows, table_headers, table_rows, total_label: str, total: float, notes: str | None = None):
+    # Core function that uses ReportLab to draw the PDF layout.
+    # It creates a standard A4 page with margins, a title, a metadata table, and a services table.
+    path.parent.mkdir(parents=True, exist_ok=True)
+    styles = getSampleStyleSheet()
+    doc = SimpleDocTemplate(
+        str(path),
+        pagesize=A4,
+        leftMargin=18 * mm,
+        rightMargin=18 * mm,
+        topMargin=16 * mm,
+        bottomMargin=16 * mm,
+        title=title,
+    )
+
+    story = [
+        Paragraph("MiNa - IMN / CSIC", styles["Title"]),
+        _paragraph(title, styles["Heading2"]),
+        Spacer(1, 8),
+    ]
+
+    wrapped_metadata_rows = [
+        [_paragraph(label, styles["BodyText"]), _paragraph(value, styles["BodyText"])]
+        for label, value in metadata_rows
+    ]
+    meta_table = Table(wrapped_metadata_rows, colWidths=[42 * mm, 120 * mm])
+    meta_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#eef2f7")),
+        ("TEXTCOLOR", (0, 0), (-1, -1), colors.HexColor("#111827")),
+        ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+        ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#cbd5e1")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("PADDING", (0, 0), (-1, -1), 6),
+    ]))
+    story.extend([meta_table, Spacer(1, 12)])
+
+    data = [
+        [_paragraph(cell, styles["BodyText"]) for cell in table_headers],
+        *[[_paragraph(cell, styles["BodyText"]) for cell in row] for row in table_rows],
+        ["", "", _paragraph(total_label, styles["BodyText"]), _paragraph(_money(total), styles["BodyText"])],
+    ]
+    table = Table(data, colWidths=[72 * mm, 28 * mm, 32 * mm, 30 * mm], repeatRows=1)
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1f4e79")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#cbd5e1")),
+        ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#eef2f7")),
+        ("FONTNAME", (2, -1), (-1, -1), "Helvetica-Bold"),
+        ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("PADDING", (0, 0), (-1, -1), 6),
+    ]))
+    story.append(table)
+
+    if notes:
+        story.extend([Spacer(1, 12), Paragraph("Notes", styles["Heading3"]), _paragraph(notes, styles["BodyText"])])
+
+    story.extend([
+        Spacer(1, 16),
+        Paragraph(
+            "Generated by SGO. Stored copy is kept on the IMN server for traceability and audit purposes.",
+            styles["Italic"],
+        ),
+    ])
+    doc.build(story)
+
+
+def generate_offer_pdf(db, offer, technician_id=None):
+    client = offer.client
+    manager = offer.manager
+    year = (offer.created_at or datetime.now()).year
+    reference = offer.reference or f"offer_{offer.id}"
+    generated_at = datetime.now().strftime("%Y%m%d%H%M%S")
+    path = DOCUMENT_ROOT / str(year) / "offers" / f"O_{_safe_part(reference)}_{generated_at}.pdf"
+
+    services = workflow.active_services(offer)
+    table_rows = [
+        [
+            service.service_name,
+            f"{service.hours:g}",
+            service.technician.first_name + " " + service.technician.last_name if service.technician else "-",
+            _money(service.quoted_price),
+        ]
+        for service in services
+    ]
+    total = workflow.sum_offer_total(offer)
+    metadata_rows = [
+        ["Offer reference", reference],
+        ["Date", _date(offer.created_at)],
+        ["Client", f"{client.first_name} {client.last_name}" if client else "-"],
+        ["Email", client.email if client else "-"],
+        ["Entity", client.entity if client else "-"],
+        ["Project code", client.codigo_proyecto if client and client.codigo_proyecto else "-"],
+        ["Internal account", client.cuenta_interna if client and client.cuenta_interna else "-"],
+        ["Principal investigator", client.investigador_principal if client and client.investigador_principal else "-"],
+        ["Manager", f"{manager.first_name} {manager.last_name}" if manager else "-"],
+        ["Status", offer.status],
+    ]
+    _build_pdf(
+        path,
+        f"Offer {reference}",
+        metadata_rows,
+        ["Service", "Hours", "Technician", "Price"],
+        table_rows,
+        "Total",
+        total,
+        offer.technician_comment,
+    )
+    return _register_document(db, document_type="offer", file_format="pdf", path=path, offer_id=offer.id, technician_id=technician_id)
+
+
+def generate_invoice_pdf(db, invoice, technician_id=None):
+    year = (invoice.created_at or datetime.now()).year
+    generated_at = datetime.now().strftime("%Y%m%d%H%M%S")
+    path = DOCUMENT_ROOT / str(year) / "invoices" / f"INV_{invoice.id:04d}_{generated_at}.pdf"
+    client = invoice.client
+    technician = invoice.technician
+
+    table_rows = []
+    for offer in invoice.offers:
+        for service in workflow.active_services(offer):
+            table_rows.append([
+                f"{offer.reference or offer.id} - {service.service_name}",
+                f"{service.hours:g}",
+                service.technician.first_name + " " + service.technician.last_name if service.technician else "-",
+                _money(service.quoted_price),
+            ])
+
+    metadata_rows = [
+        ["Invoice", f"#{invoice.id}"],
+        ["Date", _date(invoice.created_at)],
+        ["Client", f"{client.first_name} {client.last_name}" if client else "-"],
+        ["Email", client.email if client else "-"],
+        ["Entity", client.entity if client else "-"],
+        ["Technician", f"{technician.first_name} {technician.last_name}" if technician else "-"],
+        ["Status", invoice.status],
+    ]
+    _build_pdf(
+        path,
+        f"Invoice #{invoice.id}",
+        metadata_rows,
+        ["Service", "Hours", "Technician", "Price"],
+        table_rows,
+        "Invoice total",
+        invoice.total_price,
+        invoice.comment,
+    )
+    return _register_document(db, document_type="invoice", file_format="pdf", path=path, invoice_id=invoice.id, technician_id=technician_id)

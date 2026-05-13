@@ -16,7 +16,10 @@ def admin_get_technicians(current_user = Depends(auth_service.require_admin), db
 @router.post("/technicians")
 def admin_create_technician(tech_in: schemas.TechnicianCreate, current_user = Depends(auth_service.require_admin), db: Session = Depends(get_db)):
     """Create a new technician account (admin only)."""
-    if db.query(models.Technician).filter(models.Technician.email == tech_in.email).first():
+    if (
+        db.query(models.Technician).filter(models.Technician.email == tech_in.email).first()
+        or db.query(models.Client).filter(models.Client.email == tech_in.email).first()
+    ):
         raise HTTPException(status_code=400, detail="Email is already registered")
 
     password_with_pepper = tech_in.password + SECRET_PEPPER

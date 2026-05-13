@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   // Clear any existing session to enforce logout when visiting login page
   localStorage.removeItem("currentUser");
+  localStorage.removeItem("authToken");
 
   // --- Password visibility toggle ---
   const togglePassword = document.getElementById("togglePassword");
@@ -43,6 +44,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (response.ok) {
           // data contains { access_token: "...", token_type: "bearer", user: {...} }
+          if (data.user.profile_picture && !data.user.profilePicture) {
+            data.user.profilePicture = data.user.profile_picture;
+          }
           localStorage.setItem("authToken", data.access_token);
           localStorage.setItem("currentUser", JSON.stringify(data.user));
 

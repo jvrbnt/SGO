@@ -105,5 +105,25 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+/**
+ * Recursively escape strings received from the API before interpolating them
+ * into legacy innerHTML templates. 
+ * SECURITY FIX: This prevents XSS (Cross-Site Scripting) attacks where a malicious 
+ * user could input `<script>alert('hack')</script>` as their name or observation.
+ * By escaping it to HTML entities, the browser renders it as safe text instead of executing it.
+ */
+function sanitizeApiData(value) {
+    if (typeof value === "string") return escapeHtml(value);
+    if (Array.isArray(value)) return value.map(sanitizeApiData);
+    if (value && typeof value === "object") {
+        return Object.fromEntries(
+            Object.entries(value).map(([key, nestedValue]) => [key, sanitizeApiData(nestedValue)])
+        );
+    }
+    return value;
+}
+
 // Make showToast globally available
 window.showToast = showToast;
+window.escapeHtml = escapeHtml;
+window.sanitizeApiData = sanitizeApiData;

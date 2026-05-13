@@ -1,5 +1,6 @@
 // Clear any existing session to enforce logout when visiting signup page
 localStorage.removeItem("currentUser");
+localStorage.removeItem("authToken");
 
 const selectEntity = document.getElementById("entity");
 const extraFields = document.getElementById("extraFields");

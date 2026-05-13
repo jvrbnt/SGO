@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Float, DateTime, Text, Boolean, Sequence
+from sqlalchemy import Column, Integer, String, ForeignKey, Float, DateTime, Text, Boolean, Sequence, UniqueConstraint
 from sqlalchemy.orm import relationship
 import datetime
 from backend.database import Base
@@ -16,6 +16,7 @@ class Client(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     entity = Column(String, nullable=False)
+    display_name = Column(String, nullable=True)
 
     # Fields specific to Internal (MiNa) clients — required when entity is "Internal"
     # IP = Investigador Principal, CI = Cuenta Interna, CP = Codigo de Proyecto
@@ -37,6 +38,7 @@ class Technician(Base):
     last_name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
+    display_name = Column(String, nullable=True)
     profile_picture = Column(String, nullable=True)
     privilege_level = Column(String, nullable=False, default="Technician")
 
@@ -79,7 +81,7 @@ class Offer(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     reference = Column(String, unique=True, index=True, nullable=True) # e.g., '001_2026'
-    # Status flow: requested → quoted → accepted → invoiced → finished
+    # Status flow: requested -> quoted -> accepted -> completed -> invoiced -> paid
     status = Column(String, default="requested")
 
     created_at = Column(DateTime, default=datetime.datetime.now)
@@ -119,3 +121,55 @@ class Service(Base):
     offer = relationship("Offer", back_populates="services")
     technician = relationship("Technician", back_populates="assigned_services")
     catalog_item = relationship("ServiceCatalog", back_populates="services")
+
+
+class TraceabilityEntry(Base):
+    # This model acts as the digital equivalent of an RG-12 Quality form.
+    # It stores detailed chronological tracking for a specific laboratory service.
+    __tablename__ = "traceability_entries"
+    __table_args__ = (
+        UniqueConstraint("service_id", name="uq_traceability_service_id"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    offer_id = Column(Integer, ForeignKey("offers.id"), nullable=False, index=True)
+    service_id = Column(Integer, ForeignKey("services.id"), nullable=False, index=True)
+
+    request_date = Column(DateTime, nullable=True)
+    acceptance_date = Column(DateTime, nullable=True)
+    delivery_date = Column(DateTime, nullable=True)
+
+    mina_autoservicio = Column(String, nullable=True)
+    sample_provided = Column(String, nullable=True)
+    verification = Column(String, nullable=True)
+    charge_note = Column(String, nullable=True)
+    conformity = Column(String, nullable=True)
+    observations = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.datetime.now)
+    updated_at = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+
+    offer = relationship("Offer")
+    service = relationship("Service")
+
+
+class GeneratedDocument(Base):
+    # This table stores the metadata and SHA-256 hash of natively generated PDFs.
+    # It provides an unalterable audit trail proving that a document (like an invoice)
+    # existed at a specific time and hasn't been tampered with since creation.
+    __tablename__ = "generated_documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    document_type = Column(String, nullable=False)  # offer, invoice
+    file_format = Column(String, nullable=False)    # pdf, docx
+    file_path = Column(String, nullable=False)
+    sha256 = Column(String, nullable=False)
+
+    offer_id = Column(Integer, ForeignKey("offers.id"), nullable=True, index=True)
+    invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=True, index=True)
+    created_by_technician_id = Column(Integer, ForeignKey("technicians.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.now)
+
+    offer = relationship("Offer")
+    invoice = relationship("Invoice")
+    created_by_technician = relationship("Technician")

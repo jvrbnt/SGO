@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import extract
+from sqlalchemy import select
 from datetime import datetime
 from typing import List
 
 from backend import models, schemas, auth as auth_service
 from backend.dependencies import get_db
+from backend import workflow
 
 router = APIRouter(prefix="/api/client", tags=["client"])
 
@@ -16,8 +17,11 @@ def create_offer(offer_in: schemas.OfferCreate, current_user = Depends(auth_serv
     Uses a PostgreSQL Sequence (offer_ref_seq) for concurrency-safe reference
     code generation instead of the fragile 'find last + 1' pattern.
     """
+    if current_user.app_role != "client":
+        raise HTTPException(status_code=403, detail="Only clients can create offer requests")
+
     # Ensure current client doesn't spawn offers for other emails
-    if current_user.app_role == "client" and current_user.email != offer_in.client_email:
+    if current_user.email != offer_in.client_email:
         raise HTTPException(status_code=403, detail="Unauthorized client email")
         
     client = db.query(models.Client).filter(models.Client.email == offer_in.client_email).first()
@@ -27,30 +31,40 @@ def create_offer(offer_in: schemas.OfferCreate, current_user = Depends(auth_serv
     current_year = datetime.now().year
 
     # Atomically get the next value from the database sequence (concurrency-safe)
-    next_seq = db.execute(models.offer_ref_seq)
+    next_seq = db.execute(select(models.offer_ref_seq.next_value())).scalar_one()
     reference_code = f"{next_seq:03d}_{current_year}"
 
-    new_offer = models.Offer(client_id=client.id, status="requested", reference=reference_code)
-    db.add(new_offer)
-    db.commit()
-    db.refresh(new_offer)
+    try:
+        new_offer = models.Offer(client_id=client.id, status=workflow.REQUESTED, reference=reference_code)
+        db.add(new_offer)
+        db.flush()
 
-    for s in offer_in.services:
-        catalog_item = db.query(models.ServiceCatalog).filter(
-            models.ServiceCatalog.name == s.service_name
-        ).first()
+        for s in offer_in.services:
+            catalog_item = db.query(models.ServiceCatalog).filter(
+                models.ServiceCatalog.name == s.service_name
+            ).first()
+            if not catalog_item:
+                raise HTTPException(status_code=400, detail=f"Unknown service '{s.service_name}'")
 
-        new_service = models.Service(
-            service_name=s.service_name,
-            hours=s.hours,
-            original_hours=s.hours,
-            comment=s.comment,
-            offer_id=new_offer.id,
-            catalog_id=catalog_item.id if catalog_item else None
-        )
-        db.add(new_service)
+            new_service = models.Service(
+                service_name=catalog_item.name,
+                hours=s.hours,
+                original_hours=s.hours,
+                comment=s.comment,
+                offer_id=new_offer.id,
+                catalog_id=catalog_item.id
+            )
+            db.add(new_service)
 
-    db.commit()
+        db.commit()
+        db.refresh(new_offer)
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception:
+        db.rollback()
+        raise
+
     return {"message": "Offer requested successfully", "offer_id": new_offer.id}
 
 @router.get("/my-offers", response_model=List[schemas.OfferResponse])
@@ -77,10 +91,19 @@ def client_accept_offer(offer_id: int, current_user = Depends(auth_service.get_c
     if offer.client_id != current_user.id:
         raise HTTPException(status_code=403, detail="This offer does not belong to you")
 
-    if offer.status != "quoted":
+    # SECURITY FIX: Ensure the offer is in a valid state to be accepted.
+    if offer.status != workflow.QUOTED:
         raise HTTPException(status_code=400, detail=f"Cannot accept an offer with status '{offer.status}'")
 
-    offer.status = "accepted"
+    active_services = workflow.active_services(offer)
+    # SECURITY FIX: Prevent accepting an offer that has no services or unpriced services.
+    # This prevents edge cases where an empty offer or an offer with missing prices enters the active workflow.
+    if not active_services:
+        raise HTTPException(status_code=400, detail="Cannot accept an offer without active services")
+    if any(service.quoted_price is None for service in active_services):
+        raise HTTPException(status_code=400, detail="Cannot accept an offer with unpriced services")
+
+    offer.status = workflow.ACCEPTED
     db.commit()
     return {"message": "Offer accepted successfully"}
 
