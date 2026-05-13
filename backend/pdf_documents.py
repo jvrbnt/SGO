@@ -61,6 +61,18 @@ def _checksum(path: Path) -> str:
     return digest.hexdigest()
 
 
+def latest_document(db, *, document_type, file_format="pdf", offer_id=None, invoice_id=None):
+    query = db.query(models.GeneratedDocument).filter(
+        models.GeneratedDocument.document_type == document_type,
+        models.GeneratedDocument.file_format == file_format,
+    )
+    if offer_id is not None:
+        query = query.filter(models.GeneratedDocument.offer_id == offer_id)
+    if invoice_id is not None:
+        query = query.filter(models.GeneratedDocument.invoice_id == invoice_id)
+    return query.order_by(models.GeneratedDocument.created_at.desc(), models.GeneratedDocument.id.desc()).first()
+
+
 def _register_document(db, *, document_type, file_format, path, offer_id=None, invoice_id=None, technician_id=None):
     sha256 = _checksum(path)
     record = models.GeneratedDocument(
@@ -145,6 +157,39 @@ def _build_pdf(path: Path, title: str, metadata_rows, table_headers, table_rows,
     doc.build(story)
 
 
+def generate_request_pdf(db, offer, technician_id=None):
+    client = offer.client
+    year = (offer.created_at or datetime.now()).year
+    reference = offer.reference or f"offer_{offer.id}"
+    generated_at = datetime.now().strftime("%Y%m%d%H%M%S")
+    path = DOCUMENT_ROOT / str(year) / "requests" / f"PO_{_safe_part(reference)}_{generated_at}.pdf"
+    table_rows = [
+        [service.service_name, f"{service.hours:g}", "-", "-"]
+        for service in workflow.active_services(offer)
+    ]
+    metadata_rows = [
+        ["Request reference", f"PO_{reference}"],
+        ["Date", _date(offer.created_at)],
+        ["Client", f"{client.first_name} {client.last_name}" if client else "-"],
+        ["Email", client.email if client else "-"],
+        ["Entity", client.entity if client else "-"],
+        ["Project code", client.codigo_proyecto if client and client.codigo_proyecto else "-"],
+        ["Internal account", client.cuenta_interna if client and client.cuenta_interna else "-"],
+        ["Principal investigator", client.investigador_principal if client and client.investigador_principal else "-"],
+    ]
+    _build_pdf(
+        path,
+        f"Service request PO_{reference}",
+        metadata_rows,
+        ["Requested service", "Hours", "Technician", "Price"],
+        table_rows,
+        "Estimated total",
+        0.0,
+        "Request registered in SGO. The final quotation will be issued as RG-10.",
+    )
+    return _register_document(db, document_type="request", file_format="pdf", path=path, offer_id=offer.id, technician_id=technician_id)
+
+
 def generate_offer_pdf(db, offer, technician_id=None):
     client = offer.client
     manager = offer.manager
@@ -187,6 +232,45 @@ def generate_offer_pdf(db, offer, technician_id=None):
         offer.technician_comment,
     )
     return _register_document(db, document_type="offer", file_format="pdf", path=path, offer_id=offer.id, technician_id=technician_id)
+
+
+def generate_acceptance_pdf(db, offer, technician_id=None):
+    client = offer.client
+    manager = offer.manager
+    year = (offer.created_at or datetime.now()).year
+    reference = offer.reference or f"offer_{offer.id}"
+    generated_at = datetime.now().strftime("%Y%m%d%H%M%S")
+    path = DOCUMENT_ROOT / str(year) / "acceptances" / f"AO_{_safe_part(reference)}_{generated_at}.pdf"
+    table_rows = [
+        [
+            service.service_name,
+            f"{service.hours:g}",
+            service.technician.first_name + " " + service.technician.last_name if service.technician else "-",
+            _money(service.quoted_price),
+        ]
+        for service in workflow.active_services(offer)
+    ]
+    metadata_rows = [
+        ["Acceptance reference", f"AO_{reference}"],
+        ["Accepted offer", reference],
+        ["Acceptance date", datetime.now().strftime("%d/%m/%Y")],
+        ["Client", f"{client.first_name} {client.last_name}" if client else "-"],
+        ["Email", client.email if client else "-"],
+        ["Entity", client.entity if client else "-"],
+        ["Manager", f"{manager.first_name} {manager.last_name}" if manager else "-"],
+        ["Status", workflow.ACCEPTED],
+    ]
+    _build_pdf(
+        path,
+        f"Offer acceptance AO_{reference}",
+        metadata_rows,
+        ["Accepted service", "Hours", "Technician", "Price"],
+        table_rows,
+        "Accepted total",
+        workflow.sum_offer_total(offer),
+        "The client accepted the quotation through SGO.",
+    )
+    return _register_document(db, document_type="acceptance", file_format="pdf", path=path, offer_id=offer.id, technician_id=technician_id)
 
 
 def generate_invoice_pdf(db, invoice, technician_id=None):

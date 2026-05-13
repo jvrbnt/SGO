@@ -8,12 +8,19 @@ from docxtpl import DocxTemplate
 
 from backend import models, auth as auth_service, workflow
 from backend.dependencies import get_db
-from backend.pdf_documents import generate_invoice_pdf, generate_offer_pdf
+from backend.pdf_documents import generate_invoice_pdf, generate_offer_pdf, latest_document
 
 router = APIRouter(prefix="/api/technician", tags=["documents"])
 client_router = APIRouter(prefix="/api/client", tags=["documents"])
 
 TEMPLATE_PATH = Path("docs_oficiales/CSS_RG-10. Oferta Ed.05_ES.docx")
+
+
+def _latest_existing_document(db, *, document_type, offer_id=None, invoice_id=None):
+    record = latest_document(db, document_type=document_type, offer_id=offer_id, invoice_id=invoice_id)
+    if record and Path(record.file_path).exists():
+        return record
+    return None
 
 
 def _build_services_list(services):
@@ -116,7 +123,9 @@ def generate_offer_pdf_document(
     if offer.status == workflow.REQUESTED:
         raise HTTPException(status_code=400, detail="Cannot generate an offer PDF before it is quoted")
 
-    record = generate_offer_pdf(db, offer, technician_id=current_user.id)
+    record = _latest_existing_document(db, document_type="offer", offer_id=offer.id)
+    if not record:
+        record = generate_offer_pdf(db, offer, technician_id=current_user.id)
     return FileResponse(
         record.file_path,
         media_type="application/pdf",
@@ -135,7 +144,9 @@ def generate_invoice_pdf_document(
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
-    record = generate_invoice_pdf(db, invoice, technician_id=current_user.id)
+    record = _latest_existing_document(db, document_type="invoice", invoice_id=invoice.id)
+    if not record:
+        record = generate_invoice_pdf(db, invoice, technician_id=current_user.id)
     return FileResponse(
         record.file_path,
         media_type="application/pdf",
@@ -161,7 +172,9 @@ def generate_client_offer_pdf_document(
     if offer.status == workflow.REQUESTED:
         raise HTTPException(status_code=400, detail="Cannot generate an offer PDF before it is quoted")
 
-    record = generate_offer_pdf(db, offer)
+    record = _latest_existing_document(db, document_type="offer", offer_id=offer.id)
+    if not record:
+        record = generate_offer_pdf(db, offer)
     return FileResponse(
         record.file_path,
         media_type="application/pdf",
@@ -185,7 +198,9 @@ def generate_client_invoice_pdf_document(
     if invoice.client_id != current_user.id:
         raise HTTPException(status_code=403, detail="This invoice does not belong to you")
 
-    record = generate_invoice_pdf(db, invoice)
+    record = _latest_existing_document(db, document_type="invoice", invoice_id=invoice.id)
+    if not record:
+        record = generate_invoice_pdf(db, invoice)
     return FileResponse(
         record.file_path,
         media_type="application/pdf",

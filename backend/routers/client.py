@@ -7,6 +7,7 @@ from typing import List
 from backend import models, schemas, auth as auth_service
 from backend.dependencies import get_db
 from backend import workflow
+from backend.pdf_documents import generate_acceptance_pdf, generate_request_pdf
 
 router = APIRouter(prefix="/api/client", tags=["client"])
 
@@ -56,7 +57,9 @@ def create_offer(offer_in: schemas.OfferCreate, current_user = Depends(auth_serv
             )
             db.add(new_service)
 
-        db.commit()
+        db.flush()
+        db.refresh(new_offer)
+        generate_request_pdf(db, new_offer)
         db.refresh(new_offer)
     except HTTPException:
         db.rollback()
@@ -104,7 +107,20 @@ def client_accept_offer(offer_id: int, current_user = Depends(auth_service.get_c
         raise HTTPException(status_code=400, detail="Cannot accept an offer with unpriced services")
 
     offer.status = workflow.ACCEPTED
-    db.commit()
+    for service in active_services:
+        entry = db.query(models.TraceabilityEntry).filter(
+            models.TraceabilityEntry.service_id == service.id
+        ).first()
+        if not entry:
+            entry = models.TraceabilityEntry(
+                offer_id=offer.id,
+                service_id=service.id,
+                request_date=offer.created_at,
+            )
+            db.add(entry)
+        entry.acceptance_date = datetime.now()
+
+    generate_acceptance_pdf(db, offer)
     return {"message": "Offer accepted successfully"}
 
 @router.get("/invoices")

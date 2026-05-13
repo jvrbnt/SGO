@@ -6,6 +6,7 @@ import logging
 from backend import models, schemas, auth as auth_service
 from backend.dependencies import get_db
 from backend import workflow
+from backend.pdf_documents import generate_invoice_pdf
 
 logger = logging.getLogger("sgo")
 router = APIRouter(prefix="/api", tags=["invoice"])
@@ -102,7 +103,8 @@ def create_invoice(invoice_data: schemas.InvoiceCreate, current_user = Depends(a
             offer.status = workflow.INVOICED
             offer.invoice_id = new_invoice.id
 
-        db.commit()
+        db.flush()
+        generate_invoice_pdf(db, new_invoice, technician_id=current_user.id)
         db.refresh(new_invoice)
 
         return {
@@ -122,9 +124,12 @@ def create_invoice(invoice_data: schemas.InvoiceCreate, current_user = Depends(a
         raise HTTPException(status_code=400, detail="Failed to create invoice")
 
 @router.get("/technician/invoices/all")
-def get_all_invoices(current_user = Depends(auth_service.require_admin), db: Session = Depends(get_db)):
-    """Get the full invoice history (admin only)."""
-    invoices = db.query(models.Invoice).order_by(models.Invoice.created_at.desc()).all()
+def get_all_invoices(current_user = Depends(auth_service.require_technician_or_higher), db: Session = Depends(get_db)):
+    """Get invoice history. Admin sees all invoices; technicians see their own."""
+    query = db.query(models.Invoice)
+    if not workflow.is_admin(current_user):
+        query = query.filter(models.Invoice.technician_id == current_user.id)
+    invoices = query.order_by(models.Invoice.created_at.desc()).all()
     result = []
     for inv in invoices:
         tech = db.query(models.Technician).filter(models.Technician.id == inv.technician_id).first()

@@ -1,11 +1,12 @@
 import logging
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
 
 from backend import models
-from backend.database import engine, DB_AVAILABLE
+from backend.database import engine, DB_AVAILABLE, LocalSession
 
 # Import Routers
 from backend.routers import pages, auth, admin, catalog, client, technician, invoice, documents, traceability
@@ -24,6 +25,21 @@ if DB_AVAILABLE and os.getenv("AUTO_CREATE_TABLES", "").lower() in {"1", "true",
 
 # --- APP INITIALIZATION ---
 app = FastAPI()
+
+
+@app.get("/api/health", tags=["health"])
+def healthcheck():
+    if not DB_AVAILABLE or LocalSession is None:
+        raise HTTPException(status_code=503, detail="Database is not configured")
+    db = LocalSession()
+    try:
+        db.execute(text("SELECT 1"))
+    except Exception as exc:
+        logger.error("Healthcheck database query failed: %s", exc)
+        raise HTTPException(status_code=503, detail="Database is not reachable") from exc
+    finally:
+        db.close()
+    return {"status": "ok", "database": "ok"}
 
 # --- CORS MIDDLEWARE ---
 cors_origins = [

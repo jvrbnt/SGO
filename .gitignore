@@ -3,5 +3,8 @@ __pycache__/
 *.pyc
 .env
 venv
-docs_oficiales/
+docs_oficiales/*
+!docs_oficiales/CSS_RG-10. Oferta Ed.05_ES.docx
 data/
+backups/
+scratch.patch

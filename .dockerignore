@@ -9,6 +9,7 @@ env
 
 # Cache de Python
 __pycache__
+.pytest_cache
 *.pyc
 *.pyo
 *.pyd
@@ -20,7 +21,10 @@ __pycache__
 
 # Documentación
 *.md
-docs_oficiales/
+
+# Datos persistentes y temporales locales
+data/
+backups/
+scratch.patch
 
 # Otros
-

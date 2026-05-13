@@ -5,6 +5,7 @@ from typing import List, Optional
 from backend import models, schemas, auth as auth_service
 from backend.dependencies import get_db
 from backend import workflow
+from backend.pdf_documents import generate_offer_pdf
 
 router = APIRouter(prefix="/api/technician", tags=["technician"])
 
@@ -59,7 +60,7 @@ def finalize_review_and_send(offer_id: int, review_data: schemas.OfferReviewUpda
         service.comment = s_data.comment
         service.quoted_price = s_data.quoted_price
 
-    db.commit()
+    generate_offer_pdf(db, offer, technician_id=current_user.id)
     return {"message": "Offer sent to client as QUOTED"}
 
 @router.patch("/offers/{offer_id}")
