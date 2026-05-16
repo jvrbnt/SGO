@@ -24,7 +24,12 @@ if DB_AVAILABLE and os.getenv("AUTO_CREATE_TABLES", "").lower() in {"1", "true",
         database.DB_AVAILABLE = False
 
 # --- APP INITIALIZATION ---
-app = FastAPI()
+api_docs_enabled = os.getenv("ENABLE_API_DOCS", "").lower() in {"1", "true", "yes"}
+app = FastAPI(
+    docs_url="/docs" if api_docs_enabled else None,
+    redoc_url="/redoc" if api_docs_enabled else None,
+    openapi_url="/openapi.json" if api_docs_enabled else None,
+)
 
 
 @app.get("/api/health", tags=["health"])
