@@ -8,7 +8,7 @@ from docxtpl import DocxTemplate
 
 from backend import models, auth as auth_service, workflow
 from backend.dependencies import get_db
-from backend.pdf_documents import generate_invoice_pdf, generate_offer_pdf, latest_document
+from backend.pdf_documents import generate_invoice_pdf, generate_offer_pdf, generate_request_pdf, latest_document
 
 router = APIRouter(prefix="/api/technician", tags=["documents"])
 client_router = APIRouter(prefix="/api/client", tags=["documents"])
@@ -133,6 +133,27 @@ def generate_offer_pdf_document(
     )
 
 
+@router.get("/offers/{offer_id}/request.pdf")
+def generate_request_pdf_document(
+    offer_id: int,
+    current_user=Depends(auth_service.require_technician_or_higher),
+    db: Session = Depends(get_db),
+):
+    """Return the stored service request PDF for an offer."""
+    offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer not found")
+
+    record = _latest_existing_document(db, document_type="request", offer_id=offer.id)
+    if not record:
+        record = generate_request_pdf(db, offer, technician_id=current_user.id)
+    return FileResponse(
+        record.file_path,
+        media_type="application/pdf",
+        filename=Path(record.file_path).name,
+    )
+
+
 @router.get("/invoices/{invoice_id}/document.pdf")
 def generate_invoice_pdf_document(
     invoice_id: int,
@@ -147,6 +168,32 @@ def generate_invoice_pdf_document(
     record = _latest_existing_document(db, document_type="invoice", invoice_id=invoice.id)
     if not record:
         record = generate_invoice_pdf(db, invoice, technician_id=current_user.id)
+    return FileResponse(
+        record.file_path,
+        media_type="application/pdf",
+        filename=Path(record.file_path).name,
+    )
+
+
+@client_router.get("/offers/{offer_id}/request.pdf")
+def generate_client_request_pdf_document(
+    offer_id: int,
+    current_user=Depends(auth_service.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return the stored request PDF for the authenticated client."""
+    if current_user.app_role != "client":
+        raise HTTPException(status_code=403, detail="Only clients can download their request PDFs")
+
+    offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer not found")
+    if offer.client_id != current_user.id:
+        raise HTTPException(status_code=403, detail="This offer does not belong to you")
+
+    record = _latest_existing_document(db, document_type="request", offer_id=offer.id)
+    if not record:
+        record = generate_request_pdf(db, offer)
     return FileResponse(
         record.file_path,
         media_type="application/pdf",

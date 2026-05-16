@@ -263,6 +263,10 @@ document.addEventListener("DOMContentLoaded", async () => {
               </div>
             ` : ''}
 
+            <button onclick="window.downloadClientRequestPdf(${offer.id})" style="width:100%; margin-top:12px; background:#475569; color:white; border:none; padding:10px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:13px;">
+              DOWNLOAD REQUEST PDF
+            </button>
+
             ${offer.status !== 'requested' ? `
               <button onclick="window.downloadClientOfferPdf(${offer.id})" style="width:100%; margin-top:12px; background:#1f4e79; color:white; border:none; padding:10px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:13px;">
                 DOWNLOAD OFFER PDF
@@ -370,6 +374,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (err) {
       console.error("Download error:", err);
       showToast("Network error downloading offer PDF.", "error");
+    }
+  };
+
+  window.downloadClientRequestPdf = async function (offerId) {
+    try {
+      const response = await fetch(`/api/client/offers/${offerId}/request.pdf`);
+      if (!response.ok) {
+        const err = await response.json();
+        showToast("Error: " + (err.detail || "Could not download request PDF"), "error");
+        return;
+      }
+      await downloadBlobResponse(response, `Solicitud_${offerId}.pdf`);
+    } catch (err) {
+      console.error("Download error:", err);
+      showToast("Network error downloading request PDF.", "error");
     }
   };
 

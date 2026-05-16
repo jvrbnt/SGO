@@ -751,6 +751,7 @@ function renderOfferList(offers, container, isGlobal, techId) {
                   : '')
             }
             <button onclick="window.openReviewPanel(${offer.id}, ${!isGlobal}, ${offer.status !== 'requested'})" class="btn-card btn-review">Review</button>
+            <button onclick="window.downloadRequestPdf(${offer.id})" class="btn-card" style="background:#475569; color:white;" title="Download stored request PDF">Request PDF</button>
             ${offer.status !== 'requested' ? `<button onclick="window.downloadOfferPdf(${offer.id})" class="btn-card" style="background:#1f4e79; color:white;" title="Download stored offer PDF">Offer PDF</button>` : ''}
             ${offer.status !== 'requested' ? `<button onclick="window.downloadOfferDocument(${offer.id})" class="btn-card" style="background:#2c3e50; color:white;" title="Download offer as Word document">DOCX</button>` : ''}
             ${offer.status !== 'requested' ? `<button onclick="window.downloadTraceabilityCsv(${offer.id})" class="btn-card" style="background:#475569; color:white;" title="Download traceability CSV">Traceability</button>` : ''}
@@ -1517,6 +1518,21 @@ window.downloadOfferPdf = async function (offerId) {
   } catch (err) {
     console.error("Download error:", err);
     showToast("Network error downloading offer PDF.", "error");
+  }
+};
+
+window.downloadRequestPdf = async function (offerId) {
+  try {
+    const response = await fetch(`/api/technician/offers/${offerId}/request.pdf`);
+    if (!response.ok) {
+      const err = await response.json();
+      showToast("Error: " + (err.detail || "Could not download request PDF"), "error");
+      return;
+    }
+    await downloadBlobResponse(response, `Solicitud_${offerId}.pdf`);
+  } catch (err) {
+    console.error("Download error:", err);
+    showToast("Network error downloading request PDF.", "error");
   }
 };
 
