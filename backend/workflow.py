@@ -9,8 +9,8 @@ Offer State Flow:
 2. 'quoted': A technician has assigned prices and hours, and sent it back to the client.
 3. 'accepted': The client has accepted the quotation. Work can begin.
 4. 'completed': All services inside the offer are marked as 'done' by the technicians.
-5. 'invoiced': The offer has been included in an invoice. It is now locked.
-6. 'paid': The invoice has been marked as paid.
+5. 'invoiced': The completed offer has been included in an invoice. It is now locked.
+6. 'paid': Payment has been externally verified and the invoice has been marked as paid.
 """
 from fastapi import HTTPException
 
@@ -24,7 +24,7 @@ PAID = "paid"
 
 OFFER_STATUSES = {REQUESTED, QUOTED, ACCEPTED, COMPLETED, INVOICED, PAID}
 EDITABLE_OFFER_STATUSES = {REQUESTED}
-BILLABLE_OFFER_STATUSES = {ACCEPTED, COMPLETED}
+BILLABLE_OFFER_STATUSES = {COMPLETED}
 LOCKED_OFFER_STATUSES = {INVOICED, PAID}
 
 PENDING = "pending"

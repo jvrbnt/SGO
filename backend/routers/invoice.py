@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api", tags=["invoice"])
 
 @router.get("/technician/billing-clients", response_model=List[schemas.ClientResponse])
 def get_billing_clients(current_user = Depends(auth_service.require_technician_or_higher), db: Session = Depends(get_db)):
-    """Return clients who have active offers managed by the current technician.
+    """Return clients who have completed offers managed by the current technician.
     
     Security: Uses current_user.id from JWT instead of a query parameter
     to prevent IDOR (a technician querying another technician's clients).
@@ -26,7 +26,7 @@ def get_billing_clients(current_user = Depends(auth_service.require_technician_o
 
 @router.get("/technician/billing-offers", response_model=List[schemas.OfferResponse])
 def get_billing_offers(client_id: int, current_user = Depends(auth_service.require_technician_or_higher), db: Session = Depends(get_db)):
-    """Return billable offers for a specific client managed by the current technician.
+    """Return completed offers ready for billing for a specific client managed by the current technician.
     
     Security: Uses current_user.id from JWT instead of a query parameter
     to prevent IDOR (a technician viewing another technician's billable offers).
@@ -75,8 +75,8 @@ def create_invoice(invoice_data: schemas.InvoiceCreate, current_user = Depends(a
             raise HTTPException(status_code=400, detail=f"Offer {o_id} does not belong to the selected client")
         if offer.invoice_id is not None:
             raise HTTPException(status_code=400, detail=f"Offer {o_id} is already linked to an invoice")
-        if offer.status not in workflow.BILLABLE_OFFER_STATUSES:
-            raise HTTPException(status_code=400, detail=f"Offer {o_id} is not in a billable status (current: '{offer.status}')")
+        if offer.status != workflow.COMPLETED:
+            raise HTTPException(status_code=400, detail=f"Offer {o_id} must be completed before invoicing (current: '{offer.status}')")
         active_services = workflow.active_services(offer)
         if not active_services:
             raise HTTPException(status_code=400, detail=f"Offer {o_id} has no active services")
@@ -159,6 +159,9 @@ def get_all_invoices(current_user = Depends(auth_service.require_technician_or_h
 @router.post("/technician/invoices/{invoice_id}/pay")
 def pay_invoice(invoice_id: int, current_user = Depends(auth_service.require_technician_or_higher), db: Session = Depends(get_db)):
     """Mark an invoice and all linked offers as paid.
+
+    The application does not process online payments. This action means the
+    payment or internal charge has already been verified outside SGO.
     
     Security: Only the technician who owns the invoice or an Admin can mark it as paid.
     """

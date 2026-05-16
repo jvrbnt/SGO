@@ -1135,7 +1135,7 @@ window.loadBillingClients = async function () {
 
     let html = '<option value="">-- Select a client --</option>';
     if (clients.length === 0) {
-      html = '<option value="">-- No clients with pending offers --</option>';
+      html = '<option value="">-- No clients with completed offers ready for billing --</option>';
     } else {
       clients.forEach(c => {
         html += `<option value="${c.id}">${c.first_name} ${c.last_name} (${c.email})</option>`;
@@ -1167,14 +1167,14 @@ window.loadBillingClientOffers = async function () {
     window.currentBillingOffers = offers;
 
     if (offers.length === 0) {
-      list.innerHTML = "<p>No active offers found.</p>";
+      list.innerHTML = "<p>No completed offers ready for billing.</p>";
       window.calculateInvoiceTotal();
       return;
     }
 
     list.innerHTML = offers.map(o => {
-      const isBillable = o.status === "accepted" || o.status === "completed";
-      const badgeColor = o.status === "accepted" ? "#27ae60" : (o.status === "quoted" ? "#f39c12" : (o.status === "completed" ? "#2563eb" : "#94a3b8"));
+      const isBillable = o.status === "completed";
+      const badgeColor = o.status === "completed" ? "#2563eb" : "#94a3b8";
 
       let sum = 0;
       const validServices = o.services.filter(s => !s.is_deleted);
@@ -1254,7 +1254,7 @@ window.submitInvoice = async function () {
   let totalSum = 0;
   checkboxes.forEach(cb => totalSum += parseFloat(cb.getAttribute("data-price")));
 
-  if (!confirm(`Are you sure you want to invoice ${offerIds.length} offers for a total of ${totalSum.toFixed(2)} €?\n\nThis will mark these offers as 'invoiced' and send them to the client.`)) {
+  if (!confirm(`Are you sure you want to invoice ${offerIds.length} completed offer(s) for a total of ${totalSum.toFixed(2)} €?\n\nThis will mark these offers as 'invoiced' and lock them for audit traceability.`)) {
     return;
   }
 
@@ -1311,6 +1311,7 @@ window.loadTechInvoices = async function () {
     container.innerHTML = invoices.map(inv => {
       const isPaid = inv.status === 'paid';
       const isOwner = parseInt(inv.technician_id) === parseInt(techData.id);
+      const canMarkPaid = !isPaid && (isOwner || techData.privilege_level === "Admin");
       const clientName = inv.client_first_name ? `${inv.client_first_name} ${inv.client_last_name}` : `Client #${inv.client_id}`;
       return `
          <div style="background: ${isPaid ? '#f1f5f9' : 'white'}; border: 1px solid ${isPaid ? '#cbd5e1' : '#ccc'}; border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: start;">
@@ -1335,8 +1336,8 @@ window.loadTechInvoices = async function () {
                <button onclick="window.openInvoiceReview(${inv.id})" style="background:#3498db; color:white; border:none; padding:6px 12px; border-radius:4px; font-size:12px; cursor:pointer; font-weight:600;" title="View invoice details">
                  Review
                </button>
-               ${!isPaid && isOwner ? `
-                 <button onclick="window.payInvoice(${inv.id})" style="background:#2c3e50; color:white; border:none; padding:6px 12px; border-radius:4px; font-size:12px; cursor:pointer;" title="Mark this invoice and its offers as PAID">
+               ${canMarkPaid ? `
+                 <button onclick="window.payInvoice(${inv.id})" style="background:#2c3e50; color:white; border:none; padding:6px 12px; border-radius:4px; font-size:12px; cursor:pointer;" title="Mark this invoice and its offers as PAID after external verification">
                    Mark as Paid
                  </button>
                ` : ''}
@@ -1464,7 +1465,7 @@ window.openInvoiceReview = function (invoiceId) {
 };
 
 window.payInvoice = async function (invoiceId) {
-  if (!confirm("Are you sure you want to mark this invoice as PAID? This will mark all its offers as 'paid' and they will be locked.")) {
+  if (!confirm("Mark this invoice as PAID only if the payment or internal charge has already been verified outside SGO.\n\nThis will mark all linked offers as 'paid' and lock them.")) {
     return;
   }
 
