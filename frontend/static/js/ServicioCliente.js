@@ -118,9 +118,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   window.loadMyRequests = async function () {
     const list = document.getElementById("requestList");
     try {
-      const response = await fetch(
-        `/api/client/my-offers?email=${encodeURIComponent(currentUser.email)}`,
-      );
+      const response = await fetch("/api/client/my-offers");
       const offers = sanitizeDisplayData(await response.json());
 
       list.innerHTML = "";
@@ -413,7 +411,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!list) return;
     
     try {
-      const response = await fetch(`/api/client/invoices?email=${encodeURIComponent(currentUser.email)}`);
+      const response = await fetch("/api/client/invoices");
       const invoices = sanitizeDisplayData(await response.json());
       
       if (invoices.length === 0) {

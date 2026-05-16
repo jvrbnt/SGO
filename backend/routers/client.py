@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from backend import models, schemas, auth as auth_service
 from backend.dependencies import get_db
@@ -71,12 +71,19 @@ def create_offer(offer_in: schemas.OfferCreate, current_user = Depends(auth_serv
     return {"message": "Offer requested successfully", "offer_id": new_offer.id}
 
 @router.get("/my-offers", response_model=List[schemas.OfferResponse])
-def get_client_offers(email: str, current_user = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
-    """Get all offers for a specific client by email."""
-    if current_user.app_role == "client" and current_user.email != email:
-        raise HTTPException(status_code=403, detail="Unauthorized request")
-        
-    client = db.query(models.Client).filter(models.Client.email == email).first()
+def get_client_offers(email: Optional[str] = None, current_user = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
+    """Get offers for the authenticated client.
+
+    The email query parameter remains only for backwards compatibility with
+    old technician/admin tooling. Clients use their token identity so emails do
+    not appear in reverse-proxy logs.
+    """
+    if current_user.app_role == "client":
+        client = db.query(models.Client).filter(models.Client.id == current_user.id).first()
+    else:
+        if not email:
+            raise HTTPException(status_code=400, detail="Email is required for technician queries")
+        client = db.query(models.Client).filter(models.Client.email == email).first()
     if not client:
         return []
     return db.query(models.Offer).filter(models.Offer.client_id == client.id).all()
@@ -124,11 +131,14 @@ def client_accept_offer(offer_id: int, current_user = Depends(auth_service.get_c
     return {"message": "Offer accepted successfully"}
 
 @router.get("/invoices")
-def get_client_invoices(email: str, current_user = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
-    """Get all invoices for a client."""
-    if current_user.app_role == "client" and current_user.email != email:
-        raise HTTPException(status_code=403, detail="Unauthorized request")
-    client = db.query(models.Client).filter(models.Client.email == email).first()
+def get_client_invoices(email: Optional[str] = None, current_user = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
+    """Get invoices for the authenticated client."""
+    if current_user.app_role == "client":
+        client = db.query(models.Client).filter(models.Client.id == current_user.id).first()
+    else:
+        if not email:
+            raise HTTPException(status_code=400, detail="Email is required for technician queries")
+        client = db.query(models.Client).filter(models.Client.email == email).first()
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
     invoices = db.query(models.Invoice).filter(models.Invoice.client_id == client.id).all()
