@@ -271,6 +271,12 @@ document.addEventListener("DOMContentLoaded", async () => {
               </button>
             ` : ''}
 
+            ${['accepted', 'completed', 'invoiced', 'paid'].includes(offer.status) ? `
+              <button onclick="window.downloadClientAcceptancePdf(${offer.id})" style="width:100%; margin-top:12px; background:#0f766e; color:white; border:none; padding:10px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:13px;">
+                DOWNLOAD ACCEPTANCE PDF
+              </button>
+            ` : ''}
+
             ${offer.status === 'quoted' ? `
               <button onclick="window.acceptQuotedOffer(${offer.id})" style="width:100%; margin-top:15px; background:#28a745; color:white; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:14px;">
                 ACCEPT QUOTATION AND CONFIRM WORK
@@ -387,6 +393,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (err) {
       console.error("Download error:", err);
       showToast("Network error downloading request PDF.", "error");
+    }
+  };
+
+  window.downloadClientAcceptancePdf = async function (offerId) {
+    try {
+      const response = await fetch(`/api/client/offers/${offerId}/acceptance.pdf`);
+      if (!response.ok) {
+        const err = await response.json();
+        showToast("Error: " + (err.detail || "Could not download acceptance PDF"), "error");
+        return;
+      }
+      await downloadBlobResponse(response, `Aceptacion_${offerId}.pdf`);
+    } catch (err) {
+      console.error("Download error:", err);
+      showToast("Network error downloading acceptance PDF.", "error");
     }
   };
 

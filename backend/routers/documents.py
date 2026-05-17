@@ -8,7 +8,13 @@ from docxtpl import DocxTemplate
 
 from backend import models, auth as auth_service, workflow
 from backend.dependencies import get_db
-from backend.pdf_documents import generate_invoice_pdf, generate_offer_pdf, generate_request_pdf, latest_document
+from backend.pdf_documents import (
+    generate_acceptance_pdf,
+    generate_invoice_pdf,
+    generate_offer_pdf,
+    generate_request_pdf,
+    latest_document,
+)
 
 router = APIRouter(prefix="/api/technician", tags=["documents"])
 client_router = APIRouter(prefix="/api/client", tags=["documents"])
@@ -21,6 +27,21 @@ def _latest_existing_document(db, *, document_type, offer_id=None, invoice_id=No
     if record and Path(record.file_path).exists():
         return record
     return None
+
+
+def _ensure_offer_document_access(offer, current_user):
+    if offer.manager_id is None and offer.status == workflow.REQUESTED:
+        return
+    workflow.ensure_manager_or_admin(
+        offer,
+        current_user,
+        "Only the assigned manager or an Admin can download this offer document",
+    )
+
+
+def _ensure_invoice_document_access(invoice, current_user):
+    if invoice.technician_id != current_user.id and not workflow.is_admin(current_user):
+        raise HTTPException(status_code=403, detail="Only the invoice owner or an Admin can download this invoice")
 
 
 def _build_services_list(services):
@@ -64,6 +85,7 @@ def generate_offer_document(
     offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
+    _ensure_offer_document_access(offer, current_user)
 
     client = offer.client
     manager = offer.manager
@@ -120,6 +142,7 @@ def generate_offer_pdf_document(
     offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
+    _ensure_offer_document_access(offer, current_user)
     if offer.status == workflow.REQUESTED:
         raise HTTPException(status_code=400, detail="Cannot generate an offer PDF before it is quoted")
 
@@ -143,10 +166,35 @@ def generate_request_pdf_document(
     offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
+    _ensure_offer_document_access(offer, current_user)
 
     record = _latest_existing_document(db, document_type="request", offer_id=offer.id)
     if not record:
         record = generate_request_pdf(db, offer, technician_id=current_user.id)
+    return FileResponse(
+        record.file_path,
+        media_type="application/pdf",
+        filename=Path(record.file_path).name,
+    )
+
+
+@router.get("/offers/{offer_id}/acceptance.pdf")
+def generate_acceptance_pdf_document(
+    offer_id: int,
+    current_user=Depends(auth_service.require_technician_or_higher),
+    db: Session = Depends(get_db),
+):
+    """Return the stored offer acceptance PDF."""
+    offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer not found")
+    _ensure_offer_document_access(offer, current_user)
+    if offer.status not in {workflow.ACCEPTED, workflow.COMPLETED, workflow.INVOICED, workflow.PAID}:
+        raise HTTPException(status_code=400, detail="Cannot generate an acceptance PDF before the offer is accepted")
+
+    record = _latest_existing_document(db, document_type="acceptance", offer_id=offer.id)
+    if not record:
+        record = generate_acceptance_pdf(db, offer, technician_id=current_user.id)
     return FileResponse(
         record.file_path,
         media_type="application/pdf",
@@ -164,10 +212,39 @@ def generate_invoice_pdf_document(
     invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
+    _ensure_invoice_document_access(invoice, current_user)
 
     record = _latest_existing_document(db, document_type="invoice", invoice_id=invoice.id)
     if not record:
         record = generate_invoice_pdf(db, invoice, technician_id=current_user.id)
+    return FileResponse(
+        record.file_path,
+        media_type="application/pdf",
+        filename=Path(record.file_path).name,
+    )
+
+
+@client_router.get("/offers/{offer_id}/acceptance.pdf")
+def generate_client_acceptance_pdf_document(
+    offer_id: int,
+    current_user=Depends(auth_service.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return the stored acceptance PDF for the authenticated client."""
+    if current_user.app_role != "client":
+        raise HTTPException(status_code=403, detail="Only clients can download their acceptance PDFs")
+
+    offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer not found")
+    if offer.client_id != current_user.id:
+        raise HTTPException(status_code=403, detail="This offer does not belong to you")
+    if offer.status not in {workflow.ACCEPTED, workflow.COMPLETED, workflow.INVOICED, workflow.PAID}:
+        raise HTTPException(status_code=400, detail="Cannot generate an acceptance PDF before the offer is accepted")
+
+    record = _latest_existing_document(db, document_type="acceptance", offer_id=offer.id)
+    if not record:
+        record = generate_acceptance_pdf(db, offer)
     return FileResponse(
         record.file_path,
         media_type="application/pdf",
