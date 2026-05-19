@@ -31,6 +31,25 @@ def _safe_part(value) -> str:
     return text.strip("._") or "document"
 
 
+def _quality_document_path(year: int, folder: str, stem: str, extension: str = "pdf") -> Path:
+    """Return a Calidad Sin Sudar style path without overwriting previous files."""
+    directory = DOCUMENT_ROOT / str(year) / folder
+    base_path = directory / f"{stem}.{extension}"
+    if not base_path.exists():
+        return base_path
+
+    updated_path = directory / f"{stem}_Actualizada.{extension}"
+    if not updated_path.exists():
+        return updated_path
+
+    version = 2
+    while True:
+        candidate = directory / f"{stem}_Actualizada_{version}.{extension}"
+        if not candidate.exists():
+            return candidate
+        version += 1
+
+
 def _money(value) -> str:
     return f"{float(value or 0):.2f} EUR"
 
@@ -161,8 +180,7 @@ def generate_request_pdf(db, offer, technician_id=None):
     client = offer.client
     year = (offer.created_at or datetime.now()).year
     reference = offer.reference or f"offer_{offer.id}"
-    generated_at = datetime.now().strftime("%Y%m%d%H%M%S")
-    path = DOCUMENT_ROOT / str(year) / "requests" / f"PO_{_safe_part(reference)}_{generated_at}.pdf"
+    path = _quality_document_path(year, "requests", f"PO_{_safe_part(reference)}")
     table_rows = [
         [service.service_name, f"{service.hours:g}", "-", "-"]
         for service in workflow.active_services(offer)
@@ -195,8 +213,7 @@ def generate_offer_pdf(db, offer, technician_id=None):
     manager = offer.manager
     year = (offer.created_at or datetime.now()).year
     reference = offer.reference or f"offer_{offer.id}"
-    generated_at = datetime.now().strftime("%Y%m%d%H%M%S")
-    path = DOCUMENT_ROOT / str(year) / "offers" / f"O_{_safe_part(reference)}_{generated_at}.pdf"
+    path = _quality_document_path(year, "offers", f"O_{_safe_part(reference)}")
 
     services = workflow.active_services(offer)
     table_rows = [
@@ -239,8 +256,7 @@ def generate_acceptance_pdf(db, offer, technician_id=None):
     manager = offer.manager
     year = (offer.created_at or datetime.now()).year
     reference = offer.reference or f"offer_{offer.id}"
-    generated_at = datetime.now().strftime("%Y%m%d%H%M%S")
-    path = DOCUMENT_ROOT / str(year) / "acceptances" / f"AO_{_safe_part(reference)}_{generated_at}.pdf"
+    path = _quality_document_path(year, "acceptances", f"AO_{_safe_part(reference)}")
     table_rows = [
         [
             service.service_name,
@@ -275,8 +291,7 @@ def generate_acceptance_pdf(db, offer, technician_id=None):
 
 def generate_invoice_pdf(db, invoice, technician_id=None):
     year = (invoice.created_at or datetime.now()).year
-    generated_at = datetime.now().strftime("%Y%m%d%H%M%S")
-    path = DOCUMENT_ROOT / str(year) / "invoices" / f"INV_{invoice.id:04d}_{generated_at}.pdf"
+    path = _quality_document_path(year, "invoices", f"INV_{invoice.id:04d}_{year}")
     client = invoice.client
     technician = invoice.technician
 

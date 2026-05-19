@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from backend.pdf_documents import _build_pdf, _safe_part
+from backend import pdf_documents
+from backend.pdf_documents import _build_pdf, _quality_document_path, _safe_part
 
 
 def test_safe_part_removes_path_characters():
@@ -23,3 +24,19 @@ def test_build_pdf_creates_pdf_file(tmp_path):
 
     assert output.exists()
     assert output.read_bytes().startswith(b"%PDF")
+
+
+def test_quality_document_path_uses_original_naming_and_updated_suffix(tmp_path, monkeypatch):
+    monkeypatch.setattr(pdf_documents, "DOCUMENT_ROOT", tmp_path)
+
+    first = _quality_document_path(2026, "offers", "O_001_2026")
+    assert first == tmp_path / "2026" / "offers" / "O_001_2026.pdf"
+
+    first.parent.mkdir(parents=True)
+    first.write_bytes(b"%PDF first")
+    second = _quality_document_path(2026, "offers", "O_001_2026")
+    assert second == tmp_path / "2026" / "offers" / "O_001_2026_Actualizada.pdf"
+
+    second.write_bytes(b"%PDF second")
+    third = _quality_document_path(2026, "offers", "O_001_2026")
+    assert third == tmp_path / "2026" / "offers" / "O_001_2026_Actualizada_2.pdf"
