@@ -1,6 +1,6 @@
 # Sistema de Gestion de Ofertas (SGO)
 
-Codigo fuente del Sistema de Gestion de Ofertas (SGO) para uso interno del IMN.
+Codigo fuente del Sistema de Gestion de Ofertas (SGO) para uso interno del IMN(CSIC).
 
 ## Arquitectura
 
