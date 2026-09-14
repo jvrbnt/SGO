@@ -51,9 +51,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (currentUser.entity === "Internal") {
         document.getElementById("editGroup").value = currentUser.grupo || currentUser.group || "";
-        document.getElementById("editIP").value = currentUser.investigador_principal || currentUser.ip || "";
-        document.getElementById("editInternalAccount").value = currentUser.cuenta_interna || currentUser.account || "";
-        document.getElementById("editProject").value = currentUser.codigo_proyecto || currentUser.project || "";
     }
 
     // --- PHOTO MANAGEMENT ---
@@ -114,17 +111,11 @@ document.addEventListener("DOMContentLoaded", () => {
             display_name: nickname || null,
             profile_picture: currentPhotoBase64,
             entity,
-            investigador_principal: null,
-            cuenta_interna: null,
-            codigo_proyecto: null,
             grupo: null,
         };
 
         if (entity === "Internal") {
             payload.grupo = document.getElementById("editGroup").value;
-            payload.investigador_principal = document.getElementById("editIP").value;
-            payload.cuenta_interna = document.getElementById("editInternalAccount").value;
-            payload.codigo_proyecto = document.getElementById("editProject").value;
         }
 
         try {

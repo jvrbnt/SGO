@@ -40,6 +40,18 @@
   margin-bottom: 25px;
 }
 
+#tabGenerar {
+  display: block;
+  overflow: visible;
+}
+
+#billingSection {
+  display: block !important;
+  clear: both;
+  position: relative;
+  z-index: 10;
+}
+
 /* FORCE MICRO-WELDING TO CENTER COLUMN */
 #service-micro-welding {
   grid-column-start: 2;

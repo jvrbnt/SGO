@@ -18,11 +18,6 @@ class Client(Base):
     entity = Column(String, nullable=False)
     display_name = Column(String, nullable=True)
 
-    # Fields specific to Internal (MiNa) clients — required when entity is "Internal"
-    # IP = Investigador Principal, CI = Cuenta Interna, CP = Codigo de Proyecto
-    investigador_principal = Column(String, nullable=True)  # IP — supervising researcher
-    cuenta_interna = Column(String, nullable=True)          # CI — internal billing account
-    codigo_proyecto = Column(String, nullable=True)         # CP — project code
     grupo = Column(String, nullable=True)                   # Research group within MiNa
 
     profile_picture = Column(String, nullable=True)
@@ -102,6 +97,9 @@ class Offer(Base):
     updated_at = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now)
 
     technician_comment = Column(Text, nullable=True)
+    investigador_principal = Column(String, nullable=True)
+    cuenta_interna = Column(String, nullable=True)
+    codigo_proyecto = Column(String, nullable=True)
     # Foreign keys to identify client and technical manager
     client_id = Column(Integer, ForeignKey("clients.id"))
     manager_id = Column(Integer, ForeignKey("technicians.id"), nullable=True)

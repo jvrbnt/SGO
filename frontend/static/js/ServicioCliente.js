@@ -42,6 +42,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("userIcon").src = profilePicture;
   }
 
+  const billingEntity = (currentUser.entity || "").trim().toLowerCase();
+  const billingIsCompany = ["company", "empresa", "private"].includes(billingEntity);
+  const billingIsInternal = ["internal", "mina", "internal (mina)"].includes(billingEntity);
+  const billingSection = document.getElementById("billingSection");
+  if (billingIsCompany) {
+    document.getElementById("billingDescription").textContent = "No se requieren datos adicionales para empresas.";
+    document.getElementById("billingIpField").style.display = "none";
+  } else {
+    document.getElementById("billingProjectField").style.display = billingIsInternal ? "flex" : "none";
+    document.getElementById("billingAccountField").style.display = billingIsInternal ? "flex" : "none";
+    document.getElementById("billingProject").required = billingIsInternal;
+    document.getElementById("billingAccount").required = billingIsInternal;
+  }
+
   // 3. DROPDOWN MENU
   const profileContainer = document.getElementById("profileContainer");
   const dropdownMenu = document.getElementById("dropdownMenu");
@@ -313,18 +327,34 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (hasMissingDescription)
         return showToast("A request description is required for every selected service.", "warning");
 
+      const billingData = billingIsCompany ? {} : {
+        investigador_principal: document.getElementById("billingIp").value.trim(),
+        codigo_proyecto: billingIsInternal ? document.getElementById("billingProject").value.trim() : null,
+        cuenta_interna: billingIsInternal ? document.getElementById("billingAccount").value.trim() : null,
+      };
+      if (!billingIsCompany && !billingData.investigador_principal) {
+        return showToast("The person responsible for payment is required.", "warning");
+      }
+      if (billingIsInternal && (!billingData.codigo_proyecto || !billingData.cuenta_interna)) {
+        return showToast("Project code and internal account are required.", "warning");
+      }
+
       const res = await fetch("/api/client/offers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           client_email: currentUser.email,
           services: requestedServices,
+          ...(billingData || {}),
         }),
       });
 
       if (res.ok) {
         showToast("Request sent successfully.", "success");
         location.reload();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.detail || "Could not create the offer.", "error");
       }
     });
 

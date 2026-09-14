@@ -358,9 +358,9 @@ window.openReviewPanel = async function (offerId, isMineTab, readOnly = false, p
           ${isInternal ? `
           <div>
             <h4 style="margin:0 0 10px 0; color:var(--color-csic);">INTERNAL DATA</h4>
-            <p><strong>IP:</strong> ${client.investigador_principal || 'N/A'}</p>
-            <p><strong>CI:</strong> ${client.cuenta_interna || 'N/A'}</p>
-            <p><strong>CP:</strong> ${client.codigo_proyecto || 'N/A'}</p>
+            <p><strong>IP:</strong> ${offer.investigador_principal || 'N/A'}</p>
+            <p><strong>CI:</strong> ${offer.cuenta_interna || 'N/A'}</p>
+            <p><strong>CP:</strong> ${offer.codigo_proyecto || 'N/A'}</p>
             <hr style="border:0; border-top:1px solid #ddd; margin:10px 0;">
             <p><strong>Offer created:</strong> ${new Date(offer.created_at).toLocaleString()}</p>
           </div>

@@ -77,10 +77,7 @@ registrationForm.addEventListener("submit", async function (event) {
     email: document.getElementById("email").value,
     password: passwordInput.value,
     entity: mappedEntity,
-    investigador_principal: document.getElementById("ip")?.value || null,
-    cuenta_interna: document.getElementById("account")?.value || null,
     grupo: document.getElementById("group")?.value || null,
-    codigo_proyecto: document.getElementById("project")?.value || null,
   };
 
   try {

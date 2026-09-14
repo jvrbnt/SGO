@@ -191,9 +191,9 @@ def generate_request_pdf(db, offer, technician_id=None):
         ["Client", f"{client.first_name} {client.last_name}" if client else "-"],
         ["Email", client.email if client else "-"],
         ["Entity", client.entity if client else "-"],
-        ["Project code", client.codigo_proyecto if client and client.codigo_proyecto else "-"],
-        ["Internal account", client.cuenta_interna if client and client.cuenta_interna else "-"],
-        ["Principal investigator", client.investigador_principal if client and client.investigador_principal else "-"],
+        ["Project code", offer.codigo_proyecto or "-"],
+        ["Internal account", offer.cuenta_interna or "-"],
+        ["Principal investigator", offer.investigador_principal or "-"],
     ]
     _build_pdf(
         path,
@@ -232,9 +232,9 @@ def generate_offer_pdf(db, offer, technician_id=None):
         ["Client", f"{client.first_name} {client.last_name}" if client else "-"],
         ["Email", client.email if client else "-"],
         ["Entity", client.entity if client else "-"],
-        ["Project code", client.codigo_proyecto if client and client.codigo_proyecto else "-"],
-        ["Internal account", client.cuenta_interna if client and client.cuenta_interna else "-"],
-        ["Principal investigator", client.investigador_principal if client and client.investigador_principal else "-"],
+        ["Project code", offer.codigo_proyecto or "-"],
+        ["Internal account", offer.cuenta_interna or "-"],
+        ["Principal investigator", offer.investigador_principal or "-"],
         ["Manager", f"{manager.first_name} {manager.last_name}" if manager else "-"],
         ["Status", offer.status],
     ]

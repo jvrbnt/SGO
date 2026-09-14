@@ -9,10 +9,6 @@ class ClientBase(BaseModel):
     last_name: str
     email: EmailStr
     entity: str
-    # Fields for Internal (MiNa) clients — IP, CI, CP, Grupo
-    investigador_principal: Optional[str] = None  # IP — supervising researcher
-    cuenta_interna: Optional[str] = None          # CI — internal billing account
-    codigo_proyecto: Optional[str] = None         # CP — project code
     grupo: Optional[str] = None                   # Research group within MiNa
 
 class ClientCreateWeb(ClientBase):
@@ -27,25 +23,6 @@ class ClientCreateWeb(ClientBase):
         if not re.search(r"\d", v):
             raise ValueError("Password must contain at least one number")
         return v
-
-    @model_validator(mode="after")
-    def validate_internal_fields(self):
-        """Enforce that Internal (MiNa) clients must provide IP, CI, CP, and Grupo."""
-        if self.entity == "Internal":
-            missing = []
-            if not self.investigador_principal:
-                missing.append("IP (Investigador Principal)")
-            if not self.cuenta_interna:
-                missing.append("CI (Cuenta Interna)")
-            if not self.codigo_proyecto:
-                missing.append("CP (Código de Proyecto)")
-            if not self.grupo:
-                missing.append("Grupo")
-            if missing:
-                raise ValueError(
-                    f"Internal clients must provide: {', '.join(missing)}"
-                )
-        return self
 
 class ClientResponse(ClientBase):
     id: int
@@ -257,6 +234,9 @@ class InvoiceResponse(InvoiceBase):
 class OfferCreate(BaseModel):
     client_email: EmailStr
     services: List[ClientServiceCreate]
+    investigador_principal: Optional[str] = None
+    cuenta_interna: Optional[str] = None
+    codigo_proyecto: Optional[str] = None
 
     @field_validator("services")
     @classmethod
@@ -275,6 +255,9 @@ class OfferResponse(BaseModel):
     client_id: int
     manager_id: Optional[int] = None
     invoice_id: Optional[int] = None
+    investigador_principal: Optional[str] = None
+    cuenta_interna: Optional[str] = None
+    codigo_proyecto: Optional[str] = None
 
     # Nested data representations
     client: ClientResponse

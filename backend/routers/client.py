@@ -29,6 +29,20 @@ def create_offer(offer_in: schemas.OfferCreate, current_user = Depends(auth_serv
     if not client:
         raise HTTPException(status_code=404, detail="Client not found in database")
 
+    is_company = client.entity.lower() == "company"
+    if not is_company and (
+        not offer_in.investigador_principal
+        or not offer_in.investigador_principal.strip()
+    ):
+        raise HTTPException(status_code=422, detail="The person responsible for payment is required")
+    if client.entity == "Internal" and (
+        not offer_in.cuenta_interna
+        or not offer_in.cuenta_interna.strip()
+        or not offer_in.codigo_proyecto
+        or not offer_in.codigo_proyecto.strip()
+    ):
+        raise HTTPException(status_code=422, detail="Internal offers require account and project code")
+
     current_year = datetime.now().year
 
     # Atomically get the next value from the database sequence (concurrency-safe)
@@ -36,7 +50,14 @@ def create_offer(offer_in: schemas.OfferCreate, current_user = Depends(auth_serv
     reference_code = f"{next_seq:03d}_{current_year}"
 
     try:
-        new_offer = models.Offer(client_id=client.id, status=workflow.REQUESTED, reference=reference_code)
+        new_offer = models.Offer(
+            client_id=client.id,
+            status=workflow.REQUESTED,
+            reference=reference_code,
+            investigador_principal=offer_in.investigador_principal.strip() if offer_in.investigador_principal else None,
+            cuenta_interna=offer_in.cuenta_interna.strip() if offer_in.cuenta_interna else None,
+            codigo_proyecto=offer_in.codigo_proyecto.strip() if offer_in.codigo_proyecto else None,
+        )
         db.add(new_offer)
         db.flush()
 

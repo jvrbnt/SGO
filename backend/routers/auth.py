@@ -46,10 +46,7 @@ def create_client(client_data: schemas.ClientCreateWeb, db: Session = Depends(ge
         email=client_data.email,
         hashed_password=hashed_pwd,
         entity=client_data.entity,
-        investigador_principal=client_data.investigador_principal,
-        cuenta_interna=client_data.cuenta_interna,
         grupo=client_data.grupo,
-        codigo_proyecto=client_data.codigo_proyecto,
         profile_picture="https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png"
     )
     db.add(new_client)
@@ -141,9 +138,6 @@ def unified_login(login_data: schemas.LoginRequest, db: Session = Depends(get_db
                     "nickname": client.display_name,
                     "profile_picture": client.profile_picture,
                     "entity": client.entity,
-                    "investigador_principal": client.investigador_principal,
-                    "cuenta_interna": client.cuenta_interna,
-                    "codigo_proyecto": client.codigo_proyecto,
                     "grupo": client.grupo,
                 }
             }
@@ -193,9 +187,6 @@ def read_users_me(current_user = Depends(auth_service.get_current_user)):
             "nickname": getattr(current_user, "display_name", None),
             "profile_picture": getattr(current_user, "profile_picture", None),
             "entity": current_user.entity,
-            "investigador_principal": current_user.investigador_principal,
-            "cuenta_interna": current_user.cuenta_interna,
-            "codigo_proyecto": current_user.codigo_proyecto,
             "grupo": current_user.grupo,
         }
     else:
@@ -232,9 +223,6 @@ def update_users_me(
     if current_user.app_role == "client":
         if profile_data.entity is not None:
             current_user.entity = profile_data.entity
-        current_user.investigador_principal = profile_data.investigador_principal
-        current_user.cuenta_interna = profile_data.cuenta_interna
-        current_user.codigo_proyecto = profile_data.codigo_proyecto
         current_user.grupo = profile_data.grupo
 
     db.commit()
