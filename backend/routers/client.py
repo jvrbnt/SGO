@@ -49,8 +49,8 @@ def create_offer(offer_in: schemas.OfferCreate, current_user = Depends(auth_serv
 
             new_service = models.Service(
                 service_name=catalog_item.name,
-                hours=s.hours,
-                original_hours=s.hours,
+                hours=0,
+                original_hours=0,
                 comment=s.comment,
                 offer_id=new_offer.id,
                 catalog_id=catalog_item.id

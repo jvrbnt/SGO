@@ -182,6 +182,18 @@ class ServiceBase(BaseModel):
             raise ValueError("Hours must be greater than 0")
         return v
 
+
+class ClientServiceCreate(BaseModel):
+    service_name: str
+    comment: str
+
+    @field_validator("comment")
+    @classmethod
+    def validate_comment(cls, v):
+        if not v.strip():
+            raise ValueError("Request description is required")
+        return v.strip()
+
 class ServiceCreateInline(BaseModel):
     service_name: str
     hours: float = 0.0
@@ -195,7 +207,10 @@ class ServiceCreateInline(BaseModel):
             raise ValueError("Hours must be greater than 0")
         return v
 
-class ServiceResponse(ServiceBase):
+class ServiceResponse(BaseModel):
+    service_name: str
+    hours: float
+    comment: Optional[str] = None
     id: int
     catalog_id: Optional[int] = None
     technician_id: Optional[int] = None
@@ -241,7 +256,7 @@ class InvoiceResponse(InvoiceBase):
 # --- OFFER SCHEMAS ---
 class OfferCreate(BaseModel):
     client_email: EmailStr
-    services: List[ServiceBase]
+    services: List[ClientServiceCreate]
 
     @field_validator("services")
     @classmethod

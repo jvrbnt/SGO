@@ -90,10 +90,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                         <span class="icono-mas">+</span>
                     </div>
                     <div class="formulario-horas" style="display:none; flex:1; align-items:center; padding:0 15px; gap:15px; background:#fff;">
-                        <label style="font-size:12px; font-weight:bold;">HOURS:</label>
-                        <input type="number" step="0.5" min="0" class="input-horas" style="width:60px; padding:5px;">
-                        <label style="font-size:12px; font-weight:bold;">NOTE:</label>
-                        <input type="text" class="input-comentario" placeholder="Optional..." style="flex-grow:1; padding:5px;">
+                      <label style="font-size:12px; font-weight:bold;">REQUEST DESCRIPTION:</label>
+                      <textarea class="input-comentario" placeholder="Describe your request" required style="flex-grow:1; padding:5px; resize:both; min-height:38px;"></textarea>
                     </div>
                 `;
         grid.appendChild(fila);
@@ -193,10 +191,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                       const nameDisplay = isDel ? `<span style="text-decoration:line-through;">${s.service_name}</span>` : s.service_name;
                       let hoursDisplay = isDel ? `<span style="text-decoration:line-through;">${s.hours}h</span>` : `${s.hours}h`;
                       
-                      if (isEdited) {
-                          hoursDisplay = `<span style="text-decoration:line-through; color:#94a3b8; font-size:11px; margin-right:4px;">${s.original_hours}h</span><span style="color:#f59e0b; font-weight:bold;">${s.hours}h</span>`;
-                      }
-
+                      
                       return `
                         <tr style="border-bottom:1px solid #dce8ff;">
                           <td style="padding:6px 8px; ${colorStyle}">${nameDisplay}${label}</td>
@@ -297,21 +292,26 @@ document.addEventListener("DOMContentLoaded", async () => {
       const requestedServices = [];
       document.querySelectorAll(".formulario-horas").forEach((form) => {
         if (form.style.display === "flex") {
-          const hours = parseFloat(form.querySelector(".input-horas").value);
-          if (hours > 0) {
+          const comment = form.querySelector(".input-comentario").value.trim();
+          if (comment) {
             requestedServices.push({
               service_name:
                 form.previousElementSibling.querySelector(".nombre-servicio")
                   .textContent,
-              hours: hours,
-              comment: form.querySelector(".input-comentario").value,
+              comment: comment,
             });
           }
         }
       });
 
       if (requestedServices.length === 0)
-        return showToast("Select at least one service with hours.", "warning");
+        return showToast("Select at least one service and provide a description.", "warning");
+
+      const hasMissingDescription = [...document.querySelectorAll(".formulario-horas")].some((form) =>
+        form.style.display === "flex" && !form.querySelector(".input-comentario").value.trim()
+      );
+      if (hasMissingDescription)
+        return showToast("A request description is required for every selected service.", "warning");
 
       const res = await fetch("/api/client/offers", {
         method: "POST",
