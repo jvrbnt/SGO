@@ -47,6 +47,20 @@ class Technician(Base):
     # Specific services assigned individually to this technician
     assigned_services = relationship("Service", back_populates="technician")
 
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey("clients.id"), nullable=True, index=True)
+    technician_id = Column(Integer, ForeignKey("technicians.id"), nullable=True, index=True)
+    token_hash = Column(String, unique=True, nullable=False, index=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    used_at = Column(DateTime(timezone=True), nullable=True)
+
+    client = relationship("Client")
+    technician = relationship("Technician")
+
 class ServiceCatalog(Base):
     __tablename__ = "service_catalog"
 

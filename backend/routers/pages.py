@@ -11,6 +11,11 @@ async def read_index():
 async def read_login():
     return FileResponse("frontend/templates/ServicioLogin.html")
 
+
+@router.get("/reset-password")
+async def read_reset_password():
+    return FileResponse("frontend/templates/ResetPassword.html")
+
 @router.get("/cliente")
 async def read_cliente():
     return FileResponse("frontend/templates/ServicioCliente.html")

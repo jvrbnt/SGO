@@ -1,14 +1,32 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from argon2.exceptions import VerifyMismatchError
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
+import hashlib
+import secrets
 
 from backend import models, schemas, auth as auth_service
-from backend.email import send_welcome_email
+from backend.email import send_password_reset_email, send_welcome_email
 from backend.dependencies import get_db
 from backend.security import ph, SECRET_PEPPER
 
 router = APIRouter(prefix="/api", tags=["auth"])
+
+PASSWORD_RESET_MINUTES = 30
+
+
+def _token_hash(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _as_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value
 
 @router.post("/client/signup")
 def create_client(client_data: schemas.ClientCreateWeb, db: Session = Depends(get_db)):
@@ -38,6 +56,63 @@ def create_client(client_data: schemas.ClientCreateWeb, db: Session = Depends(ge
     db.commit()
     send_welcome_email(new_client.email, new_client.first_name)
     return {"message": "Client account created successfully"}
+
+
+@router.post("/forgot-password")
+def request_password_reset(reset_data: schemas.PasswordResetRequest, db: Session = Depends(get_db)):
+    """Create a short-lived reset token without revealing whether an email exists."""
+    user = db.query(models.Client).filter(models.Client.email == reset_data.email).first()
+    user_type = "client"
+    if not user:
+        user = db.query(models.Technician).filter(models.Technician.email == reset_data.email).first()
+        user_type = "technician"
+
+    if user:
+        now = _utc_now()
+        query = db.query(models.PasswordResetToken).filter(models.PasswordResetToken.used_at.is_(None))
+        if user_type == "client":
+            query = query.filter(models.PasswordResetToken.client_id == user.id)
+        else:
+            query = query.filter(models.PasswordResetToken.technician_id == user.id)
+        query.update({models.PasswordResetToken.used_at: now}, synchronize_session=False)
+
+        raw_token = secrets.token_urlsafe(32)
+        reset_token = models.PasswordResetToken(
+            client_id=user.id if user_type == "client" else None,
+            technician_id=user.id if user_type == "technician" else None,
+            token_hash=_token_hash(raw_token),
+            expires_at=now + timedelta(minutes=PASSWORD_RESET_MINUTES),
+        )
+        db.add(reset_token)
+        db.commit()
+        send_password_reset_email(user.email, user.first_name, raw_token)
+
+    return {"message": "If the email is registered, you will receive password reset instructions."}
+
+
+@router.post("/reset-password")
+def reset_password(reset_data: schemas.PasswordResetConfirm, db: Session = Depends(get_db)):
+    """Validate and consume a password reset token exactly once."""
+    reset_token = (
+        db.query(models.PasswordResetToken)
+        .with_for_update()
+        .filter(
+            models.PasswordResetToken.token_hash == _token_hash(reset_data.token),
+            models.PasswordResetToken.used_at.is_(None),
+        )
+        .first()
+    )
+    if not reset_token or _as_utc(reset_token.expires_at) <= _utc_now():
+        raise HTTPException(status_code=400, detail="Invalid or expired password reset token")
+
+    user = reset_token.client or reset_token.technician
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired password reset token")
+
+    user.hashed_password = ph.hash(reset_data.new_password + SECRET_PEPPER)
+    reset_token.used_at = _utc_now()
+    db.commit()
+    return {"message": "Password updated successfully"}
 
 @router.post("/login")
 def unified_login(login_data: schemas.LoginRequest, db: Session = Depends(get_db)):
