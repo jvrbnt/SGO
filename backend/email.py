@@ -26,7 +26,7 @@ def send_welcome_email(recipient: str, first_name: str) -> bool:
     use_tls = os.getenv("SMTP_USE_TLS", "true").lower() in {"1", "true", "yes"}
 
     message = EmailMessage()
-    message["Subject"] = "Bienvenido a SGO"
+    message["Subject"] = "Bienvenido a MiNa"
     message["From"] = sender
     message["To"] = recipient
     message.set_content(
