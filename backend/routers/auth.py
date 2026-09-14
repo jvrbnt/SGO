@@ -4,6 +4,7 @@ from argon2.exceptions import VerifyMismatchError
 from datetime import timedelta
 
 from backend import models, schemas, auth as auth_service
+from backend.email import send_welcome_email
 from backend.dependencies import get_db
 from backend.security import ph, SECRET_PEPPER
 
@@ -35,6 +36,7 @@ def create_client(client_data: schemas.ClientCreateWeb, db: Session = Depends(ge
     )
     db.add(new_client)
     db.commit()
+    send_welcome_email(new_client.email, new_client.first_name)
     return {"message": "Client account created successfully"}
 
 @router.post("/login")
