@@ -26,6 +26,7 @@ services:
     volumes:
       - ./data:/app/data
       - ./Calidad:/app/Calidad
+      - ./fonts:/usr/local/share/fonts/gill-sans:ro
       - ./docs_oficiales:/app/docs_oficiales:ro
     # No exponemos el puerto 8000 hacia afuera, solo hacia nginx dentro de la red interna
     expose:

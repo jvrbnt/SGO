@@ -1,7 +1,7 @@
 FROM python:3.13-slim
 
 RUN apt-get update \
-	&& apt-get install -y --no-install-recommends libreoffice \
+	&& apt-get install -y --no-install-recommends fontconfig libreoffice \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Evitar que Python escriba archivos .pyc en el disco
@@ -22,9 +22,12 @@ RUN uv sync --frozen --no-dev
 
 # Copiar el resto del código
 COPY . .
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 # Añadir el entorno virtual al PATH
 ENV PATH="/app/.venv/bin:$PATH"
+
+ENTRYPOINT ["sh", "/usr/local/bin/docker-entrypoint.sh"]
 
 # Exponer el puerto
 EXPOSE 8000
