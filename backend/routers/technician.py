@@ -45,6 +45,7 @@ def finalize_review_and_send(offer_id: int, review_data: schemas.OfferReviewUpda
 
     offer.status = workflow.QUOTED
     offer.technician_comment = review_data.technician_comment
+    offer.delivery_date = review_data.delivery_date
 
     for s_data in review_data.services:
         service = db.query(models.Service).filter(models.Service.id == s_data.id).first()

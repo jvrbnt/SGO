@@ -7,7 +7,7 @@ from typing import List, Optional
 from backend import models, schemas, auth as auth_service
 from backend.dependencies import get_db
 from backend import workflow
-from backend.pdf_documents import generate_acceptance_pdf, generate_request_pdf
+from backend.pdf_documents import generate_acceptance_pdf, generate_request_pdf, next_offer_reference
 
 router = APIRouter(prefix="/api/client", tags=["client"])
 
@@ -59,9 +59,8 @@ def create_offer(offer_in: schemas.OfferCreate, current_user = Depends(auth_serv
 
     current_year = datetime.now().year
 
-    # Atomically get the next value from the database sequence (concurrency-safe)
-    next_seq = db.execute(select(models.offer_ref_seq.next_value())).scalar_one()
-    reference_code = f"{next_seq:03d}_{current_year}"
+    # The latest request PDF is the source of truth for the next reference.
+    reference_code = next_offer_reference(db, current_year)
 
     try:
         new_offer = models.Offer(

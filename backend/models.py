@@ -102,6 +102,7 @@ class Offer(Base):
 
     created_at = Column(DateTime, default=datetime.datetime.now)
     updated_at = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+    delivery_date = Column(DateTime, nullable=True)
 
     technician_comment = Column(Text, nullable=True)
     investigador_principal = Column(String, nullable=True)

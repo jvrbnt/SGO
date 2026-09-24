@@ -414,6 +414,12 @@ window.openReviewPanel = async function (offerId, isMineTab, readOnly = false, p
         <h4 style="color:#888; margin-bottom:10px;">MESSAGE FOR THE CLIENT (GLOBAL COMMENT)</h4>
         <textarea id="globalComment" ${readOnly ? 'disabled style="width:100%;height:80px;padding:10px;border:1px solid #ccc;border-radius:4px;font-family:inherit;background:#f3f4f6;color:#888;cursor:not-allowed;resize:none;"' : 'style="width:100%; height:80px; padding:10px; border:1px solid #ccc; border-radius:4px; font-family:inherit;"'} placeholder="Explain the quote to the researcher...">${offer.technician_comment || ''}</textarea>
 
+        <label style="display:flex; flex-direction:column; gap:5px; margin-top:15px; font-size:13px; font-weight:600; color:#475569;">
+          PROPOSED DELIVERY DATE
+          <input id="deliveryDate" type="date" value="${offer.delivery_date ? new Date(offer.delivery_date).toISOString().slice(0, 10) : ''}"
+            ${readOnly ? 'disabled style="padding:8px;border:1px solid #ccc;border-radius:4px;background:#f3f4f6;color:#888;"' : 'style="padding:8px;border:1px solid #ccc;border-radius:4px;"'}>
+        </label>
+
         ${readOnly ? `
           <div style="background:#fff3cd; border:1px solid #ffc107; border-radius:6px; padding:12px; margin-top:15px; font-size:13px; color:#856404; display:flex; align-items:center; gap:8px;">
             This offer has already been sent to the client and cannot be modified from here.
@@ -521,6 +527,7 @@ window.sendQuotedOffer = async function (offerId) {
       body: JSON.stringify({
         services: servicesData,
         technician_comment: comment,
+        delivery_date: document.getElementById("deliveryDate")?.value || null,
         status: "quoted",
       }),
     });
@@ -550,6 +557,7 @@ window.captureEdits = function () {
     };
   });
   edits.globalComment = document.getElementById("globalComment")?.value || "";
+  edits.deliveryDate = document.getElementById("deliveryDate")?.value || "";
   return edits;
 };
 
@@ -569,6 +577,8 @@ window.restoreEdits = function (edits) {
   });
   const gc = document.getElementById("globalComment");
   if (gc && edits.globalComment !== undefined) gc.value = edits.globalComment;
+  const deliveryDate = document.getElementById("deliveryDate");
+  if (deliveryDate && edits.deliveryDate !== undefined) deliveryDate.value = edits.deliveryDate;
 };
 
 window.deleteServiceFromOffer = async function (serviceId, offerId, isMineTab, serviceName) {

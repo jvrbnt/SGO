@@ -260,6 +260,7 @@ class OfferResponse(BaseModel):
     status: str
     created_at: datetime
     updated_at: Optional[datetime] = None
+    delivery_date: Optional[datetime] = None
     technician_comment: Optional[str] = None
     client_id: int
     manager_id: Optional[int] = None
@@ -301,6 +302,7 @@ class ServiceUpdate(BaseModel):
 class OfferReviewUpdate(BaseModel):
     services: List[ServiceUpdate]
     technician_comment: Optional[str] = None
+    delivery_date: Optional[datetime] = None
     status: str = "quoted"
 
 class TechnicianCreate(BaseModel):

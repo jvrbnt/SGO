@@ -40,3 +40,12 @@ def test_quality_document_path_uses_original_naming_and_updated_suffix(tmp_path,
     second.write_bytes(b"%PDF second")
     third = _quality_document_path(2026, "offers", "O_001_2026")
     assert third == tmp_path / "2026" / "offers" / "O_001_2026_Actualizada_2.pdf"
+
+
+def test_latest_request_number_reads_mail_request_folder(tmp_path, monkeypatch):
+    monkeypatch.setattr(pdf_documents, "PO_REQUEST_DIRECTORY", tmp_path)
+    (tmp_path / "PO_001_2026.pdf").write_bytes(b"%PDF first")
+    (tmp_path / "PO_009_2025.pdf").write_bytes(b"%PDF old")
+    (tmp_path / "PO_not-a-number_2026.pdf").write_bytes(b"%PDF invalid")
+
+    assert pdf_documents._latest_request_number(2026) == 1

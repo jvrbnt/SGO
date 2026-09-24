@@ -1,5 +1,9 @@
 FROM python:3.13-slim
 
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends libreoffice \
+	&& rm -rf /var/lib/apt/lists/*
+
 # Evitar que Python escriba archivos .pyc en el disco
 ENV PYTHONDONTWRITEBYTECODE=1
 # Evitar que Python haga buffer de stdout y stderr
