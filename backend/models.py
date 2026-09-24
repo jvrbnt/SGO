@@ -43,6 +43,13 @@ class Technician(Base):
     assigned_services = relationship("Service", back_populates="technician")
 
 
+class IP(Base):
+    __tablename__ = "ips"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, nullable=False, index=True)
+
+
 class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"
 

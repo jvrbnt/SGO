@@ -47,7 +47,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const billingIsInternal = ["internal", "mina", "internal (mina)"].includes(billingEntity);
   const billingSection = document.getElementById("billingSection");
   if (billingIsCompany) {
-    document.getElementById("billingDescription").textContent = "No se requieren datos adicionales para empresas.";
     document.getElementById("billingIpField").style.display = "none";
   } else {
     document.getElementById("billingProjectField").style.display = billingIsInternal ? "flex" : "none";
@@ -55,6 +54,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("billingProject").required = billingIsInternal;
     document.getElementById("billingAccount").required = billingIsInternal;
   }
+
+  async function loadPossibleIps() {
+    if (billingIsCompany) return;
+    const selector = document.getElementById("billingIp");
+    try {
+      const response = await fetch("/api/client/ips");
+      if (!response.ok) throw new Error("Could not load possible IPs");
+      const possibleIps = sanitizeDisplayData(await response.json());
+      selector.innerHTML = '<option value="">Select an IP</option>';
+      possibleIps.forEach((possibleIp) => {
+        const option = document.createElement("option");
+        option.value = possibleIp.name;
+        option.textContent = possibleIp.name;
+        selector.appendChild(option);
+      });
+    } catch (error) {
+      selector.innerHTML = '<option value="">Could not load IPs</option>';
+      showToast("Could not load the possible IPs.", "error");
+    }
+  }
+  await loadPossibleIps();
 
   // 3. DROPDOWN MENU
   const profileContainer = document.getElementById("profileContainer");

@@ -44,6 +44,15 @@ class TechnicianResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
+class IPResponse(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True
+
+
 # --- LOGIN AND CATALOG ---
 class LoginRequest(BaseModel):
     email: EmailStr

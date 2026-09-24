@@ -61,18 +61,19 @@
       <div id="servicesGrid"></div>
       <section id="billingSection" aria-labelledby="billingTitle" style="display:block; clear:both; position:relative; z-index:10; width:100%; box-sizing:border-box; margin-top:30px; padding:22px; border:1px solid #dbe4ee; border-radius:8px; background:#f8fafc;">
         <h3 id="billingTitle" style="margin:0 0 8px; color:var(--color-csic);">Bill to:</h3>
-        <p id="billingDescription" style="margin:0 0 16px; color:#64748b; font-size:13px;">Estos datos se guardarán en esta oferta.</p>
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">
           <label id="billingIpField" style="display:flex; flex-direction:column; gap:5px; font-weight:600; font-size:13px;">
-            Responsable del pago / IP
-            <input id="billingIp" type="text" required style="padding:9px; border:1px solid #cbd5e1; border-radius:4px; background:#fff;">
+            IP
+            <select id="billingIp" required style="padding:9px; border:1px solid #cbd5e1; border-radius:4px; background:#fff;">
+              <option value="">Loading...</option>
+            </select>
           </label>
           <label id="billingProjectField" style="display:none; flex-direction:column; gap:5px; font-weight:600; font-size:13px;">
-            Código de proyecto
+            Project Code
             <input id="billingProject" type="text" required style="padding:9px; border:1px solid #cbd5e1; border-radius:4px; background:#fff;">
           </label>
           <label id="billingAccountField" style="display:none; flex-direction:column; gap:5px; font-weight:600; font-size:13px;">
-            Cuenta interna
+            Internal Account
             <input id="billingAccount" type="text" required style="padding:9px; border:1px solid #cbd5e1; border-radius:4px; background:#fff;">
           </label>
         </div>
@@ -153,7 +154,7 @@
   </div>
 
   <script src="/static/js/Toast.js"></script>
-  <script src="/static/js/ServicioCliente.js?v=20260914-4" defer></script>
+  <script src="/static/js/ServicioCliente.js?v=20260924-1" defer></script>
   <script src="/static/js/Footer.js"></script>
 </body>
 

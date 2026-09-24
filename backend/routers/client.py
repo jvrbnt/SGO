@@ -11,6 +11,14 @@ from backend.pdf_documents import generate_acceptance_pdf, generate_request_pdf
 
 router = APIRouter(prefix="/api/client", tags=["client"])
 
+@router.get("/ips", response_model=List[schemas.IPResponse])
+@router.get("/possible-ips", response_model=List[schemas.IPResponse], include_in_schema=False)
+def get_ips(current_user = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
+    """Return the approved investigator principal names for the billing selector."""
+    if current_user.app_role != "client":
+        raise HTTPException(status_code=403, detail="Only clients can view possible IPs")
+    return db.query(models.IP).order_by(models.IP.name).all()
+
 @router.post("/offers")
 def create_offer(offer_in: schemas.OfferCreate, current_user = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
     """Create a new offer request from a client.
@@ -35,6 +43,12 @@ def create_offer(offer_in: schemas.OfferCreate, current_user = Depends(auth_serv
         or not offer_in.investigador_principal.strip()
     ):
         raise HTTPException(status_code=422, detail="The person responsible for payment is required")
+    if not is_company:
+        possible_ip = db.query(models.IP).filter(
+            models.IP.name == offer_in.investigador_principal.strip()
+        ).first()
+        if not possible_ip:
+            raise HTTPException(status_code=422, detail="Select a valid person responsible for payment")
     if client.entity == "Internal" and (
         not offer_in.cuenta_interna
         or not offer_in.cuenta_interna.strip()
