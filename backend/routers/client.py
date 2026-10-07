@@ -8,6 +8,7 @@ from backend import models, schemas, auth as auth_service
 from backend.dependencies import get_db
 from backend import workflow
 from backend.pdf_documents import generate_acceptance_pdf, generate_request_pdf, next_offer_reference
+from backend.traceability_excel import try_sync_offer
 
 router = APIRouter(prefix="/api/client", tags=["client"])
 
@@ -95,6 +96,7 @@ def create_offer(offer_in: schemas.OfferCreate, current_user = Depends(auth_serv
         db.refresh(new_offer)
         generate_request_pdf(db, new_offer)
         db.refresh(new_offer)
+        try_sync_offer(db, new_offer)
     except HTTPException:
         db.rollback()
         raise
@@ -162,6 +164,7 @@ def client_accept_offer(offer_id: int, current_user = Depends(auth_service.get_c
         entry.acceptance_date = datetime.now()
 
     generate_acceptance_pdf(db, offer)
+    try_sync_offer(db, offer)
     return {"message": "Offer accepted successfully"}
 
 @router.get("/invoices")

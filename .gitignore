@@ -4,7 +4,7 @@ __pycache__/
 .env
 venv
 docs_oficiales/*
-!docs_oficiales/CSS_RG-10. Oferta Ed.05_ES.docx
+!docs_oficiales/CSS_RG-10. Oferta Ed.06_ES.docx
 data/
 backups/
 scratch.patch

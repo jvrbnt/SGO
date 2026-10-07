@@ -7,6 +7,7 @@ import io
 
 from backend import models, schemas, auth as auth_service, workflow
 from backend.dependencies import get_db
+from backend.traceability_excel import try_sync_offer
 
 """
 Traceability Module (Quality Control & Auditing)
@@ -124,6 +125,7 @@ def update_offer_traceability(
         entry.observations = entry_data.observations
 
     db.commit()
+    try_sync_offer(db, offer)
     return get_offer_traceability(offer_id, current_user, db)
 
 

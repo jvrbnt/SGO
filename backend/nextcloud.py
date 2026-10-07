@@ -111,7 +111,7 @@ class NextcloudClient:
             response = self.session.get(url, stream=True)
 
             if response.status_code == 200:
-                os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
+                os.makedirs(os.path.dirname(local_file_path) or ".", exist_ok=True)
                 with open(local_file_path, "wb") as f:
                     for chunk in response.iter_content(chunk_size=8192):
                         if chunk:
