@@ -50,6 +50,23 @@
             </div>
 
             <button id="btnSaveChanges">Save Changes</button>
+
+            <h3 style="margin:30px 0 10px;">Change Password</h3>
+            <div class="fields-grid">
+                <div class="input-group">
+                    <label>Current password:</label>
+                    <input type="password" id="currentPassword" autocomplete="current-password">
+                </div>
+                <div class="input-group">
+                    <label>New password:</label>
+                    <input type="password" id="newPassword" autocomplete="new-password" placeholder="Min. 8 characters and a number">
+                </div>
+                <div class="input-group">
+                    <label>Confirm new password:</label>
+                    <input type="password" id="confirmPassword" autocomplete="new-password">
+                </div>
+            </div>
+            <button id="btnChangePassword">Change Password</button>
         </div>
     </div>
 
@@ -94,6 +111,7 @@
 
 <script src="/static/js/Avatar.js"></script>
     <script src="/static/js/Toast.js"></script>
+    <script src="/static/js/ChangePassword.js"></script>
     <script src="/static/js/ServicioEditT.js?v=2" defer></script>
   <script src="/static/js/Footer.js"></script>
 </body>

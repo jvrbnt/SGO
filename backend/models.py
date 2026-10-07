@@ -22,6 +22,11 @@ class Client(Base):
 
     profile_picture = Column(String, nullable=True)
 
+    email_verified = Column(Boolean, nullable=False, default=False)
+    email_verification_hash = Column(String, nullable=True, index=True)
+    email_verification_expires = Column(DateTime, nullable=True)
+    verification_poll_hash = Column(String, nullable=True)  # lets the waiting sign-up screen log in once verified
+
     # Relationship between client and their multiple requests/offers
     offers = relationship("Offer", back_populates="client")
 

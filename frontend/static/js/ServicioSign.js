@@ -90,9 +90,7 @@ registrationForm.addEventListener("submit", async function (event) {
     const data = await response.json();
 
     if (response.ok) {
-      showToast(data.message || "Account created successfully", "success");
-      // Redirect to login on success
-      window.location.href = "/login";
+      showVerificationWaitScreen(newClient.email, data.poll_token);
     } else {
       // Handle validation or duplicate errors
       if (Array.isArray(data.detail)) {
@@ -112,3 +110,48 @@ registrationForm.addEventListener("submit", async function (event) {
     );
   }
 });
+
+// Waiting screen: polls until the user clicks the link sent by e-mail, then logs in.
+function showVerificationWaitScreen(email, pollToken) {
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.85);z-index:5000;display:flex;align-items:center;justify-content:center;";
+  overlay.innerHTML = `
+    <div style="background:#fff;padding:36px 44px;max-width:440px;text-align:center;font-family:Arial,sans-serif;">
+      <div class="verify-spinner" style="width:48px;height:48px;margin:0 auto 18px;border:5px solid #e2e8f0;border-top-color:#0f172a;border-radius:50%;animation:verifySpin 1s linear infinite;"></div>
+      <h2 style="margin:0 0 10px;color:#0f172a;">Verify your email</h2>
+      <p style="color:#475569;line-height:1.5;">We have sent a verification link to <strong></strong>.<br>Click it to activate your account. This page will continue automatically.</p>
+      <button type="button" id="resendVerification" style="margin-top:12px;background:none;border:1px solid #0f172a;padding:8px 16px;cursor:pointer;">Resend email</button>
+    </div>
+    <style>@keyframes verifySpin{to{transform:rotate(360deg)}}</style>`;
+  overlay.querySelector("strong").textContent = email;
+  document.body.appendChild(overlay);
+
+  overlay.querySelector("#resendVerification").addEventListener("click", async () => {
+    await fetch("/api/client/resend-verification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    showToast("Verification email sent again.", "success");
+  });
+
+  const timer = setInterval(async () => {
+    try {
+      const response = await fetch("/api/client/verification-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, poll_token: pollToken }),
+      });
+      if (!response.ok) return;
+      const result = await response.json();
+      if (result.verified) {
+        clearInterval(timer);
+        localStorage.setItem("authToken", result.access_token);
+        localStorage.setItem("currentUser", JSON.stringify(result.user));
+        window.location.href = "/cliente";
+      }
+    } catch (err) {
+      console.error("Verification check failed:", err);
+    }
+  }, 3000);
+}

@@ -6,10 +6,36 @@ from typing import List, Optional
 from backend import models, schemas, auth as auth_service
 from backend.dependencies import get_db
 from backend import workflow
-from backend.pdf_documents import generate_offer_pdf
+import os
+import threading
+from backend.email import send_offer_quote_email
+from backend.pdf_documents import generate_offer_pdf, load_document_bytes
 from backend.traceability_excel import try_sync_offer_background
 
+import logging
+logger = logging.getLogger("sgo.technician")
+
 router = APIRouter(prefix="/api/technician", tags=["technician"])
+
+def _notify_client_of_quote(offer, document_path: str) -> None:
+    """E-mail the quotation (PDF attached) with a one-click accept link, without blocking the request."""
+    if not offer.client:
+        return
+    from backend.routers.client import create_accept_token
+
+    base_url = os.getenv("APP_BASE_URL", "http://localhost:8000").rstrip("/")
+    accept_url = f"{base_url}/api/client/offers/{offer.id}/accept-link?token={create_accept_token(offer.id)}"
+    recipient, first_name, reference = offer.client.email, offer.client.first_name, offer.reference
+
+    def run():
+        try:
+            pdf = load_document_bytes(document_path)
+            send_offer_quote_email(recipient, first_name, reference, accept_url, pdf, f"Oferta_{reference}.pdf")
+        except Exception:
+            logger.exception("Could not e-mail quotation %s", reference)
+
+    threading.Thread(target=run, daemon=True).start()
+
 
 @router.get("/offers", response_model=List[schemas.OfferResponse])
 def get_all_offers(current_user = Depends(auth_service.require_technician_or_higher), db: Session = Depends(get_db)):
@@ -63,8 +89,9 @@ def finalize_review_and_send(offer_id: int, review_data: schemas.OfferReviewUpda
         service.comment = s_data.comment
         service.quoted_price = s_data.quoted_price
 
-    generate_offer_pdf(db, offer, technician_id=current_user.id)
+    record = generate_offer_pdf(db, offer, technician_id=current_user.id)
     try_sync_offer_background(db, offer)
+    _notify_client_of_quote(offer, record.file_path)
     return {"message": "Offer sent to client as QUOTED"}
 
 @router.patch("/offers/{offer_id}")

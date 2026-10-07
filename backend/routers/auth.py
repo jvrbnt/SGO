@@ -6,7 +6,8 @@ import hashlib
 import secrets
 
 from backend import models, schemas, auth as auth_service
-from backend.email import send_password_reset_email, send_welcome_email
+from backend.email import send_password_reset_email, send_welcome_email, send_verification_email
+from backend.html_pages import result_page
 from backend.dependencies import get_db
 from backend.security import ph, SECRET_PEPPER
 from backend.prepared_offers import claim_prepared_offers
@@ -14,6 +15,7 @@ from backend.prepared_offers import claim_prepared_offers
 router = APIRouter(prefix="/api", tags=["auth"])
 
 PASSWORD_RESET_MINUTES = 30
+EMAIL_VERIFICATION_HOURS = 24
 
 
 def _token_hash(token: str) -> str:
@@ -29,9 +31,39 @@ def _as_utc(value: datetime) -> datetime:
         return value.replace(tzinfo=timezone.utc)
     return value
 
+def _issue_verification_token(client: models.Client) -> str:
+    raw = secrets.token_urlsafe(32)
+    client.email_verification_hash = _token_hash(raw)
+    client.email_verification_expires = datetime.now() + timedelta(hours=EMAIL_VERIFICATION_HOURS)
+    return raw
+
+
+def _client_login_payload(client: models.Client) -> dict:
+    access_token = auth_service.create_access_token(
+        data={"id": client.id, "role": "client"},
+        expires_delta=timedelta(minutes=auth_service.ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": client.id,
+            "role": "client",
+            "email": client.email,
+            "first_name": client.first_name,
+            "last_name": client.last_name,
+            "display_name": client.display_name,
+            "nickname": client.display_name,
+            "profile_picture": client.profile_picture,
+            "entity": client.entity,
+            "grupo": client.grupo,
+        }
+    }
+
+
 @router.post("/client/signup")
 def create_client(client_data: schemas.ClientCreateWeb, db: Session = Depends(get_db)):
-    """Register a new client account."""
+    """Register a new client account. It stays inactive until the e-mail is verified."""
     if (
         db.query(models.Client).filter(models.Client.email == client_data.email).first()
         or db.query(models.Technician).filter(models.Technician.email == client_data.email).first()
@@ -47,13 +79,85 @@ def create_client(client_data: schemas.ClientCreateWeb, db: Session = Depends(ge
         email=client_data.email,
         hashed_password=hashed_pwd,
         entity=client_data.entity,
-        grupo=client_data.grupo
+        grupo=client_data.grupo,
+        email_verified=False,
     )
+    verification_token = _issue_verification_token(new_client)
+    poll_token = secrets.token_urlsafe(32)
+    new_client.verification_poll_hash = _token_hash(poll_token)
     db.add(new_client)
     db.commit()
-    claim_prepared_offers(db, new_client)
-    send_welcome_email(new_client.email, new_client.first_name)
-    return {"message": "Client account created successfully"}
+    send_verification_email(new_client.email, new_client.first_name, verification_token)
+    return {
+        "message": "Account created. Please verify your email.",
+        "verification_required": True,
+        "poll_token": poll_token,
+    }
+
+
+@router.get("/verify-email")
+def verify_email(token: str, db: Session = Depends(get_db)):
+    """Landing page of the verification link sent by e-mail."""
+    client = db.query(models.Client).filter(
+        models.Client.email_verification_hash == _token_hash(token)
+    ).first()
+    if not client:
+        return result_page("Enlace no válido", "El enlace de verificación no es válido o ya fue utilizado.", ok=False, status_code=400)
+    if client.email_verification_expires and client.email_verification_expires < datetime.now():
+        return result_page("Enlace caducado", "El enlace ha caducado. Solicita uno nuevo desde la pantalla de registro.", ok=False, status_code=400)
+
+    client.email_verified = True
+    client.email_verification_hash = None
+    client.email_verification_expires = None
+    db.commit()
+    claim_prepared_offers(db, client)
+    send_welcome_email(client.email, client.first_name)
+    return result_page("Correo verificado", "Tu correo ha sido verificado. Ya puedes volver a la ventana de registro: se abrirá tu cuenta automáticamente.")
+
+
+@router.post("/client/verification-status")
+def verification_status(data: schemas.VerificationStatusRequest, db: Session = Depends(get_db)):
+    """Polled by the sign-up screen; logs the user in as soon as the e-mail is verified."""
+    client = db.query(models.Client).filter(models.Client.email == data.email).first()
+    if (
+        not client
+        or not client.verification_poll_hash
+        or not secrets.compare_digest(client.verification_poll_hash, _token_hash(data.poll_token))
+    ):
+        raise HTTPException(status_code=400, detail="Invalid verification session")
+    if not client.email_verified:
+        return {"verified": False}
+
+    client.verification_poll_hash = None
+    db.commit()
+    return {"verified": True, **_client_login_payload(client)}
+
+
+@router.post("/client/resend-verification")
+def resend_verification(data: schemas.ResendVerificationRequest, db: Session = Depends(get_db)):
+    """Send a fresh verification link without revealing whether the account exists."""
+    client = db.query(models.Client).filter(models.Client.email == data.email).first()
+    if client and not client.email_verified:
+        token = _issue_verification_token(client)
+        db.commit()
+        send_verification_email(client.email, client.first_name, token)
+    return {"message": "If the account is pending verification, a new link has been sent."}
+
+
+@router.post("/me/password")
+def change_password(
+    data: schemas.PasswordChange,
+    current_user=Depends(auth_service.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Let any logged-in user (client or technician) change their own password."""
+    try:
+        ph.verify(current_user.hashed_password, data.current_password + SECRET_PEPPER)
+    except VerifyMismatchError:
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    current_user.hashed_password = ph.hash(data.new_password + SECRET_PEPPER)
+    db.commit()
+    return {"message": "Password updated successfully"}
 
 
 @router.post("/forgot-password")
@@ -122,26 +226,9 @@ def unified_login(login_data: schemas.LoginRequest, db: Session = Depends(get_db
     if client:
         try:
             ph.verify(client.hashed_password, password_with_pepper)
-            access_token = auth_service.create_access_token(
-                data={"id": client.id, "role": "client"},
-                expires_delta=timedelta(minutes=auth_service.ACCESS_TOKEN_EXPIRE_MINUTES)
-            )
-            return {
-                "access_token": access_token,
-                "token_type": "bearer",
-                "user": {
-                    "id": client.id,
-                    "role": "client",
-                    "email": client.email,
-                    "first_name": client.first_name,
-                    "last_name": client.last_name,
-                    "display_name": client.display_name,
-                    "nickname": client.display_name,
-                    "profile_picture": client.profile_picture,
-                    "entity": client.entity,
-                    "grupo": client.grupo,
-                }
-            }
+            if not client.email_verified:
+                raise HTTPException(status_code=403, detail="Please verify your email before logging in. Check your inbox.")
+            return _client_login_payload(client)
         except VerifyMismatchError:
             pass
 

@@ -95,3 +95,80 @@ def send_password_reset_email(recipient: str, first_name: str, token: str) -> bo
         return False
 
     return True
+
+
+def _app_base_url() -> str:
+    return os.getenv("APP_BASE_URL", "http://localhost:8000").rstrip("/")
+
+
+def _deliver(message: EmailMessage, kind: str) -> bool:
+    """Send a prepared message through the configured SMTP server."""
+    if os.getenv("MAIL_ENABLED", "false").lower() not in {"1", "true", "yes"}:
+        logger.info("%s email skipped because MAIL_ENABLED is not enabled", kind)
+        return False
+
+    host = os.getenv("SMTP_HOST")
+    username = os.getenv("SMTP_USERNAME")
+    password = os.getenv("SMTP_PASSWORD")
+    sender = os.getenv("MAIL_FROM", username)
+    if not host or not username or not password or not sender:
+        logger.error("Mail is enabled but SMTP configuration is incomplete")
+        return False
+
+    message["From"] = sender
+    port = int(os.getenv("SMTP_PORT", "587"))
+    use_ssl = os.getenv("SMTP_USE_SSL", "false").lower() in {"1", "true", "yes"}
+    use_tls = os.getenv("SMTP_USE_TLS", "true").lower() in {"1", "true", "yes"}
+    try:
+        smtp_class = smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
+        with smtp_class(host, port, timeout=30) as smtp:
+            if use_tls and not use_ssl:
+                smtp.starttls()
+            smtp.login(username, password)
+            smtp.send_message(message)
+    except (OSError, smtplib.SMTPException) as exc:
+        logger.exception("Could not send %s email to %s: %s", kind, message["To"], exc)
+        return False
+    return True
+
+
+def send_verification_email(recipient: str, first_name: str, token: str) -> bool:
+    """Send the e-mail verification link used to activate a new account."""
+    link = f"{_app_base_url()}/api/verify-email?{urlencode({'token': token})}"
+    message = EmailMessage()
+    message["Subject"] = "Verifica tu correo - MiNa"
+    message["To"] = recipient
+    message.set_content(
+        f"Hola {first_name},\n\n"
+        "Para activar tu cuenta en el Servicio de Micro y Nanofabricación (MiNa), "
+        "verifica tu correo electrónico haciendo clic en este enlace (válido 24 horas):\n\n"
+        f"{link}\n\n"
+        "Si no has creado una cuenta, puedes ignorar este mensaje.\n\n"
+        "Este correo se ha enviado desde una dirección no-reply."
+    )
+    sent = _deliver(message, "Verification")
+    if not sent and os.getenv("MAIL_ENABLED", "false").lower() not in {"1", "true", "yes"}:
+        logger.warning("MAIL_ENABLED is off. Verification link for %s: %s", recipient, link)
+    return sent
+
+
+def send_offer_quote_email(
+    recipient: str, first_name: str, reference: str, accept_url: str,
+    pdf_bytes: bytes | None, pdf_name: str,
+) -> bool:
+    """Notify the client of a new quotation, attaching the offer document and an accept link."""
+    message = EmailMessage()
+    message["Subject"] = f"Nueva oferta {reference} - MiNa"
+    message["To"] = recipient
+    message.set_content(
+        f"Hola {first_name},\n\n"
+        f"El equipo técnico de MiNa ha preparado la oferta {reference}. "
+        "Encontrarás el documento adjunto" + ("" if pdf_bytes else " en tu área de cliente") + ".\n\n"
+        "Si estás de acuerdo, puedes aceptarla directamente haciendo clic en este enlace:\n\n"
+        f"{accept_url}\n\n"
+        "También puedes revisarla y aceptarla desde la sección My Offers de la web.\n\n"
+        "Este correo se ha enviado desde una dirección no-reply."
+    )
+    if pdf_bytes:
+        message.add_attachment(pdf_bytes, maintype="application", subtype="pdf", filename=pdf_name)
+    return _deliver(message, "Offer quote")

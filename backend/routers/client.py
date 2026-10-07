@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-from datetime import datetime
+from datetime import datetime, timedelta
+from jose import JWTError, jwt
 from typing import List, Optional
 
 from backend import models, schemas, auth as auth_service
 from backend.dependencies import get_db
 from backend import workflow
+from backend.html_pages import result_page
 from backend.pdf_documents import generate_acceptance_pdf, generate_request_pdf, next_offer_reference
 from backend.traceability_excel import try_sync_offer_background
 
@@ -124,19 +126,19 @@ def get_client_offers(email: Optional[str] = None, current_user = Depends(auth_s
         return []
     return db.query(models.Offer).filter(models.Offer.client_id == client.id).all()
 
-@router.patch("/offers/{offer_id}/accept")
-def client_accept_offer(offer_id: int, current_user = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
-    """Allow a client to accept a quoted offer."""
-    if current_user.app_role != "client":
-        raise HTTPException(status_code=403, detail="Only clients can accept offers")
+ACCEPT_LINK_DAYS = 30
 
-    offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
-    if not offer:
-        raise HTTPException(status_code=404, detail="Offer not found")
 
-    if offer.client_id != current_user.id:
-        raise HTTPException(status_code=403, detail="This offer does not belong to you")
+def create_accept_token(offer_id: int) -> str:
+    """Signed token embedded in the quotation e-mail so the client can accept with one click."""
+    return auth_service.create_access_token(
+        data={"offer_id": offer_id, "purpose": "accept_offer"},
+        expires_delta=timedelta(days=ACCEPT_LINK_DAYS),
+    )
 
+
+def _accept_offer(db: Session, offer: models.Offer) -> None:
+    """Shared acceptance logic for the authenticated endpoint and the e-mail link."""
     # SECURITY FIX: Ensure the offer is in a valid state to be accepted.
     if offer.status != workflow.QUOTED:
         raise HTTPException(status_code=400, detail=f"Cannot accept an offer with status '{offer.status}'")
@@ -165,7 +167,48 @@ def client_accept_offer(offer_id: int, current_user = Depends(auth_service.get_c
 
     generate_acceptance_pdf(db, offer)
     try_sync_offer_background(db, offer)
+
+
+@router.patch("/offers/{offer_id}/accept")
+def client_accept_offer(offer_id: int, current_user = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
+    """Allow a client to accept a quoted offer."""
+    if current_user.app_role != "client":
+        raise HTTPException(status_code=403, detail="Only clients can accept offers")
+
+    offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer not found")
+
+    if offer.client_id != current_user.id:
+        raise HTTPException(status_code=403, detail="This offer does not belong to you")
+
+    _accept_offer(db, offer)
     return {"message": "Offer accepted successfully"}
+
+
+@router.get("/offers/{offer_id}/accept-link")
+def client_accept_offer_from_email(offer_id: int, token: str, db: Session = Depends(get_db)):
+    """One-click acceptance from the quotation e-mail."""
+    try:
+        payload = jwt.decode(token, auth_service.SECRET_KEY, algorithms=[auth_service.ALGORITHM])
+    except JWTError:
+        return result_page("Enlace no válido", "El enlace de aceptación no es válido o ha caducado.", ok=False, status_code=400)
+    if payload.get("purpose") != "accept_offer" or payload.get("offer_id") != offer_id:
+        return result_page("Enlace no válido", "El enlace de aceptación no es válido.", ok=False, status_code=400)
+
+    offer = db.query(models.Offer).filter(models.Offer.id == offer_id).first()
+    if not offer:
+        return result_page("Oferta no encontrada", "No hemos encontrado esta oferta.", ok=False, status_code=404)
+    if offer.status in (workflow.ACCEPTED, workflow.COMPLETED, workflow.INVOICED, workflow.PAID):
+        return result_page("Oferta ya aceptada", f"La oferta {offer.reference} ya estaba aceptada.")
+    if offer.status != workflow.QUOTED:
+        return result_page("Oferta no disponible", f"La oferta {offer.reference} no se puede aceptar en este momento.", ok=False, status_code=400)
+
+    try:
+        _accept_offer(db, offer)
+    except HTTPException as exc:
+        return result_page("No se pudo aceptar", str(exc.detail), ok=False, status_code=exc.status_code)
+    return result_page("Oferta aceptada", f"La oferta {offer.reference} ha sido aceptada. El equipo de MiNa comenzará el trabajo.")
 
 @router.get("/invoices")
 def get_client_invoices(email: Optional[str] = None, current_user = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):

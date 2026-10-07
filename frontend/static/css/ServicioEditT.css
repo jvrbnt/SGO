@@ -149,3 +149,13 @@
 }
 
 .hidden { display: none; }
+
+#btnChangePassword {
+    margin-top: 15px;
+    padding: 12px 24px;
+    background: #0f172a;
+    color: white;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+}
