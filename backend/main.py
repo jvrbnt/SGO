@@ -9,7 +9,7 @@ from backend import models
 from backend.database import engine, DB_AVAILABLE, LocalSession
 
 # Import Routers
-from backend.routers import pages, auth, admin, catalog, client, technician, invoice, documents, traceability
+from backend.routers import pages, auth, admin, catalog, client, technician, invoice, documents, traceability, nextcloud
 
 # --- LOGGING CONFIGURATION ---
 logger = logging.getLogger("sgo")
@@ -74,3 +74,4 @@ app.include_router(invoice.router)
 app.include_router(documents.router)
 app.include_router(documents.client_router)
 app.include_router(traceability.router)
+app.include_router(nextcloud.router)

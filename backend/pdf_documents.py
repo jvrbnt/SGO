@@ -18,6 +18,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 from sqlalchemy import select, text
 
 from backend import models, workflow
+from backend.nextcloud import get_nextcloud_client
 
 """
 PDF Document Generation Module
@@ -32,11 +33,55 @@ DOCUMENT_ROOT = Path(os.getenv("GENERATED_DOCUMENTS_DIR", "data/generated_docume
 PO_REQUEST_DIRECTORY = Path(os.getenv("PO_REQUEST_DIRECTORY", "Calidad/Mail Petición Oferta"))
 ACCEPTANCE_DOCUMENT_DIRECTORY = Path(os.getenv("ACCEPTANCE_DOCUMENT_DIRECTORY", "Calidad/Mail Aceptación Oferta"))
 OFFER_DOCUMENT_DIRECTORY = Path(os.getenv("OFFER_DOCUMENT_DIRECTORY", "Calidad/RG-10. Ofertas. Ed 03"))
-INVOICE_DOCUMENT_DIRECTORY = Path(os.getenv("INVOICE_DOCUMENT_DIRECTORY", "Calidad/Facturas"))
-RG10_TEMPLATE_PATH = Path(os.getenv("RG10_TEMPLATE_PATH", "docs_oficiales/CSS_RG-10. Oferta Ed.05_ES.docx"))
+INVOICE_DOCUMENT_DIRECTORY = Path(os.getenv("INVOICE_DOCUMENT_DIRECTORY", "Calidad/Facturación Clientes"))
+RG10_TEMPLATE_PATH = Path(os.getenv("RG10_TEMPLATE_PATH", "docs_oficiales/CSS_RG-10. Oferta Ed.06_ES.docx"))
 PO_REQUEST_FILENAME = re.compile(
     r"^PO_(?P<number>\d+)_(?P<year>\d{4})(?:_Actualizada(?:_\d+)?)?\.pdf$"
 )
+# Calidad documents live in Nextcloud (QUALITY_REMOTE_ROOT); the local Calidad
+# folder is only a staging copy used to build and serve the generated files.
+QUALITY_LOCAL_ROOT = Path(os.getenv("QUALITY_LOCAL_ROOT", "Calidad"))
+QUALITY_REMOTE_ROOT = os.getenv("NEXTCLOUD_QUALITY_PATH", "/SGO-test").rstrip("/")
+
+
+def _remote_path(path: Path) -> str | None:
+    """Map a local Calidad path to its Nextcloud path, or None if not a Calidad path."""
+    if not (os.getenv("NEXTCLOUD_USERNAME") and os.getenv("NEXTCLOUD_PASSWORD")):
+        return None
+    try:
+        relative = Path(path).relative_to(QUALITY_LOCAL_ROOT)
+    except ValueError:
+        return None
+    return "/".join([QUALITY_REMOTE_ROOT, *relative.parts])
+
+
+def _list_directory_names(directory: Path) -> set[str]:
+    """Names inside a Calidad directory, read from Nextcloud when it is configured."""
+    remote = _remote_path(directory)
+    if remote is None:
+        return {p.name for p in directory.iterdir()} if directory.exists() else set()
+    names = get_nextcloud_client().list_names(remote)
+    if names is None:
+        raise RuntimeError(f"Could not list Nextcloud folder {remote}")
+    return names
+
+
+def _document_exists(path: Path) -> bool:
+    return path.name in _list_directory_names(path.parent)
+
+
+def _upload_to_nextcloud(path: Path) -> None:
+    remote = _remote_path(path)
+    if remote is None:
+        return
+    client = get_nextcloud_client()
+    folder = QUALITY_REMOTE_ROOT
+    client.create_folder(folder)
+    for part in remote[len(QUALITY_REMOTE_ROOT):].strip("/").split("/")[:-1]:
+        folder = f"{folder}/{part}"
+        client.create_folder(folder)
+    if not client.upload_file(str(path), remote, overwrite=False):
+        raise RuntimeError(f"Could not upload {path.name} to Nextcloud ({remote})")
 
 
 def _safe_part(value) -> str:
@@ -66,13 +111,12 @@ def _quality_document_path(year: int, folder: str, stem: str, extension: str = "
 
 def _latest_request_number(year: int) -> int:
     """Read the highest PO number currently present in the request-mail folder."""
-    if not PO_REQUEST_DIRECTORY.exists():
-        return 0
+    names = _list_directory_names(PO_REQUEST_DIRECTORY)
 
     latest = 0
-    for path in PO_REQUEST_DIRECTORY.glob("PO_*.pdf"):
-        match = PO_REQUEST_FILENAME.match(path.name)
-        if match and int(match.group("year")) == year:
+    for name in names:
+        match = PO_REQUEST_FILENAME.match(name)
+        if match and name.startswith("PO_") and int(match.group("year")) == year:
             latest = max(latest, int(match.group("number")))
     return latest
 
@@ -80,17 +124,17 @@ def _latest_request_number(year: int) -> int:
 def _request_document_path(reference: str, extension: str = "pdf") -> Path:
     """Return the next request path without overwriting an existing PDF."""
     base_path = PO_REQUEST_DIRECTORY / f"PO_{_safe_part(reference)}.{extension}"
-    if not base_path.exists():
+    if not _document_exists(base_path):
         return base_path
 
     updated_path = PO_REQUEST_DIRECTORY / f"PO_{_safe_part(reference)}_Actualizada.{extension}"
-    if not updated_path.exists():
+    if not _document_exists(updated_path):
         return updated_path
 
     version = 2
     while True:
         candidate = PO_REQUEST_DIRECTORY / f"PO_{_safe_part(reference)}_Actualizada_{version}.{extension}"
-        if not candidate.exists():
+        if not _document_exists(candidate):
             return candidate
         version += 1
 
@@ -98,17 +142,17 @@ def _request_document_path(reference: str, extension: str = "pdf") -> Path:
 def _acceptance_document_path(reference: str, extension: str = "pdf") -> Path:
     """Return the acceptance PDF path without overwriting an existing file."""
     base_path = ACCEPTANCE_DOCUMENT_DIRECTORY / f"AO_{_safe_part(reference)}.{extension}"
-    if not base_path.exists():
+    if not _document_exists(base_path):
         return base_path
 
     updated_path = ACCEPTANCE_DOCUMENT_DIRECTORY / f"AO_{_safe_part(reference)}_Actualizada.{extension}"
-    if not updated_path.exists():
+    if not _document_exists(updated_path):
         return updated_path
 
     version = 2
     while True:
         candidate = ACCEPTANCE_DOCUMENT_DIRECTORY / f"AO_{_safe_part(reference)}_Actualizada_{version}.{extension}"
-        if not candidate.exists():
+        if not _document_exists(candidate):
             return candidate
         version += 1
 
@@ -116,17 +160,17 @@ def _acceptance_document_path(reference: str, extension: str = "pdf") -> Path:
 def _quality_mail_document_path(directory: Path, prefix: str, reference: str, extension: str = "pdf") -> Path:
     """Return a quality document path without overwriting existing files."""
     base_path = directory / f"{prefix}{_safe_part(reference)}.{extension}"
-    if not base_path.exists():
+    if not _document_exists(base_path):
         return base_path
 
     updated_path = directory / f"{prefix}{_safe_part(reference)}_Actualizada.{extension}"
-    if not updated_path.exists():
+    if not _document_exists(updated_path):
         return updated_path
 
     version = 2
     while True:
         candidate = directory / f"{prefix}{_safe_part(reference)}_Actualizada_{version}.{extension}"
-        if not candidate.exists():
+        if not _document_exists(candidate):
             return candidate
         version += 1
 
@@ -203,6 +247,7 @@ def latest_document(db, *, document_type, file_format="pdf", offer_id=None, invo
 
 def _register_document(db, *, document_type, file_format, path, offer_id=None, invoice_id=None, technician_id=None):
     sha256 = _checksum(path)
+    _upload_to_nextcloud(path)
     record = models.GeneratedDocument(
         document_type=document_type,
         file_format=file_format,

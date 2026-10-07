@@ -19,7 +19,7 @@ from backend.pdf_documents import (
 router = APIRouter(prefix="/api/technician", tags=["documents"])
 client_router = APIRouter(prefix="/api/client", tags=["documents"])
 
-TEMPLATE_PATH = Path("docs_oficiales/CSS_RG-10. Oferta Ed.05_ES.docx")
+TEMPLATE_PATH = Path("docs_oficiales/CSS_RG-10. Oferta Ed.06_ES.docx")
 
 
 def _latest_existing_document(db, *, document_type, offer_id=None, invoice_id=None):
