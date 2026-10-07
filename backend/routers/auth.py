@@ -9,6 +9,7 @@ from backend import models, schemas, auth as auth_service
 from backend.email import send_password_reset_email, send_welcome_email
 from backend.dependencies import get_db
 from backend.security import ph, SECRET_PEPPER
+from backend.prepared_offers import claim_prepared_offers
 
 router = APIRouter(prefix="/api", tags=["auth"])
 
@@ -50,6 +51,7 @@ def create_client(client_data: schemas.ClientCreateWeb, db: Session = Depends(ge
     )
     db.add(new_client)
     db.commit()
+    claim_prepared_offers(db, new_client)
     send_welcome_email(new_client.email, new_client.first_name)
     return {"message": "Client account created successfully"}
 

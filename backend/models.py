@@ -195,3 +195,18 @@ class GeneratedDocument(Base):
     offer = relationship("Offer")
     invoice = relationship("Invoice")
     created_by_technician = relationship("Technician")
+
+
+class PreparedOffer(Base):
+    # Running offers pre-loaded for a client email. They become real accepted offers
+    # when the client signs up with that email (see backend/prepared_offers.py).
+    __tablename__ = "prepared_offers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, nullable=False, index=True)  # stored lowercase
+    reference = Column(String, unique=True, nullable=False)
+    service_name = Column(String, nullable=False)
+    hours = Column(Float, nullable=False)
+    consumed_hours = Column(Float, nullable=False, default=0.0)
+    price = Column(Float, nullable=False)
+    claimed_at = Column(DateTime, nullable=True)
