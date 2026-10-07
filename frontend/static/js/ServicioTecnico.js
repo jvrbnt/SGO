@@ -254,6 +254,30 @@ window.markServiceStatus = async function (serviceId, newStatus) {
   }
 };
 
+window.saveConsumedHours = async function (serviceId) {
+  const input = document.getElementById(`consumed-${serviceId}`);
+  const hours = parseFloat(input.value);
+  if (isNaN(hours) || hours < 0) {
+    showToast("Enter a valid number of hours.", "warning");
+    return;
+  }
+  try {
+    const response = await fetch(`/api/technician/services/${serviceId}/consumed-hours?hours=${hours}`, {
+      method: "PATCH"
+    });
+    if (response.ok) {
+      showToast("Consumed hours saved.", "success");
+      window.loadAllOffers();
+    } else {
+      const error = await response.json().catch(() => ({}));
+      showToast("Error: " + (error.detail || "Could not save consumed hours"), "error");
+    }
+  } catch (err) {
+    console.error("Network error:", err);
+    showToast("Network error saving consumed hours.", "error");
+  }
+};
+
 // --- 4. REVIEW MODE (TECHNICIAN WORKFLOW) ---
 
 // Map entity → price field
@@ -721,7 +745,7 @@ function renderOfferList(offers, container, isGlobal, techId) {
                 <div style="display: flex; justify-content: space-between; align-items: stretch; background: white; padding: 0; border: 1px solid #eee; border-radius: 4px; gap: 0; overflow: hidden;">
                     <div style="font-size:14px; color:#333; flex: 1; padding: 8px 12px;">
                         <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
-                            <span><strong>${s.service_name}</strong> (${s.hours}h)</span>
+                            <span><strong>${s.service_name}</strong> (${(offer.status === 'accepted' || offer.status === 'completed') ? `${s.consumed_hours || 0}h / ${s.hours}h` : `${s.hours}h`})</span>
                             ${s.technician_id ? `<span style="font-size:12px; color:#555;"><strong>Assigned Technician:</strong> ${s.technician ? s.technician.first_name + ' ' + s.technician.last_name : 'Technician #' + s.technician_id}</span>` : ''}
                             ${(offer.status === 'accepted' || offer.status === 'completed') ? `
                               <span style="font-size:11px; font-weight:bold; padding:4px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px; ${s.status === 'done' ? 'background:#d1fae5; color:#065f46;' : 'background:#fef3c7; color:#92400e;'}">
@@ -737,7 +761,11 @@ function renderOfferList(offers, container, isGlobal, techId) {
                         ${(offer.status === 'accepted' || offer.status === 'completed')
                           ? (s.technician_id === techId || (techData && techData.privilege_level === 'Admin')
                               ? (s.status !== 'done'
-                                ? `<button onclick="window.markServiceStatus(${s.id}, 'done')" style="background:#059669; color:white; border:none; padding:8px 14px; cursor:pointer; font-size:12px; font-weight:bold; white-space:nowrap;">✓ Service Done</button>`
+                                ? `${offer.status === 'accepted' ? `<div style="display:flex; align-items:center; gap:4px; padding:0 10px; font-size:12px; color:#333; white-space:nowrap;">
+                                    <input type="number" id="consumed-${s.id}" min="0" max="${s.hours}" step="0.25" value="${s.consumed_hours || 0}" style="width:60px; padding:4px;">
+                                    <span>/ ${s.hours}h</span>
+                                    <button onclick="window.saveConsumedHours(${s.id})" style="background:#2563eb; color:white; border:none; padding:6px 10px; cursor:pointer; font-size:12px; font-weight:bold;">Save</button>
+                                  </div>` : ''}<button onclick="window.markServiceStatus(${s.id}, 'done')" style="background:#059669; color:white; border:none; padding:8px 14px; cursor:pointer; font-size:12px; font-weight:bold; white-space:nowrap;">✓ Mark as done</button>`
                                 : `<button onclick="window.markServiceStatus(${s.id}, 'pending')" style="background:#d97706; color:white; border:none; padding:8px 14px; cursor:pointer; font-size:12px; font-weight:bold; white-space:nowrap;">↩ Back to Pending</button>`)
                               : '')
                           : (!s.technician_id

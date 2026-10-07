@@ -47,6 +47,29 @@ CLIENT_TYPES = {
 }
 
 
+SERVICE_NAMES = {
+    "electron beam lithography": "Litografía electrónica",
+    "hr-sem microscopy": "SEM Alta resolución MINOTAURO",
+    "reactive ion etching (rie)": "RIE",
+    "focused ion beam (fib)": "FIB",
+    "metal evaporation": "Evaporador por cañón de eˉ",
+    "atomic force microscopy (afm)": "AFM",
+    "uv lithography": "Fotolitografía AA",
+    "profilometer": "Perfilómetro",
+    "spin coating": "Centrífuga",
+    "wet etching": "Ataque Húmedo",
+    "x-ray diffraction (xrd)": "RX",
+    "siox, sinx coatings (pecvd)": "PECVD",
+    "micro-welding": "Microsoldadura",
+    "oxygen plasma": "Plasma O2",
+    "two-photon polymerization (2pp)": "2PP",
+}
+
+
+def _traceability_service_name(name: str) -> str:
+    return SERVICE_NAMES.get((name or "").strip().lower(), name)
+
+
 def _q(tag: str) -> str:
     return f"{{{MAIN_NS}}}{tag}"
 
@@ -80,8 +103,9 @@ def _service_rows(db, offer) -> list[dict]:
             "H": entry.acceptance_date if entry else None,
             "I": mina,
             "J": entry.sample_provided if entry else None,
-            "K": entry.verification if entry else None,
-            "L": service.service_name,
+            "K": service.completed_at if service.status == workflow.DONE else None,
+            "L": _traceability_service_name(service.service_name),
+            "raw_name": service.service_name,
             "M": (entry.delivery_date if entry and entry.delivery_date else offer.delivery_date),
             "N": service.quoted_price,
             "O": hours,
@@ -204,7 +228,7 @@ def _update_workbook(xlsx_bytes: bytes, offer_rows: list[dict]) -> bytes:
 
     placements = []
     for data in offer_rows:
-        match = next((item for item in known if item[1] == data["L"]), None)
+        match = next((item for item in known if item[1] in (data["L"], data["raw_name"])), None)
         if not match:
             match = next((item for item in known if not item[1]), None)
         if match:
@@ -227,7 +251,7 @@ def _update_workbook(xlsx_bytes: bytes, offer_rows: list[dict]) -> bytes:
         for number, data in placements:
             row = _get_row(sheet_data, number)
             for column, value in data.items():
-                if value not in (None, ""):
+                if column in COLUMNS and value not in (None, ""):
                     _set_cell(row, column, value)
 
         # Extend dropdown validations (x14) to cover the table.

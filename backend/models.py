@@ -126,6 +126,8 @@ class Service(Base):
     service_name = Column(String, nullable=False)  # Name of requested service (catalog copy)
     hours = Column(Float, default=0.0)
     original_hours = Column(Float, default=0.0)
+    consumed_hours = Column(Float, default=0.0, nullable=False, server_default="0")  # Hours already worked
+    completed_at = Column(DateTime, nullable=True)  # When the technician marked it as done
     quoted_price = Column(Float, nullable=True)  # Final price set by technician
     comment = Column(Text, nullable=True)
     status = Column(String, default="pending")  # Status flow: pending → doing → done

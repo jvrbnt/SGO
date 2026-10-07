@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -182,7 +183,11 @@ def update_service_status(service_id: int, new_status: str, current_user = Depen
         raise HTTPException(status_code=403, detail="Only the assigned technician can change the service status")
 
     service.status = new_status
+    # Marking as done means every quoted hour was consumed; going back resets the counter.
+    service.consumed_hours = service.hours or 0.0 if new_status == workflow.DONE else 0.0
+    service.completed_at = datetime.now() if new_status == workflow.DONE else None
     db.commit()
+    try_sync_offer_background(db, offer)
 
     # SECURITY & WORKFLOW FIX: Check if all active services are done → auto-complete offer.
     # This prevents offers from getting stuck in "accepted" state forever.
@@ -201,6 +206,28 @@ def update_service_status(service_id: int, new_status: str, current_user = Depen
 
     db.commit()
     return {"message": f"Service status updated to '{new_status}'", "offer_finished": False}
+
+@router.patch("/services/{service_id}/consumed-hours")
+def update_service_consumed_hours(service_id: int, hours: float, current_user = Depends(auth_service.require_technician_or_higher), db: Session = Depends(get_db)):
+    """Record how many of the quoted hours of a service have been consumed so far."""
+    service = db.query(models.Service).filter(models.Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+
+    offer = service.offer
+    if offer.status != workflow.ACCEPTED:
+        raise HTTPException(status_code=400, detail=f"Cannot update consumed hours on a '{offer.status}' offer")
+    if service.technician_id != current_user.id and not workflow.is_admin(current_user):
+        raise HTTPException(status_code=403, detail="Only the assigned technician can update consumed hours")
+    if service.status == workflow.DONE:
+        raise HTTPException(status_code=400, detail="Service is already done")
+    if hours < 0 or hours > (service.hours or 0):
+        raise HTTPException(status_code=400, detail=f"Consumed hours must be between 0 and {service.hours}")
+
+    service.consumed_hours = hours
+    db.commit()
+    return {"message": "Consumed hours updated", "consumed_hours": service.consumed_hours}
+
 
 @router.delete("/services/{service_id}")
 def delete_service(service_id: int, current_user = Depends(auth_service.require_technician_or_higher), db: Session = Depends(get_db)):

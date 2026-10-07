@@ -270,6 +270,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     return `
                       <li style="margin-bottom:3px;">
                         ${s.service_name} — ${hoursDisplay}
+                        <small style="color:#0f766e; font-weight:bold; margin-left:4px;">(${s.consumed_hours || 0}h / ${s.hours}h consumed)</small>
                         ${isAdded ? '<small style="color:#10b981; font-weight:bold; margin-left:4px;">(Added by technician)</small>' : ''}
                         ${s.quoted_price != null ? `<span style="color:${priceColor}; font-weight:600; margin-left:4px;">(${s.quoted_price.toFixed(2)} €)</span>` : ''}
                       </li>

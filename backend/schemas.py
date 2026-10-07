@@ -202,6 +202,7 @@ class ServiceResponse(BaseModel):
     technician_id: Optional[int] = None
     quoted_price: Optional[float] = None
     original_hours: Optional[float] = None
+    consumed_hours: float = 0.0
     status: str = "pending"
     is_deleted: bool = False
     added_by_technician: bool = False
