@@ -46,8 +46,7 @@ def create_client(client_data: schemas.ClientCreateWeb, db: Session = Depends(ge
         email=client_data.email,
         hashed_password=hashed_pwd,
         entity=client_data.entity,
-        grupo=client_data.grupo,
-        profile_picture="https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png"
+        grupo=client_data.grupo
     )
     db.add(new_client)
     db.commit()
@@ -217,8 +216,6 @@ def update_users_me(
     for internal clients.
     """
     current_user.display_name = profile_data.display_name
-    if profile_data.profile_picture is not None:
-        current_user.profile_picture = profile_data.profile_picture
 
     if current_user.app_role == "client":
         if profile_data.entity is not None:

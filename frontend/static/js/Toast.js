@@ -127,3 +127,22 @@ function sanitizeApiData(value) {
 window.showToast = showToast;
 window.escapeHtml = escapeHtml;
 window.sanitizeApiData = sanitizeApiData;
+
+// Disables a button and shows a spinner while an async action runs.
+async function withButtonLoading(button, loadingText, action) {
+  if (!button || button.disabled) return;
+  const originalHtml = button.innerHTML;
+  const originalOpacity = button.style.opacity;
+  button.disabled = true;
+  button.style.opacity = "0.8";
+  button.style.cursor = "wait";
+  button.innerHTML = `<span class="btn-spinner"></span>${loadingText}`;
+  try {
+    return await action();
+  } finally {
+    button.disabled = false;
+    button.style.opacity = originalOpacity;
+    button.style.cursor = "";
+    button.innerHTML = originalHtml;
+  }
+}

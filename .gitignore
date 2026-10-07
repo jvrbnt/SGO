@@ -5,7 +5,6 @@ __pycache__/
 venv
 docs_oficiales/*
 !docs_oficiales/CSS_RG-10. Oferta Ed.06_ES.docx
-data/
 backups/
 scratch.patch
 structure.md

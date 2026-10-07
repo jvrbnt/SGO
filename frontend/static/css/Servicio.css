@@ -293,3 +293,37 @@ body, html {
     box-shadow: none !important;
     border: none !important;
 }
+
+.top-contact-info .brand-logo {
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+
+.top-contact-info .brand-logo img {
+  height: 54px;
+  width: auto;
+  display: block;
+}
+
+#icon .footer-logos {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 30px;
+  margin: 0 auto;
+}
+
+#icon .footer-logos .footer-logo-eu {
+  height: 130px !important;
+  width: auto !important;
+  object-fit: contain !important;
+  margin: 0 !important;
+}
+
+#icon .footer-logos .footer-logo-mns {
+  height: 100px !important;
+  width: auto !important;
+  object-fit: contain !important;
+  margin: 0 !important;
+}

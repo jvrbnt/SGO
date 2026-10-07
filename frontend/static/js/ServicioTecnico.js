@@ -39,7 +39,6 @@ window.fetch = async function() {
 // --- 2. INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", () => {
   const techData = JSON.parse(localStorage.getItem("currentUser"));
-  const profilePicture = techData ? (techData.profilePicture || techData.profile_picture) : null;
 
   if (!techData || techData.role !== "technician") {
     window.location.href = "/login";
@@ -52,10 +51,8 @@ document.addEventListener("DOMContentLoaded", () => {
     userNameBar.textContent = techData.nickname || `${techData.first_name} ${techData.last_name}`;
   }
 
-  if (profilePicture) {
-    const userIcon = document.getElementById("userIcon");
-    if (userIcon) userIcon.src = profilePicture;
-  }
+  const userIcon = document.getElementById("userIcon");
+  if (userIcon) userIcon.src = window.avatarFor(techData);
 
   // Dropdown Menu Logic
   const profileContainer = document.getElementById("profileContainer");
@@ -425,7 +422,7 @@ window.openReviewPanel = async function (offerId, isMineTab, readOnly = false, p
             This offer has already been sent to the client and cannot be modified from here.
           </div>
         ` : `
-          <button onclick="window.sendQuotedOffer(${offer.id})" class="btn-card btn-send" ${!canSend ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>
+          <button onclick="window.sendQuotedOffer(${offer.id}, this)" class="btn-card btn-send" ${!canSend ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>
             SEND QUOTED OFFER TO CLIENT
           </button>
           ${!canSend ? `
@@ -501,7 +498,7 @@ window.recalcGrandTotal = function () {
   if (el) el.textContent = sum.toFixed(2) + ' €';
 };
 
-window.sendQuotedOffer = async function (offerId) {
+window.sendQuotedOffer = async function (offerId, button) {
   const hours = document.querySelectorAll(".rev-hours");
   const notes = document.querySelectorAll(".rev-notes");
   const totals = document.querySelectorAll(".rev-total-price");
@@ -520,6 +517,7 @@ window.sendQuotedOffer = async function (offerId) {
     };
   });
 
+  await withButtonLoading(button, "Sending offer...", async () => {
   try {
     const response = await fetch(`/api/technician/offers/${offerId}/review`, {
       method: "PUT",
@@ -543,7 +541,9 @@ window.sendQuotedOffer = async function (offerId) {
     }
   } catch (err) {
     console.error("Error saving review:", err);
+    showToast("Network error sending the offer.", "error");
   }
+  });
 };
 
 window.captureEdits = function () {
@@ -764,8 +764,6 @@ function renderOfferList(offers, container, isGlobal, techId) {
             <button onclick="window.downloadRequestPdf(${offer.id})" class="btn-card" style="background:#475569; color:white;" title="Download stored request PDF">Request PDF</button>
             ${offer.status !== 'requested' ? `<button onclick="window.downloadOfferPdf(${offer.id})" class="btn-card" style="background:#1f4e79; color:white;" title="Download stored offer PDF">Offer PDF</button>` : ''}
             ${['accepted', 'completed', 'invoiced', 'paid'].includes(offer.status) ? `<button onclick="window.downloadAcceptancePdf(${offer.id})" class="btn-card" style="background:#0f766e; color:white;" title="Download stored acceptance PDF">Acceptance PDF</button>` : ''}
-            ${offer.status !== 'requested' ? `<button onclick="window.downloadOfferDocument(${offer.id})" class="btn-card" style="background:#2c3e50; color:white;" title="Download offer as Word document">DOCX</button>` : ''}
-            ${offer.status !== 'requested' ? `<button onclick="window.downloadTraceabilityCsv(${offer.id})" class="btn-card" style="background:#475569; color:white;" title="Download traceability CSV">Traceability</button>` : ''}
           </div>
           <div style="text-align: right;">
             ${offer.manager_id
@@ -1575,37 +1573,6 @@ window.downloadInvoicePdf = async function (invoiceId) {
   } catch (err) {
     console.error("Download error:", err);
     showToast("Network error downloading invoice PDF.", "error");
-  }
-};
-
-// --- DOWNLOAD OFFER DOCUMENT ---
-window.downloadOfferDocument = async function (offerId) {
-  try {
-    const response = await fetch(`/api/technician/offers/${offerId}/document`);
-    if (!response.ok) {
-      const err = await response.json();
-      showToast("Error: " + (err.detail || "Could not generate document"), "error");
-      return;
-    }
-    await downloadBlobResponse(response, `Oferta_${offerId}.docx`);
-  } catch (err) {
-    console.error("Download error:", err);
-    showToast("Network error downloading document.", "error");
-  }
-};
-
-window.downloadTraceabilityCsv = async function (offerId) {
-  try {
-    const response = await fetch(`/api/technician/offers/${offerId}/traceability.csv`);
-    if (!response.ok) {
-      const err = await response.json();
-      showToast("Error: " + (err.detail || "Could not export traceability"), "error");
-      return;
-    }
-    await downloadBlobResponse(response, `trazabilidad_${offerId}.csv`);
-  } catch (err) {
-    console.error("Traceability export error:", err);
-    showToast("Network error exporting traceability.", "error");
   }
 };
 

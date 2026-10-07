@@ -261,8 +261,10 @@ def sync_offer(db, offer) -> bool:
     offer_rows = _service_rows(db, offer)
     if not offer_rows or not offer.reference:
         return False
+    return _push_rows(offer_rows, (offer.created_at or datetime.now()).year)
 
-    year = (offer.created_at or datetime.now()).year
+
+def _push_rows(offer_rows: list[dict], year: int) -> bool:
     client = get_nextcloud_client()
     file_name = _find_workbook_name(client, year)
     if not file_name:
@@ -279,6 +281,28 @@ def sync_offer(db, offer) -> bool:
         if put.status_code not in (200, 201, 204):
             raise RuntimeError(f"Could not upload {remote}: {put.status_code}")
     return True
+
+
+def try_sync_offer_background(db, offer) -> None:
+    """Read the offer data now, then upload to the workbook in a background thread."""
+    try:
+        if not (os.getenv("NEXTCLOUD_USERNAME") and os.getenv("NEXTCLOUD_PASSWORD")):
+            return
+        offer_rows = _service_rows(db, offer)
+        if not offer_rows or not offer.reference:
+            return
+        year = (offer.created_at or datetime.now()).year
+    except Exception:
+        logger.exception("RG-12 traceability sync failed for offer %s", getattr(offer, "reference", None))
+        return
+
+    def run():
+        try:
+            _push_rows(offer_rows, year)
+        except Exception:
+            logger.exception("RG-12 traceability sync failed for offer %s", offer_rows[0].get("code"))
+
+    threading.Thread(target=run, daemon=True).start()
 
 
 def try_sync_offer(db, offer) -> None:

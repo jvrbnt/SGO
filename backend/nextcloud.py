@@ -237,8 +237,25 @@ class NextcloudClient:
             return False
 
 
+_client_cache: NextcloudClient | None = None
+_client_key: tuple | None = None
+
+
 def get_nextcloud_client() -> NextcloudClient:
-    """Factory function to create Nextcloud client from environment variables."""
+    """Return a shared client (reuses the HTTPS connection) built from environment variables."""
+    global _client_cache, _client_key
+    key = (
+        os.getenv("NEXTCLOUD_URL", "https://saco.csic.es"),
+        os.getenv("NEXTCLOUD_USERNAME", ""),
+        os.getenv("NEXTCLOUD_PASSWORD", ""),
+        os.getenv("NEXTCLOUD_REMOTE_PATH", "/remote.php/dav/files"),
+    )
+    if _client_cache is None or key != _client_key:
+        _client_cache, _client_key = _build_client(), key
+    return _client_cache
+
+
+def _build_client() -> NextcloudClient:
     return NextcloudClient(
         base_url=os.getenv("NEXTCLOUD_URL", "https://saco.csic.es"),
         username=os.getenv("NEXTCLOUD_USERNAME", ""),

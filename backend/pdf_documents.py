@@ -28,19 +28,19 @@ efficient for the server and avoids the need for heavy external dependencies
 like LibreOffice or Microsoft Word.
 """
 
-# Directory where all generated PDFs will be stored persistently.
-DOCUMENT_ROOT = Path(os.getenv("GENERATED_DOCUMENTS_DIR", "data/generated_documents"))
-PO_REQUEST_DIRECTORY = Path(os.getenv("PO_REQUEST_DIRECTORY", "Calidad/Mail Petición Oferta"))
-ACCEPTANCE_DOCUMENT_DIRECTORY = Path(os.getenv("ACCEPTANCE_DOCUMENT_DIRECTORY", "Calidad/Mail Aceptación Oferta"))
-OFFER_DOCUMENT_DIRECTORY = Path(os.getenv("OFFER_DOCUMENT_DIRECTORY", "Calidad/RG-10. Ofertas. Ed 03"))
-INVOICE_DOCUMENT_DIRECTORY = Path(os.getenv("INVOICE_DOCUMENT_DIRECTORY", "Calidad/Facturación Clientes"))
+# Calidad documents live only in Nextcloud. Files are built in a temporary staging
+# folder (never inside the project) and removed once uploaded.
+QUALITY_LOCAL_ROOT = Path(os.getenv("QUALITY_LOCAL_ROOT") or Path(tempfile.gettempdir()) / "sgo_calidad")
+PO_REQUEST_DIRECTORY = Path(os.getenv("PO_REQUEST_DIRECTORY", str(QUALITY_LOCAL_ROOT / "Mail Petición Oferta")))
+ACCEPTANCE_DOCUMENT_DIRECTORY = Path(os.getenv("ACCEPTANCE_DOCUMENT_DIRECTORY", str(QUALITY_LOCAL_ROOT / "Mail Aceptación Oferta")))
+OFFER_DOCUMENT_DIRECTORY = Path(os.getenv("OFFER_DOCUMENT_DIRECTORY", str(QUALITY_LOCAL_ROOT / "RG-10. Ofertas. Ed 03")))
+INVOICE_DOCUMENT_DIRECTORY = Path(os.getenv("INVOICE_DOCUMENT_DIRECTORY", str(QUALITY_LOCAL_ROOT / "Facturación Clientes")))
 RG10_TEMPLATE_PATH = Path(os.getenv("RG10_TEMPLATE_PATH", "docs_oficiales/CSS_RG-10. Oferta Ed.06_ES.docx"))
 PO_REQUEST_FILENAME = re.compile(
     r"^PO_(?P<number>\d+)_(?P<year>\d{4})(?:_Actualizada(?:_\d+)?)?\.pdf$"
 )
 # Calidad documents live in Nextcloud (QUALITY_REMOTE_ROOT); the local Calidad
 # folder is only a staging copy used to build and serve the generated files.
-QUALITY_LOCAL_ROOT = Path(os.getenv("QUALITY_LOCAL_ROOT", "Calidad"))
 QUALITY_REMOTE_ROOT = os.getenv("NEXTCLOUD_QUALITY_PATH", "/SGO-test").rstrip("/")
 
 
@@ -88,25 +88,6 @@ def _safe_part(value) -> str:
     text = str(value or "").strip()
     text = re.sub(r"[^A-Za-z0-9_.-]+", "_", text)
     return text.strip("._") or "document"
-
-
-def _quality_document_path(year: int, folder: str, stem: str, extension: str = "pdf") -> Path:
-    """Return a Calidad Sin Sudar style path without overwriting previous files."""
-    directory = DOCUMENT_ROOT / str(year) / folder
-    base_path = directory / f"{stem}.{extension}"
-    if not base_path.exists():
-        return base_path
-
-    updated_path = directory / f"{stem}_Actualizada.{extension}"
-    if not updated_path.exists():
-        return updated_path
-
-    version = 2
-    while True:
-        candidate = directory / f"{stem}_Actualizada_{version}.{extension}"
-        if not candidate.exists():
-            return candidate
-        version += 1
 
 
 def _latest_request_number(year: int) -> int:
@@ -245,13 +226,33 @@ def latest_document(db, *, document_type, file_format="pdf", offer_id=None, invo
     return query.order_by(models.GeneratedDocument.created_at.desc(), models.GeneratedDocument.id.desc()).first()
 
 
+def load_document_bytes(file_path: str) -> bytes | None:
+    """Read a stored document from Nextcloud (or the staging path), None if missing."""
+    local = Path(file_path)
+    if local.exists():
+        return local.read_bytes()
+    remote = file_path
+    if not remote.startswith(QUALITY_REMOTE_ROOT + "/"):
+        # Legacy records stored a project-relative "Calidad/..." path.
+        parts = Path(file_path).parts
+        if not parts or parts[0] != "Calidad" or not _remote_path(QUALITY_LOCAL_ROOT.joinpath(*parts[1:])):
+            return None
+        remote = _remote_path(QUALITY_LOCAL_ROOT.joinpath(*parts[1:]))
+    client = get_nextcloud_client()
+    response = client.session.get(client._build_url(remote))
+    return response.content if response.status_code == 200 else None
+
+
 def _register_document(db, *, document_type, file_format, path, offer_id=None, invoice_id=None, technician_id=None):
     sha256 = _checksum(path)
+    remote = _remote_path(path)
     _upload_to_nextcloud(path)
+    if remote is not None:
+        path.unlink(missing_ok=True)
     record = models.GeneratedDocument(
         document_type=document_type,
         file_format=file_format,
-        file_path=str(path),
+        file_path=remote or str(path),
         sha256=sha256,
         offer_id=offer_id,
         invoice_id=invoice_id,

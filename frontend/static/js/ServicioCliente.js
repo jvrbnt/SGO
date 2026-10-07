@@ -37,10 +37,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     "Researcher";
   document.getElementById("userNameBar").textContent = displayName;
 
-  const profilePicture = currentUser.profilePicture || currentUser.profile_picture;
-  if (profilePicture) {
-    document.getElementById("userIcon").src = profilePicture;
-  }
+  document.getElementById("userIcon").src = window.avatarFor(currentUser);
 
   const billingEntity = (currentUser.entity || "").trim().toLowerCase();
   const billingIsCompany = ["company", "empresa", "private"].includes(billingEntity);
@@ -108,37 +105,48 @@ document.addEventListener("DOMContentLoaded", async () => {
       const response = await fetch("/api/catalog");
       const catalog = sanitizeDisplayData(await response.json());
 
-      grid.style.display = "flex";
-      grid.style.flexDirection = "column";
+      grid.style.display = "grid";
+      grid.style.gridTemplateColumns = "repeat(3, minmax(0, 1fr))";
       grid.style.gap = "10px";
       grid.innerHTML = "";
 
+      const requestList = document.getElementById("serviceRequestList");
+      requestList.innerHTML = "";
+
       catalog.forEach((item) => {
-        const fila = document.createElement("div");
+        const fila = document.createElement("label");
+        fila.className = "service-option";
         fila.style.cssText =
-          "display:flex; border:1px solid #ccc; border-radius:4px; background:#fff; align-items:stretch; min-height:55px;";
-
-        fila.innerHTML = `
-                    <div class="btn-desplegar" style="flex:0 0 40%; display:flex; justify-content:space-between; align-items:center; padding:0 15px; background:#f8f9fa; border-right:1px solid #eee; cursor:pointer;">
-                        <span class="nombre-servicio" style="font-weight:600; font-size:14px;">${item.name}</span>
-                        <span class="icono-mas">+</span>
-                    </div>
-                    <div class="formulario-horas" style="display:none; flex:1; align-items:center; padding:0 15px; gap:15px; background:#fff;">
-                      <label style="font-size:12px; font-weight:bold;">REQUEST DESCRIPTION:</label>
-                      <textarea class="input-comentario" placeholder="Describe your request" required style="flex-grow:1; padding:5px; resize:both; min-height:38px;"></textarea>
-                    </div>
-                `;
+          "display:flex; align-items:center; gap:12px; border:1px solid #ccc; border-radius:4px; background:#fff; min-height:48px; padding:0 15px; cursor:pointer;";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.style.cssText = "width:18px; height:18px; cursor:pointer;";
+        const name = document.createElement("span");
+        name.style.cssText = "font-weight:600; font-size:14px;";
+        name.textContent = item.name;
+        fila.append(checkbox, name);
         grid.appendChild(fila);
-      });
 
-      document.querySelectorAll(".btn-desplegar").forEach((btn) => {
-        btn.addEventListener("click", function () {
-          const form = this.nextElementSibling;
-          const icon = this.querySelector(".icono-mas");
-          const isOpen = form.style.display === "flex";
-          form.style.display = isOpen ? "none" : "flex";
-          icon.textContent = isOpen ? "+" : "-";
-          this.style.background = isOpen ? "#f8f9fa" : "#e9ecef";
+        const request = document.createElement("div");
+        request.className = "request-item";
+        request.dataset.service = item.name;
+        request.style.cssText = "display:none; flex-direction:column; gap:6px; padding:12px 15px; border:1px solid #ccc; border-radius:4px; background:#fff;";
+        const title = document.createElement("strong");
+        title.style.fontSize = "14px";
+        title.textContent = item.name;
+        const textarea = document.createElement("textarea");
+        textarea.className = "input-comentario";
+        textarea.placeholder = "Describe your request";
+        textarea.style.cssText = "width:100%; box-sizing:border-box; padding:8px; resize:vertical; min-height:60px;";
+        request.append(title, textarea);
+        requestList.appendChild(request);
+
+        checkbox.addEventListener("change", () => {
+          request.style.display = checkbox.checked ? "flex" : "none";
+          fila.style.background = checkbox.checked ? "#e9ecef" : "#fff";
+          document.getElementById("requestPerService").style.display =
+            requestList.querySelector('.request-item[style*="display: flex"]') ? "block" : "none";
+          if (checkbox.checked) textarea.focus();
         });
       });
     } catch (e) {
@@ -210,7 +218,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                       if (s.is_deleted && s.added_by_technician) return '';
                       const isDel = s.is_deleted;
                       const isAdded = s.added_by_technician;
-                      const isEdited = !isDel && !isAdded && s.original_hours !== null && parseFloat(s.hours) !== parseFloat(s.original_hours);
 
                       const colorStyle = isDel ? 'color: #94a3b8;' : 'color:#333;';
                       let label = '';
@@ -218,12 +225,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                          label = ' <span style="color:#ef4444; font-size:11px; font-weight:bold; text-decoration:none;">(Deleted by technician)</span>';
                       } else if (isAdded) {
                          label = ' <span style="color:#10b981; font-size:11px; font-weight:bold;">(Added by technician)</span>';
-                      } else if (isEdited) {
-                         label = ' <span style="color:#f59e0b; font-size:11px; font-weight:bold;">(Edited by technician)</span>';
                       }
                       
                       const nameDisplay = isDel ? `<span style="text-decoration:line-through;">${s.service_name}</span>` : s.service_name;
-                      let hoursDisplay = isDel ? `<span style="text-decoration:line-through;">${s.hours}h</span>` : `${s.hours}h`;
+                      const hoursDisplay = `${s.hours}h`;
                       
                       
                       return `
@@ -260,17 +265,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                   ${offer.services.map(s => {
                     if (s.is_deleted) return '';
                     const isAdded = s.added_by_technician;
-                    const isEdited = !isAdded && s.original_hours !== null && parseFloat(s.hours) !== parseFloat(s.original_hours);
-                    let hoursDisplay = `${s.hours}h`;
-                    if (isEdited) {
-                       hoursDisplay = `<span style="text-decoration:line-through; color:#94a3b8; font-size:11px; margin-right:4px;">${s.original_hours}h</span><span style="color:#f59e0b; font-weight:bold;">${s.hours}h</span>`;
-                     }
+                    const hoursDisplay = `${s.hours}h`;
                     const priceColor = '#1a6b33';
                     return `
                       <li style="margin-bottom:3px;">
                         ${s.service_name} — ${hoursDisplay}
                         ${isAdded ? '<small style="color:#10b981; font-weight:bold; margin-left:4px;">(Added by technician)</small>' : ''}
-                        ${isEdited ? '<small style="color:#f59e0b; font-weight:bold; margin-left:4px;">(Edited by technician)</small>' : ''}
                         ${s.quoted_price != null ? `<span style="color:${priceColor}; font-weight:600; margin-left:4px;">(${s.quoted_price.toFixed(2)} €)</span>` : ''}
                       </li>
                     `;
@@ -280,7 +280,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             ` : `
               <!-- REQUESTED: lista simple sin precios -->
               <ul style="padding-left:15px; font-size:14px; margin-bottom:10px;">
-                ${offer.services.map(s => `<li><strong>${s.service_name}</strong>: ${s.hours}h ${s.comment ? `<br><i style="color:#888;">"${s.comment}"</i>` : ''}</li>`).join('')}
+                ${offer.services.map(s => `<li><strong>${s.service_name}</strong>${s.comment ? `<br><i style="color:#888;">"${s.comment}"</i>` : ''}</li>`).join('')}
               </ul>
             `}
 
@@ -322,28 +322,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 7. SUBMIT NEW REQUEST
   document
     .getElementById("btnSendRequest")
-    ?.addEventListener("click", async () => {
+    ?.addEventListener("click", async (event) => {
       const requestedServices = [];
-      document.querySelectorAll(".formulario-horas").forEach((form) => {
-        if (form.style.display === "flex") {
-          const comment = form.querySelector(".input-comentario").value.trim();
-          if (comment) {
-            requestedServices.push({
-              service_name:
-                form.previousElementSibling.querySelector(".nombre-servicio")
-                  .textContent,
-              comment: comment,
-            });
-          }
+      let hasMissingDescription = false;
+      document.querySelectorAll("#serviceRequestList .request-item").forEach((item) => {
+        if (item.style.display !== "flex") return;
+        const comment = item.querySelector(".input-comentario").value.trim();
+        if (!comment) {
+          hasMissingDescription = true;
+          return;
         }
+        requestedServices.push({ service_name: item.dataset.service, comment });
       });
 
-      if (requestedServices.length === 0)
+      if (requestedServices.length === 0 && !hasMissingDescription)
         return showToast("Select at least one service and provide a description.", "warning");
-
-      const hasMissingDescription = [...document.querySelectorAll(".formulario-horas")].some((form) =>
-        form.style.display === "flex" && !form.querySelector(".input-comentario").value.trim()
-      );
       if (hasMissingDescription)
         return showToast("A request description is required for every selected service.", "warning");
 
@@ -359,23 +352,31 @@ document.addEventListener("DOMContentLoaded", async () => {
         return showToast("Project code and internal account are required.", "warning");
       }
 
-      const res = await fetch("/api/client/offers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          client_email: currentUser.email,
-          services: requestedServices,
-          ...(billingData || {}),
-        }),
-      });
+      await withButtonLoading(event.currentTarget, "Creating offer...", async () => {
+        let res;
+        try {
+          res = await fetch("/api/client/offers", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              client_email: currentUser.email,
+              services: requestedServices,
+              ...(billingData || {}),
+            }),
+          });
+        } catch (e) {
+          return showToast("Network error creating the offer.", "error");
+        }
 
-      if (res.ok) {
-        showToast("Request sent successfully.", "success");
-        location.reload();
-      } else {
-        const data = await res.json().catch(() => ({}));
-        showToast(data.detail || "Could not create the offer.", "error");
-      }
+        if (res.ok) {
+          showToast("Request sent successfully.", "success");
+          sessionStorage.setItem("openTabAfterReload", "tabMisOfertas");
+          location.reload();
+        } else {
+          const data = await res.json().catch(() => ({}));
+          showToast(data.detail || "Could not create the offer.", "error");
+        }
+      });
     });
 
   // 8. ACCEPTANCE LOGIC
@@ -587,3 +588,12 @@ window.openTab = function (evt, tabName) {
   document.getElementById(tabName).classList.add("active");
   evt.currentTarget.classList.add("active");
 };
+
+// After creating an offer the page reloads; reopen the requested tab.
+document.addEventListener("DOMContentLoaded", () => {
+  const tabName = sessionStorage.getItem("openTabAfterReload") ||
+    (location.hash === "#my-offers" ? "tabMisOfertas" : null);
+  if (!tabName) return;
+  sessionStorage.removeItem("openTabAfterReload");
+  document.querySelector(`.tab-btn[onclick*="'${tabName}'"]`)?.click();
+});

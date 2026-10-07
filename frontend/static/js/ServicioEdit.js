@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const DEFAULT_PHOTO = "https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png";
     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
     const authFetch = (resource, config = {}) => {
         const token = localStorage.getItem("authToken");
@@ -30,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const updateUI = (user) => {
         const displayName = user.nickname || user.display_name || `${user.first_name || ""} ${user.last_name || ""}`.trim() || "User";
         userNameBar.textContent = displayName;
-        const photo = user.profilePicture || user.profile_picture || DEFAULT_PHOTO;
+        const photo = window.avatarFor(user);
         userIconBar.src = photo;
         photoPreview.src = photo;
     };
@@ -52,29 +51,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (currentUser.entity === "Internal") {
         document.getElementById("editGroup").value = currentUser.grupo || currentUser.group || "";
     }
-
-    // --- PHOTO MANAGEMENT ---
-    const inputPhotoFile = document.getElementById("inputPhotoFile");
-    let currentPhotoBase64 = currentUser.profilePicture || currentUser.profile_picture || DEFAULT_PHOTO;
-
-    document.getElementById("btnChangePhoto").addEventListener("click", () => inputPhotoFile.click());
-    
-    document.getElementById("btnRemovePhoto").addEventListener("click", () => {
-        currentPhotoBase64 = DEFAULT_PHOTO;
-        photoPreview.src = DEFAULT_PHOTO;
-    });
-
-    inputPhotoFile.addEventListener("change", function() {
-        const file = this.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                photoPreview.src = e.target.result;
-                currentPhotoBase64 = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-    });
 
     editEntity.addEventListener("change", (e) => toggleInternal(e.target.value));
 
@@ -109,7 +85,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const nickname = editNickname.value.trim();
         const payload = {
             display_name: nickname || null,
-            profile_picture: currentPhotoBase64,
             entity,
             grupo: null,
         };
@@ -129,7 +104,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 throw new Error(Array.isArray(data.detail) ? "Invalid profile data." : (data.detail || "Could not update profile"));
             }
 
-            data.profilePicture = data.profile_picture;
             data.nickname = data.display_name;
             localStorage.setItem("currentUser", JSON.stringify(data));
             showToast("Profile updated successfully!", "success");

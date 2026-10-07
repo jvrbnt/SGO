@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Client Portal - MiNa</title>
   <link rel="stylesheet" href="/static/css/ServicioCliente.css?v=20260914-4" />
-  <link rel="stylesheet" href="/static/css/Servicio.css" />
+  <link rel="stylesheet" href="/static/css/Servicio.css?v=4" />
   <link rel="stylesheet" href="/static/css/Footer.css">
   <link rel="stylesheet" href="/static/css/Toast.css">
 </head>
@@ -14,6 +14,7 @@
 <body>
   <div class="side-bar">
     <div class="top-contact-info">
+<a href="/cliente#my-offers" class="brand-logo" title="My Offers"><img src="/static/imagenes/Mina.png" alt="MiNa" width="500"></a>
       <div>
         <img
           src="https://cdn.iconscout.com/icon/premium/png-256-thumb/correo-electronico-icon-svg-png-download-11866287.png?f=webp&w=128"
@@ -58,7 +59,12 @@
     </div>
 
     <div id="tabGenerar" class="tab-content active" style="width: 100%">
+      <h3 style="margin:0 0 10px; color:var(--color-csic);">Available services</h3>
       <div id="servicesGrid"></div>
+      <section id="requestPerService" style="display:none; margin-top:24px;">
+        <h3 style="margin:0 0 10px; color:var(--color-csic);">Request per service</h3>
+        <div id="serviceRequestList" style="display:flex; flex-direction:column; gap:10px;"></div>
+      </section>
       <section id="billingSection" aria-labelledby="billingTitle" style="display:block; clear:both; position:relative; z-index:10; width:100%; box-sizing:border-box; margin-top:30px; padding:22px; border:1px solid #dbe4ee; border-radius:8px; background:#f8fafc;">
         <h3 id="billingTitle" style="margin:0 0 8px; color:var(--color-csic);">Bill to:</h3>
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">
@@ -105,11 +111,10 @@
   </div>
 
   <div id="icon">
-    <img src="/static/imagenes/Csic.png" alt="Csic Logo" class="centered-icon" />
-    <div id="icon2">
-      <img src="/static/imagenes/Mina.png" alt="Mina Logo" />
+    <div class="footer-logos">
+    <img src="/static/imagenes/MicroNanoSpainLogoseuropeosynacionaleshorizontal.png" alt="Funded by the European Union" class="footer-logo footer-logo-eu">
+    <img src="/static/imagenes/MicroNanoSpain2.png" alt="MicroNanoSpain" class="footer-logo footer-logo-mns">
     </div>
-    <img src="/static/imagenes/MicroNano.png" alt="MicroNano Logo" class="centered-icon" />
     <div class="social-links">
       <a href="https://es-es.facebook.com/CSIC/" class="btn-social"><img
           src="https://cdn.pixabay.com/photo/2021/06/15/12/51/facebook-6338508_640.png" alt="Facebook"></a>
@@ -153,8 +158,9 @@
     
   </div>
 
-  <script src="/static/js/Toast.js"></script>
-  <script src="/static/js/ServicioCliente.js?v=20260924-1" defer></script>
+<script src="/static/js/Avatar.js"></script>
+  <script src="/static/js/Toast.js?v=2"></script>
+  <script src="/static/js/ServicioCliente.js?v=20261007-2" defer></script>
   <script src="/static/js/Footer.js"></script>
 </body>
 

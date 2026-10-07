@@ -171,4 +171,17 @@ body #icon {
 #passwordMessage {
     font-weight: bold;
     font-size: 12px;
-}
+}
+
+body #icon {
+    flex-direction: column !important;
+    gap: 20px !important;
+}
+
+body #icon .footer-logos {
+    margin: 0 !important;
+}
+
+body #icon .social-links {
+    justify-content: center;
+}

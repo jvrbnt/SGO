@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Profile - IMN</title>
-    <link rel="stylesheet" href="/static/css/Servicio.css">
+    <link rel="stylesheet" href="/static/css/Servicio.css?v=4">
     <link rel="stylesheet" href="/static/css/ServicioEdit.css">
   <link rel="stylesheet" href="/static/css/Footer.css">
   <link rel="stylesheet" href="/static/css/Toast.css">
@@ -12,6 +12,7 @@
 <body>
     <div class="side-bar" id="topBar">
         <div class="top-contact-info">
+<a href="/cliente#my-offers" class="brand-logo" title="My Offers"><img src="/static/imagenes/Mina.png" alt="MiNa"></a>
             <div>
                 <img src="https://cdn.iconscout.com/icon/premium/png-256-thumb/correo-electronico-icon-svg-png-download-11866287.png?f=webp&w=128" alt="email">
                 <h6>mina.imn@csic.es</h6>
@@ -39,12 +40,7 @@
         
         <div id="editForm">
             <div class="photo-section">
-                <img id="photoPreview" src="https://static.vecteezy.com/system/resources/thumbnails/021/353/308/small/user-icon-for-website-and-mobile-apps-png.png" alt="Preview">
-                <input type="file" id="inputPhotoFile" accept="image/*" style="display: none;">
-                <div class="photo-buttons">
-                    <button type="button" id="btnChangePhoto" class="btn-secundario">Change Photo</button>
-                    <button type="button" id="btnRemovePhoto" class="btn-danger">Remove Photo</button>
-                </div>
+                <img id="photoPreview" src="" alt="Preview">
             </div>
 
             <div class="fields-grid">
@@ -88,9 +84,10 @@
     </div>
 
     <div id="icon">
-        <img src="/static/imagenes/Csic.png" alt="Csic Logo" class="centered-icon">
-        <div id="icon2"><img src="/static/imagenes/Mina.png" alt="Mina"></div>
-        <img src="/static/imagenes/MicroNano.png" alt="MicroNano Logo" class="centered-icon">
+        <div class="footer-logos">
+    <img src="/static/imagenes/MicroNanoSpainLogoseuropeosynacionaleshorizontal.png" alt="Funded by the European Union" class="footer-logo footer-logo-eu">
+    <img src="/static/imagenes/MicroNanoSpain2.png" alt="MicroNanoSpain" class="footer-logo footer-logo-mns">
+    </div>
         <div class="social-links">
             <a href="https://es-es.facebook.com/CSIC/" class="btn-social"><img src="https://cdn.pixabay.com/photo/2021/06/15/12/51/facebook-6338508_640.png" alt="Facebook"></a>
             <a href="https://www.instagram.com/csic/" class="btn-social" id="insta"><img src="https://static.vecteezy.com/system/resources/thumbnails/018/930/691/small/instagram-logo-instagram-icon-transparent-free-png.png" alt="Instagram"></a>
@@ -125,8 +122,9 @@
       
     </div>
 
+<script src="/static/js/Avatar.js"></script>
     <script src="/static/js/Toast.js"></script>
-    <script src="/static/js/ServicioEdit.js" defer></script>
+    <script src="/static/js/ServicioEdit.js?v=2" defer></script>
   <script src="/static/js/Footer.js"></script>
 </body>
 </html>

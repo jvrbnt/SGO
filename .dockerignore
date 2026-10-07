@@ -23,7 +23,6 @@ __pycache__
 *.md
 
 # Datos persistentes y temporales locales
-data/
 backups/
 scratch.patch
 
